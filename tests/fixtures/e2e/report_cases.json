@@ -1,0 +1,14 @@
+[
+  {
+    "id": "report-reliable-feed-portrait-png",
+    "args": ["tests/fixtures/images/portrait_sample_30x40.png", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "report-reliable-reel-portrait-mp4-audio",
+    "args": ["tests/fixtures/images/portrait_video_audio_360x640.mp4", "--mode", "reliable", "--surface", "reel", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "report-reliable-feed-landscape-white",
+    "args": ["tests/fixtures/images/landscape_sample_48x32.jpg", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--white-canvas", "--json"]
+  }
+]
