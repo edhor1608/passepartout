@@ -24,6 +24,12 @@ JSON output:
 bun run recommend --mode reliable --surface feed --orientation portrait --json
 ```
 
+Analyze from file:
+
+```bash
+bun run analyze tests/fixtures/images/portrait_sample_30x40.ppm --mode reliable --surface feed --json
+```
+
 ## Test
 
 ```bash
@@ -47,6 +53,7 @@ Regenerate snapshots/fixtures when needed:
 ```bash
 bun run fixtures:images
 bun run fixtures:e2e
+bun run fixtures:e2e:analyze
 bun run fixtures:visual
 bun run fixtures:pixel
 ```

@@ -62,3 +62,48 @@ export type RecommendationOutput = {
   workflow_note: string;
   white_canvas: WhiteCanvasOutput;
 };
+
+export type TierName =
+  | "tier_upscale"
+  | "tier_preserve"
+  | "tier_downscale"
+  | "tier_aspect_correction";
+
+export type TierOutput = {
+  name: TierName;
+  reason: string;
+  risk_level: RiskLevel;
+};
+
+export type MediaInspection = {
+  path: string;
+  width: number;
+  height: number;
+  aspect_ratio: string;
+  orientation: Orientation;
+  colorspace: string;
+  codec: string | null;
+  fps: number;
+};
+
+export type AnalyzeInput = {
+  file: string;
+  mode: Mode;
+  surface: Surface;
+  workflow?: Workflow;
+  whiteCanvas?: boolean;
+  canvasProfile?: CanvasProfile;
+};
+
+export type AnalyzeOutput = {
+  input: MediaInspection;
+  selection: {
+    mode: Mode;
+    surface: Surface;
+    workflow: Workflow;
+    profile: string;
+    target_resolution: Resolution;
+  };
+  tier: TierOutput;
+  white_canvas: WhiteCanvasOutput;
+};
