@@ -52,9 +52,7 @@ export function recommend(input: RecommendInput, ruleset: Ruleset = getDefaultRu
   let whiteCanvas = disabledWhiteCanvas();
 
   if (whiteCanvasEnabled) {
-    if (input.surface !== "feed") {
-      workflowNote = `White-canvas is feed-only in Phase 1; ignored for ${input.surface}.`;
-    } else {
+    if (input.surface === "feed") {
       const resolved = resolveCanvasProfile({
         requestedProfile: input.canvasProfile,
         workflow,
@@ -73,6 +71,35 @@ export function recommend(input: RecommendInput, ruleset: Ruleset = getDefaultRu
       whiteCanvas = {
         enabled: true,
         profile: resolved.profile,
+        style,
+        margins: computeStyledMargins({
+          canvasWidth: width,
+          canvasHeight: height,
+          sourceRatio,
+          style,
+          ruleset,
+        }),
+        contain_only: true,
+        no_crop: true,
+      };
+    } else {
+      const { width, height } = parseResolution(base.resolution);
+      const sourceRatio = input.sourceRatio ?? sourceRatioFromOrientation(input.orientation);
+      const style = resolveCanvasStyle(input.canvasStyle, ruleset);
+      const surfaceProfile = input.surface === "story" ? "story_default" : "reel_default";
+
+      selectedProfile = `${input.mode}_${input.surface}_white_canvas_${surfaceProfile}`;
+      targetResolution = base.resolution;
+      reason = `White-canvas contain profile ${surfaceProfile} with style ${style} selected for ${input.orientation} source.`;
+      riskLevel = input.mode === "experimental" ? "high" : "low";
+      workflowNote = `Using ${surfaceProfile} white-canvas profile.`;
+      if (input.canvasProfile) {
+        workflowNote += " Feed canvas-profile options are ignored for non-feed surfaces.";
+      }
+
+      whiteCanvas = {
+        enabled: true,
+        profile: surfaceProfile,
         style,
         margins: computeStyledMargins({
           canvasWidth: width,

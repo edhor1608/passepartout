@@ -127,6 +127,35 @@ describe("export-video integration", () => {
     );
   });
 
+  test("white-canvas export-video supports reel surface", async () => {
+    const input = join(fixtures, "portrait_video_360x640.mp4");
+    const output = resetOut("portrait_white_canvas_reel.mp4");
+
+    const exportResult = await runExportVideoCli([
+      input,
+      "--out",
+      output,
+      "--mode",
+      "reliable",
+      "--surface",
+      "reel",
+      "--workflow",
+      "unknown",
+      "--white-canvas",
+      "--json",
+    ]);
+
+    expect(exportResult.exitCode).toBe(0);
+    expect(existsSync(output)).toBe(true);
+
+    const payload = parseJsonStdout(exportResult.stdout);
+    expect(payload).toHaveProperty("target_resolution", "1080x1920");
+    expect(payload).toHaveProperty("white_canvas_enabled", true);
+    expect(payload).toHaveProperty("selected_profile", "reliable_reel_white_canvas_reel_default");
+    expect(payload.output_width).toBe(1080);
+    expect(payload.output_height).toBe(1920);
+  });
+
   test("export-video strips audio track from audio input", async () => {
     const input = join(fixtures, "portrait_video_audio_360x640.mp4");
     const output = resetOut("portrait_audio_input_stripped.mp4");

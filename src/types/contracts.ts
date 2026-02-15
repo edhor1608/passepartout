@@ -15,6 +15,7 @@ export type CanvasProfile = (typeof CANVAS_PROFILES)[number];
 
 export const CANVAS_STYLES = ["gallery_clean", "polaroid_classic"] as const;
 export type CanvasStyle = (typeof CANVAS_STYLES)[number];
+export type WhiteCanvasResolvedProfile = CanvasProfile | "story_default" | "reel_default";
 export type RiskLevel = "low" | "medium" | "high";
 export type Resolution = `${number}x${number}`;
 
@@ -62,7 +63,7 @@ export type RecommendInput = {
 
 export type WhiteCanvasOutput = {
   enabled: boolean;
-  profile: CanvasProfile | null;
+  profile: WhiteCanvasResolvedProfile | null;
   style: CanvasStyle | null;
   margins: Margins | null;
   contain_only: boolean;
