@@ -8,7 +8,10 @@ export type CliRunResult = {
 
 const REPO_ROOT = resolve(import.meta.dir, "..", "..");
 
-async function runCli(command: "recommend" | "analyze" | "export-image", args: string[]): Promise<CliRunResult> {
+async function runCli(
+  command: "recommend" | "analyze" | "export-image" | "export-video",
+  args: string[],
+): Promise<CliRunResult> {
   const proc = Bun.spawn({
     cmd: ["bun", "run", command, ...args],
     cwd: REPO_ROOT,
@@ -35,6 +38,10 @@ export async function runAnalyzeCli(args: string[]): Promise<CliRunResult> {
 
 export async function runExportImageCli(args: string[]): Promise<CliRunResult> {
   return runCli("export-image", args);
+}
+
+export async function runExportVideoCli(args: string[]): Promise<CliRunResult> {
+  return runCli("export-video", args);
 }
 
 export function parseJsonStdout(stdout: string): Record<string, unknown> {
