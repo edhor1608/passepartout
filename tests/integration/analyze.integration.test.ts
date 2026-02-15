@@ -47,6 +47,27 @@ describe("analyze cli integration", () => {
     expect(whiteCanvas.margins).toEqual({ left: 43, top: 216, right: 43, bottom: 216 });
   });
 
+  test("analyze supports PNG input", async () => {
+    const file = join(fixtures, "portrait_sample_30x40.png");
+    const result = await runAnalyzeCli([
+      file,
+      "--mode",
+      "reliable",
+      "--surface",
+      "feed",
+      "--workflow",
+      "unknown",
+      "--json",
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    const payload = parseJsonStdout(result.stdout);
+    const input = payload.input as Record<string, unknown>;
+    expect(input.width).toBe(30);
+    expect(input.height).toBe(40);
+    expect(input.orientation).toBe("portrait");
+  });
+
   test("missing value for --mode fails with explicit error", async () => {
     const file = join(fixtures, "landscape_sample_48x32.ppm");
     const result = await runAnalyzeCli([file, "--mode", "--surface", "feed", "--json"]);

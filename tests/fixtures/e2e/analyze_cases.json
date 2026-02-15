@@ -10,5 +10,13 @@
   {
     "id": "analyze-experimental-story-square",
     "args": ["tests/fixtures/images/square_sample_36x36.ppm", "--mode", "experimental", "--surface", "story", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "analyze-reliable-feed-portrait-png",
+    "args": ["tests/fixtures/images/portrait_sample_30x40.png", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "analyze-reliable-feed-landscape-jpg",
+    "args": ["tests/fixtures/images/landscape_sample_48x32.jpg", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--json"]
   }
 ]

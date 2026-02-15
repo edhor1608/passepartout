@@ -30,8 +30,30 @@ describe("media inspector", () => {
     expect(meta.orientation).toBe("portrait");
   });
 
+  test("reads PNG fixture metadata", () => {
+    const path = join(fixtures, "portrait_sample_30x40.png");
+    const meta = inspectMedia(path);
+
+    expect(meta.width).toBe(30);
+    expect(meta.height).toBe(40);
+    expect(meta.orientation).toBe("portrait");
+    expect(meta.aspect_ratio).toBe("0.7500");
+    expect(meta.colorspace).toBe("unknown");
+  });
+
+  test("reads JPEG fixture metadata", () => {
+    const path = join(fixtures, "landscape_sample_48x32.jpg");
+    const meta = inspectMedia(path);
+
+    expect(meta.width).toBe(48);
+    expect(meta.height).toBe(32);
+    expect(meta.orientation).toBe("landscape");
+    expect(meta.aspect_ratio).toBe("1.5000");
+    expect(meta.colorspace).toBe("unknown");
+  });
+
   test("fails for unsupported extension", () => {
-    expect(() => inspectMedia("/tmp/input.jpg")).toThrow("Unsupported media format");
+    expect(() => inspectMedia("/tmp/input.gif")).toThrow("Unsupported media format");
   });
 
   test("preserves caller-provided path string", () => {
