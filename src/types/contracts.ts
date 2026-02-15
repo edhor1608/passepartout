@@ -94,7 +94,9 @@ export type MediaInspection = {
   has_audio: boolean;
   audio_codec: string | null;
   audio_channels: number | null;
+  audio_channel_layout: string | null;
   audio_sample_rate_hz: number | null;
+  audio_sample_format: string | null;
   audio_bitrate_kbps: number | null;
 };
 

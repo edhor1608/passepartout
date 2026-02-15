@@ -22,7 +22,9 @@ describe("media inspector", () => {
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
     expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_channel_layout).toBeNull();
     expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_sample_format).toBeNull();
     expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
@@ -38,7 +40,9 @@ describe("media inspector", () => {
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
     expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_channel_layout).toBeNull();
     expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_sample_format).toBeNull();
     expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
@@ -56,7 +60,9 @@ describe("media inspector", () => {
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
     expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_channel_layout).toBeNull();
     expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_sample_format).toBeNull();
     expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
@@ -74,7 +80,9 @@ describe("media inspector", () => {
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
     expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_channel_layout).toBeNull();
     expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_sample_format).toBeNull();
     expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
@@ -93,7 +101,9 @@ describe("media inspector", () => {
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
     expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_channel_layout).toBeNull();
     expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_sample_format).toBeNull();
     expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
@@ -112,7 +122,9 @@ describe("media inspector", () => {
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
     expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_channel_layout).toBeNull();
     expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_sample_format).toBeNull();
     expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
@@ -131,7 +143,9 @@ describe("media inspector", () => {
     expect(meta.has_audio).toBe(true);
     expect(meta.audio_codec).toBe("aac");
     expect(meta.audio_channels).toBe(1);
+    expect(meta.audio_channel_layout).toBe("mono");
     expect(meta.audio_sample_rate_hz).toBe(48000);
+    expect(meta.audio_sample_format).toBe("fltp");
     expect(meta.audio_bitrate_kbps).toBeGreaterThan(0);
   });
 
