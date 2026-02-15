@@ -15,6 +15,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Analyze metadata baseline extended for detailed audio fields: `audio_channels`, `audio_sample_rate_hz`, `audio_bitrate_kbps`.
 - Added `export-image` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing.
 - Added `export-video` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing (`MP4`/H.264 output).
+- `export-video` contract now includes output-probed metadata (`output_width`, `output_height`, `output_codec`, `output_fps`).
 - Externalized rules in `config/ruleset.v1.json`.
 - White-canvas policy logic for feed profiles with workflow-gated `feed_app_direct` fallback.
 - Locked margin formula v1 and contain/no-crop invariant flags.
@@ -40,6 +41,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added failing-first tests and snapshot coverage for detailed audio metadata fields.
 - Added export integration/e2e snapshot tests with fixture outputs in `tests/fixtures/exports`.
 - Added export-video integration/e2e snapshot tests and dedicated export-video snapshot fixtures.
+- Added failing-first export-video assertions to verify returned output metadata against the exported file.
 
 ## Deferred
 

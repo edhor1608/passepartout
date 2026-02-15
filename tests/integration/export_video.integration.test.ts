@@ -33,6 +33,11 @@ describe("export-video integration", () => {
 
     expect(exportResult.exitCode).toBe(0);
     expect(existsSync(output)).toBe(true);
+    const exportPayload = parseJsonStdout(exportResult.stdout);
+    expect(exportPayload.output_width).toBe(1080);
+    expect(exportPayload.output_height).toBe(1920);
+    expect(exportPayload.output_codec).toBe("h264");
+    expect(exportPayload.output_fps).toBe(30);
 
     const analyzeResult = await runAnalyzeCli([
       output,
@@ -80,6 +85,10 @@ describe("export-video integration", () => {
     const payload = parseJsonStdout(exportResult.stdout);
     expect(payload).toHaveProperty("target_resolution", "1080x1350");
     expect(payload).toHaveProperty("white_canvas_enabled", true);
+    expect(payload.output_width).toBe(1080);
+    expect(payload.output_height).toBe(1350);
+    expect(payload.output_codec).toBe("h264");
+    expect(payload.output_fps).toBe(24);
   });
 
   test("missing value for --mode fails with explicit error", async () => {
@@ -108,5 +117,23 @@ describe("export-video integration", () => {
 
     expect(result.exitCode).not.toBe(0);
     expect(result.stderr).toContain("Missing value for --crf");
+  });
+
+  test("unsupported output extension fails with explicit error", async () => {
+    const input = join(fixtures, "portrait_video_360x640.mp4");
+    const output = resetOut("unsupported_output.mkv");
+    const result = await runExportVideoCli([
+      input,
+      "--out",
+      output,
+      "--mode",
+      "reliable",
+      "--surface",
+      "reel",
+      "--json",
+    ]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("output must be .mp4 or .mov");
   });
 });
