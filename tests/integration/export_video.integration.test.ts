@@ -33,6 +33,11 @@ describe("export-video integration", () => {
 
     expect(exportResult.exitCode).toBe(0);
     expect(existsSync(output)).toBe(true);
+    const exportPayload = parseJsonStdout(exportResult.stdout);
+    expect(exportPayload.output_width).toBe(1080);
+    expect(exportPayload.output_height).toBe(1920);
+    expect(exportPayload.output_codec).toBe("h264");
+    expect(exportPayload.output_fps).toBe(30);
 
     const analyzeResult = await runAnalyzeCli([
       output,
@@ -80,5 +85,9 @@ describe("export-video integration", () => {
     const payload = parseJsonStdout(exportResult.stdout);
     expect(payload).toHaveProperty("target_resolution", "1080x1350");
     expect(payload).toHaveProperty("white_canvas_enabled", true);
+    expect(payload.output_width).toBe(1080);
+    expect(payload.output_height).toBe(1350);
+    expect(payload.output_codec).toBe("h264");
+    expect(payload.output_fps).toBe(24);
   });
 });

@@ -155,4 +155,8 @@ export type ExportVideoOutput = {
   ffmpeg_filter: string;
   video_codec: string;
   fps: number;
+  output_width: number;
+  output_height: number;
+  output_codec: string | null;
+  output_fps: number;
 };

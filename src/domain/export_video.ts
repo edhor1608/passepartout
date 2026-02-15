@@ -93,6 +93,7 @@ export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
   if (proc.exitCode !== 0) {
     throw new Error(`ffmpeg video export failed: ${proc.stderr.toString().trim()}`);
   }
+  const outputMeta = inspectMedia(outputPath);
 
   return {
     input_path: inputPath,
@@ -103,5 +104,9 @@ export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
     ffmpeg_filter: filter,
     video_codec: "h264",
     fps,
+    output_width: outputMeta.width,
+    output_height: outputMeta.height,
+    output_codec: outputMeta.codec,
+    output_fps: outputMeta.fps,
   };
 }
