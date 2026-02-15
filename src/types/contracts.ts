@@ -84,6 +84,8 @@ export type MediaInspection = {
   colorspace: string;
   codec: string | null;
   fps: number;
+  duration_seconds: number | null;
+  bitrate_kbps: number | null;
 };
 
 export type AnalyzeInput = {

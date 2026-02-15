@@ -195,11 +195,35 @@ function parseFps(raw: string | undefined): number {
   return Number.parseFloat(value.toFixed(3));
 }
 
+function parseDurationSeconds(raw: string | undefined): number | null {
+  if (!raw) {
+    return null;
+  }
+  const value = Number.parseFloat(raw);
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  return Number.parseFloat(value.toFixed(3));
+}
+
+function parseBitrateKbps(raw: string | undefined): number | null {
+  if (!raw) {
+    return null;
+  }
+  const value = Number.parseInt(raw, 10);
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  return Math.round(value / 1000);
+}
+
 function readVideoMetadata(path: string): {
   width: number;
   height: number;
   codec: string | null;
   fps: number;
+  durationSeconds: number | null;
+  bitrateKbps: number | null;
 } {
   const proc = Bun.spawnSync({
     cmd: [
@@ -209,7 +233,7 @@ function readVideoMetadata(path: string): {
       "-select_streams",
       "v:0",
       "-show_entries",
-      "stream=width,height,codec_name,avg_frame_rate,r_frame_rate",
+      "stream=width,height,codec_name,avg_frame_rate,r_frame_rate:format=duration,bit_rate",
       "-of",
       "json",
       path,
@@ -234,6 +258,7 @@ function readVideoMetadata(path: string): {
   if (!stream) {
     throw new Error(`ffprobe returned no video stream for ${path}`);
   }
+  const format = (parsed as { format?: Record<string, unknown> }).format;
 
   const width = Number(stream.width);
   const height = Number(stream.height);
@@ -248,8 +273,12 @@ function readVideoMetadata(path: string): {
   const realFrameRate =
     typeof stream.r_frame_rate === "string" ? stream.r_frame_rate : undefined;
   const fps = parseFps(avgFrameRate) || parseFps(realFrameRate);
+  const durationRaw = typeof format?.duration === "string" ? format.duration : undefined;
+  const bitrateRaw = typeof format?.bit_rate === "string" ? format.bit_rate : undefined;
+  const durationSeconds = parseDurationSeconds(durationRaw);
+  const bitrateKbps = parseBitrateKbps(bitrateRaw);
 
-  return { width, height, codec, fps };
+  return { width, height, codec, fps, durationSeconds, bitrateKbps };
 }
 
 export function inspectMedia(filePath: string): MediaInspection {
@@ -260,6 +289,8 @@ export function inspectMedia(filePath: string): MediaInspection {
   let colorspace = "unknown";
   let codec: string | null = null;
   let fps = 0;
+  let durationSeconds: number | null = null;
+  let bitrateKbps: number | null = null;
 
   if (lower.endsWith(".ppm")) {
     ({ width, height } = readPpmSize(resolvedPath));
@@ -269,7 +300,7 @@ export function inspectMedia(filePath: string): MediaInspection {
   } else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
     ({ width, height } = readJpegSize(resolvedPath));
   } else if (lower.endsWith(".mp4") || lower.endsWith(".mov")) {
-    ({ width, height, codec, fps } = readVideoMetadata(resolvedPath));
+    ({ width, height, codec, fps, durationSeconds, bitrateKbps } = readVideoMetadata(resolvedPath));
   } else {
     throw new Error(`Unsupported media format for current analyze slice: ${filePath}`);
   }
@@ -283,5 +314,7 @@ export function inspectMedia(filePath: string): MediaInspection {
     colorspace,
     codec,
     fps,
+    duration_seconds: durationSeconds,
+    bitrate_kbps: bitrateKbps,
   };
 }
