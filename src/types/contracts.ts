@@ -162,3 +162,20 @@ export type ExportVideoOutput = {
   output_has_audio: boolean;
   output_audio_codec: string | null;
 };
+
+export type ReportInput = AnalyzeInput;
+
+export type ReportCheckStatus = "pass" | "warn";
+
+export type ReportCheck = {
+  id: string;
+  label: string;
+  status: ReportCheckStatus;
+  message: string;
+};
+
+export type ReportOutput = {
+  analyze: AnalyzeOutput;
+  checks: ReportCheck[];
+  next_actions: string[];
+};
