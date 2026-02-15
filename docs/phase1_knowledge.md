@@ -2,13 +2,14 @@
 
 ## Problem
 
-Implement the smallest executable slice of P17 that validates locked recommendation policy decisions before analyzer/export work.
+Implement executable, testable milestones of P17 without drifting from locked recommendation policy and white-canvas rules.
 
 ## What Was Implemented
 
 - Deterministic recommendation engine (`recommend`) with mode/surface/orientation/workflow inputs.
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
-- Analyze media inspector expanded to support `PNG` and `JPEG` dimension inspection in addition to `PPM`.
+- Analyze media inspector expanded from `PPM` to `PNG`, `JPEG`, `MP4`, and `MOV`.
+- Video probing baseline added with `ffprobe` (`width`, `height`, `aspect`, `orientation`, `codec`, `fps`).
 - Added `export-image` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing.
 - Externalized rules in `config/ruleset.v1.json`.
 - White-canvas policy logic for feed profiles with workflow-gated `feed_app_direct` fallback.
@@ -29,9 +30,11 @@ Implement the smallest executable slice of P17 that validates locked recommendat
 - Added real image fixtures in `tests/fixtures/images` (PPM) and used them in visual tests.
 - Added media inspector baseline for PPM (`P3` + `P6`) and wired analyze e2e snapshot tests.
 - Introduced raster fixture generation (`ffmpeg`) and analyze e2e coverage for PNG/JPEG fixtures.
+- Added video fixture generation (`ffmpeg`) and analyze coverage for MP4/MOV fixtures.
 - Added export integration/e2e snapshot tests with fixture outputs in `tests/fixtures/exports`.
 
 ## Deferred
 
-- Any real renderer/export pipeline (FFmpeg/libvips).
+- Advanced video inspection fields (`bitrate`, `duration`, audio stream metadata, color metadata).
+- Video export/transcode profiles beyond image-frame export baseline.
 - Empirical quality validation harness.

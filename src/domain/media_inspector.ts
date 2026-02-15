@@ -240,12 +240,96 @@ function formatAspect(width: number, height: number): string {
   return (width / height).toFixed(4);
 }
 
+function parseFps(raw: string | undefined): number {
+  if (!raw || raw === "0/0") {
+    return 0;
+  }
+
+  const [numToken, denToken] = raw.split("/");
+  const numerator = Number.parseFloat(numToken ?? "");
+  const denominator = Number.parseFloat(denToken ?? "");
+
+  if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator === 0) {
+    return 0;
+  }
+
+  const value = numerator / denominator;
+  if (!Number.isFinite(value) || value <= 0) {
+    return 0;
+  }
+
+  const rounded = Math.round(value);
+  if (Math.abs(value - rounded) < 0.001) {
+    return rounded;
+  }
+  return Number.parseFloat(value.toFixed(3));
+}
+
+function readVideoMetadata(path: string): {
+  width: number;
+  height: number;
+  codec: string | null;
+  fps: number;
+} {
+  const proc = Bun.spawnSync({
+    cmd: [
+      "ffprobe",
+      "-v",
+      "error",
+      "-select_streams",
+      "v:0",
+      "-show_entries",
+      "stream=width,height,codec_name,avg_frame_rate,r_frame_rate",
+      "-of",
+      "json",
+      path,
+    ],
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+
+  if (proc.exitCode !== 0) {
+    throw new Error(`ffprobe failed for ${path}: ${proc.stderr.toString().trim()}`);
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(proc.stdout.toString());
+  } catch {
+    throw new Error(`ffprobe returned invalid JSON for ${path}`);
+  }
+
+  const streams = (parsed as { streams?: Array<Record<string, unknown>> }).streams;
+  const stream = streams?.[0];
+  if (!stream) {
+    throw new Error(`ffprobe returned no video stream for ${path}`);
+  }
+
+  const width = Number(stream.width);
+  const height = Number(stream.height);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    throw new Error(`Invalid video dimensions in ${path}`);
+  }
+
+  const codecToken = stream.codec_name;
+  const codec = typeof codecToken === "string" && codecToken.length > 0 ? codecToken : null;
+  const avgFrameRate =
+    typeof stream.avg_frame_rate === "string" ? stream.avg_frame_rate : undefined;
+  const realFrameRate =
+    typeof stream.r_frame_rate === "string" ? stream.r_frame_rate : undefined;
+  const fps = parseFps(avgFrameRate) || parseFps(realFrameRate);
+
+  return { width, height, codec, fps };
+}
+
 export function inspectMedia(filePath: string): MediaInspection {
   const resolvedPath = resolve(filePath);
   const lower = filePath.toLowerCase();
   let width = 0;
   let height = 0;
   let colorspace = "unknown";
+  let codec: string | null = null;
+  let fps = 0;
 
   if (lower.endsWith(".ppm")) {
     ({ width, height } = readPpmSize(resolvedPath));
@@ -254,6 +338,8 @@ export function inspectMedia(filePath: string): MediaInspection {
     ({ width, height } = readPngSize(resolvedPath));
   } else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
     ({ width, height } = readJpegSize(resolvedPath));
+  } else if (lower.endsWith(".mp4") || lower.endsWith(".mov")) {
+    ({ width, height, codec, fps } = readVideoMetadata(resolvedPath));
   } else {
     throw new Error(`Unsupported media format for current analyze slice: ${filePath}`);
   }
@@ -265,7 +351,7 @@ export function inspectMedia(filePath: string): MediaInspection {
     aspect_ratio: formatAspect(width, height),
     orientation: detectOrientation(width, height),
     colorspace,
-    codec: null,
-    fps: 0,
+    codec,
+    fps,
   };
 }
