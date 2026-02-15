@@ -88,6 +88,9 @@ export type MediaInspection = {
   bitrate_kbps: number | null;
   has_audio: boolean;
   audio_codec: string | null;
+  audio_channels: number | null;
+  audio_sample_rate_hz: number | null;
+  audio_bitrate_kbps: number | null;
 };
 
 export type AnalyzeInput = {

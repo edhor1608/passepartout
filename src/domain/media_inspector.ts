@@ -217,6 +217,22 @@ function parseBitrateKbps(raw: string | undefined): number | null {
   return Math.round(value / 1000);
 }
 
+function parseChannels(raw: unknown): number | null {
+  const value = typeof raw === "number" ? raw : Number.parseInt(String(raw ?? ""), 10);
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  return Math.round(value);
+}
+
+function parseSampleRate(raw: unknown): number | null {
+  const value = Number.parseInt(String(raw ?? ""), 10);
+  if (!Number.isFinite(value) || value <= 0) {
+    return null;
+  }
+  return value;
+}
+
 function readVideoMetadata(path: string): {
   width: number;
   height: number;
@@ -226,6 +242,9 @@ function readVideoMetadata(path: string): {
   bitrateKbps: number | null;
   hasAudio: boolean;
   audioCodec: string | null;
+  audioChannels: number | null;
+  audioSampleRateHz: number | null;
+  audioBitrateKbps: number | null;
 } {
   const proc = Bun.spawnSync({
     cmd: [
@@ -233,7 +252,7 @@ function readVideoMetadata(path: string): {
       "-v",
       "error",
       "-show_entries",
-      "stream=codec_type,codec_name,width,height,avg_frame_rate,r_frame_rate:format=duration,bit_rate",
+      "stream=codec_type,codec_name,width,height,avg_frame_rate,r_frame_rate,channels,sample_rate,bit_rate:format=duration,bit_rate",
       "-of",
       "json",
       path,
@@ -287,6 +306,11 @@ function readVideoMetadata(path: string): {
   const audioCodec =
     typeof audioCodecToken === "string" && audioCodecToken.length > 0 ? audioCodecToken : null;
   const hasAudio = audioCodec !== null;
+  const audioChannels = parseChannels(audioStream?.channels);
+  const audioSampleRateHz = parseSampleRate(audioStream?.sample_rate);
+  const audioBitrateRaw =
+    typeof audioStream?.bit_rate === "string" ? audioStream.bit_rate : undefined;
+  const audioBitrateKbps = parseBitrateKbps(audioBitrateRaw);
 
   return {
     width,
@@ -297,6 +321,9 @@ function readVideoMetadata(path: string): {
     bitrateKbps,
     hasAudio,
     audioCodec,
+    audioChannels,
+    audioSampleRateHz,
+    audioBitrateKbps,
   };
 }
 
@@ -312,6 +339,9 @@ export function inspectMedia(filePath: string): MediaInspection {
   let bitrateKbps: number | null = null;
   let hasAudio = false;
   let audioCodec: string | null = null;
+  let audioChannels: number | null = null;
+  let audioSampleRateHz: number | null = null;
+  let audioBitrateKbps: number | null = null;
 
   if (lower.endsWith(".ppm")) {
     ({ width, height } = readPpmSize(resolvedPath));
@@ -330,6 +360,9 @@ export function inspectMedia(filePath: string): MediaInspection {
       bitrateKbps,
       hasAudio,
       audioCodec,
+      audioChannels,
+      audioSampleRateHz,
+      audioBitrateKbps,
     } = readVideoMetadata(resolvedPath));
   } else {
     throw new Error(`Unsupported media format for current analyze slice: ${filePath}`);
@@ -348,5 +381,8 @@ export function inspectMedia(filePath: string): MediaInspection {
     bitrate_kbps: bitrateKbps,
     has_audio: hasAudio,
     audio_codec: audioCodec,
+    audio_channels: audioChannels,
+    audio_sample_rate_hz: audioSampleRateHz,
+    audio_bitrate_kbps: audioBitrateKbps,
   };
 }
