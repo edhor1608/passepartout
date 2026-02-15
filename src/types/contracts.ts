@@ -235,3 +235,27 @@ export type BenchmarkOutput = {
     codec_score: number;
   };
 };
+
+export type OverlayRatio = "4:5" | "3:4" | "9:16";
+
+export type OverlayOutput = {
+  ratio: OverlayRatio;
+  canvas_resolution: Resolution;
+  canvas: {
+    width: number;
+    height: number;
+  };
+  safe_zone: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    width: number;
+    height: number;
+  };
+  thirds: {
+    vertical: [number, number];
+    horizontal: [number, number];
+  };
+  output_svg_path?: string;
+};

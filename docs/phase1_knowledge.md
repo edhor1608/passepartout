@@ -7,6 +7,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 ## What Was Implemented
 
 - Deterministic recommendation engine (`recommend`) with mode/surface/orientation/workflow inputs.
+- Deterministic overlay guide engine (`overlay`) for crop-safe framing guides (`4:5`, `3:4`, `9:16`) with JSON + SVG output.
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Deterministic report engine (`report`) layered on analyze output with checklist + next-actions contract.
 - Deterministic report-export engine (`report-export`) that executes export and compares input/output media characteristics.
@@ -64,6 +65,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Regenerated e2e snapshots for style-enabled analyze/report/export/report-export/benchmark/recommend paths.
 - Added failing-first tests for `audio_channel_layout` + `audio_sample_format` and extended analyze/report/report-export/benchmark snapshots.
 - Added failing-first tests and e2e cases for non-feed white-canvas behavior (story/reel recommend + export/report/report-export/benchmark flows).
+- Added failing-first tests for overlay geometry + CLI output and fixture-based e2e snapshot coverage for overlay ratios.
 
 ## Deferred
 
