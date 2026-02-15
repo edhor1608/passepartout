@@ -36,6 +36,12 @@ Generate crop-safe overlay guide geometry:
 bun run overlay --ratio 4:5 --json
 ```
 
+Simulate profile-grid square crop visibility:
+
+```bash
+bun run grid-preview --ratio 4:5 --json
+```
+
 Export image using deterministic preset:
 
 ```bash
@@ -80,6 +86,7 @@ bun run fixtures:images:raster
 bun run fixtures:e2e
 bun run fixtures:e2e:analyze
 bun run fixtures:e2e:overlay
+bun run fixtures:e2e:grid-preview
 bun run fixtures:e2e:export
 bun run fixtures:visual
 bun run fixtures:pixel

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "grid-preview-4-5",
+    "args": ["--ratio", "4:5", "--json"]
+  },
+  {
+    "id": "grid-preview-3-4",
+    "args": ["--ratio", "3:4", "--json"]
+  },
+  {
+    "id": "grid-preview-9-16",
+    "args": ["--ratio", "9:16", "--json"]
+  }
+]
