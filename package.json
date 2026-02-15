@@ -1,0 +1,27 @@
+{
+  "name": "instagram-upload-quality-lab",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "recommend": "bun run src/cli/recommend.ts",
+    "test": "bun test",
+    "test:unit": "bun test tests/recommend.test.ts tests/white_canvas.test.ts",
+    "test:integration": "bun test tests/integration",
+    "test:e2e": "bun test tests/e2e",
+    "test:visual": "bun test tests/visual",
+    "test:visual-pixel": "bun test tests/visual/pixel_diff.visual.test.ts",
+    "test:property": "bun test tests/property",
+    "test:all": "bun test",
+    "fixtures:images": "bun run tests/fixtures/images/generate-fixtures.ts",
+    "fixtures:e2e": "bun run tests/fixtures/e2e/generate-snapshots.ts",
+    "fixtures:visual": "bun run tests/fixtures/visual/generate-snapshots.ts",
+    "fixtures:pixel": "bun run tests/fixtures/pixel/generate-snapshots.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

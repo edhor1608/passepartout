@@ -1,0 +1,42 @@
+[
+  {
+    "id": "reliable-feed-portrait",
+    "args": ["--mode", "reliable", "--surface", "feed", "--orientation", "portrait", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "reliable-feed-landscape-white-default",
+    "args": ["--mode", "reliable", "--surface", "feed", "--orientation", "landscape", "--workflow", "unknown", "--white-canvas", "--json"]
+  },
+  {
+    "id": "reliable-feed-landscape-white-fallback",
+    "args": ["--mode", "reliable", "--surface", "feed", "--orientation", "landscape", "--workflow", "api_scheduler", "--white-canvas", "--canvas-profile", "feed_app_direct", "--json"]
+  },
+  {
+    "id": "reliable-feed-landscape-white-app-direct",
+    "args": ["--mode", "reliable", "--surface", "feed", "--orientation", "landscape", "--workflow", "app_direct", "--white-canvas", "--canvas-profile", "feed_app_direct", "--json"]
+  },
+  {
+    "id": "reliable-story-portrait",
+    "args": ["--mode", "reliable", "--surface", "story", "--orientation", "portrait", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "reliable-story-white-ignored",
+    "args": ["--mode", "reliable", "--surface", "story", "--orientation", "portrait", "--workflow", "unknown", "--white-canvas", "--json"]
+  },
+  {
+    "id": "experimental-feed-square",
+    "args": ["--mode", "experimental", "--surface", "feed", "--orientation", "square", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "experimental-feed-portrait-white-app-direct",
+    "args": ["--mode", "experimental", "--surface", "feed", "--orientation", "portrait", "--workflow", "app_direct", "--white-canvas", "--canvas-profile", "feed_app_direct", "--json"]
+  },
+  {
+    "id": "experimental-reel-landscape",
+    "args": ["--mode", "experimental", "--surface", "reel", "--orientation", "landscape", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "experimental-story-square",
+    "args": ["--mode", "experimental", "--surface", "story", "--orientation", "square", "--workflow", "unknown", "--json"]
+  }
+]
