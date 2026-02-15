@@ -23,6 +23,9 @@ describe("media inspector", () => {
     expect(meta.bitrate_kbps).toBeNull();
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
+    expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
   test("reads P6 snapshot metadata", () => {
@@ -36,6 +39,9 @@ describe("media inspector", () => {
     expect(meta.bitrate_kbps).toBeNull();
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
+    expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
   test("reads PNG fixture metadata", () => {
@@ -51,6 +57,9 @@ describe("media inspector", () => {
     expect(meta.bitrate_kbps).toBeNull();
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
+    expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
   test("reads JPEG fixture metadata", () => {
@@ -66,6 +75,9 @@ describe("media inspector", () => {
     expect(meta.bitrate_kbps).toBeNull();
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
+    expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
   test("reads MP4 fixture metadata", () => {
@@ -82,6 +94,9 @@ describe("media inspector", () => {
     expect(meta.bitrate_kbps).toBeGreaterThan(0);
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
+    expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
   test("reads MOV fixture metadata", () => {
@@ -98,6 +113,9 @@ describe("media inspector", () => {
     expect(meta.bitrate_kbps).toBeGreaterThan(0);
     expect(meta.has_audio).toBe(false);
     expect(meta.audio_codec).toBeNull();
+    expect(meta.audio_channels).toBeNull();
+    expect(meta.audio_sample_rate_hz).toBeNull();
+    expect(meta.audio_bitrate_kbps).toBeNull();
   });
 
   test("reads MP4 fixture with audio metadata", () => {
@@ -114,6 +132,9 @@ describe("media inspector", () => {
     expect(meta.bitrate_kbps).toBeGreaterThan(0);
     expect(meta.has_audio).toBe(true);
     expect(meta.audio_codec).toBe("aac");
+    expect(meta.audio_channels).toBe(1);
+    expect(meta.audio_sample_rate_hz).toBe(48000);
+    expect(meta.audio_bitrate_kbps).toBeGreaterThan(0);
   });
 
   test("fails for unsupported extension", () => {
