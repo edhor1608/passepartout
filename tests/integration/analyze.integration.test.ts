@@ -67,4 +67,27 @@ describe("analyze cli integration", () => {
     expect(input.height).toBe(40);
     expect(input.orientation).toBe("portrait");
   });
+
+  test("analyze supports MP4 input", async () => {
+    const file = join(fixtures, "portrait_video_360x640.mp4");
+    const result = await runAnalyzeCli([
+      file,
+      "--mode",
+      "reliable",
+      "--surface",
+      "reel",
+      "--workflow",
+      "unknown",
+      "--json",
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    const payload = parseJsonStdout(result.stdout);
+    const input = payload.input as Record<string, unknown>;
+    expect(input.width).toBe(360);
+    expect(input.height).toBe(640);
+    expect(input.orientation).toBe("portrait");
+    expect(input.codec).toBe("h264");
+    expect(input.fps).toBe(30);
+  });
 });

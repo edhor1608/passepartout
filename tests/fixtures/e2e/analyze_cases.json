@@ -18,5 +18,13 @@
   {
     "id": "analyze-reliable-feed-landscape-jpg",
     "args": ["tests/fixtures/images/landscape_sample_48x32.jpg", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "analyze-reliable-reel-portrait-mp4",
+    "args": ["tests/fixtures/images/portrait_video_360x640.mp4", "--mode", "reliable", "--surface", "reel", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "analyze-reliable-feed-landscape-mov",
+    "args": ["tests/fixtures/images/landscape_video_640x360.mov", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--json"]
   }
 ]

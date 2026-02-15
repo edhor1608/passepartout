@@ -50,6 +50,30 @@ describe("media inspector", () => {
     expect(meta.colorspace).toBe("unknown");
   });
 
+  test("reads MP4 fixture metadata", () => {
+    const path = join(fixtures, "portrait_video_360x640.mp4");
+    const meta = inspectMedia(path);
+
+    expect(meta.width).toBe(360);
+    expect(meta.height).toBe(640);
+    expect(meta.orientation).toBe("portrait");
+    expect(meta.aspect_ratio).toBe("0.5625");
+    expect(meta.codec).toContain("h264");
+    expect(meta.fps).toBe(30);
+  });
+
+  test("reads MOV fixture metadata", () => {
+    const path = join(fixtures, "landscape_video_640x360.mov");
+    const meta = inspectMedia(path);
+
+    expect(meta.width).toBe(640);
+    expect(meta.height).toBe(360);
+    expect(meta.orientation).toBe("landscape");
+    expect(meta.aspect_ratio).toBe("1.7778");
+    expect(meta.codec).toContain("h264");
+    expect(meta.fps).toBe(24);
+  });
+
   test("fails for unsupported extension", () => {
     expect(() => inspectMedia("/tmp/input.gif")).toThrow("Unsupported media format");
   });
