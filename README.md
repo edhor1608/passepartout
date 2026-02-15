@@ -30,6 +30,12 @@ Analyze from file:
 bun run analyze tests/fixtures/images/portrait_sample_30x40.ppm --mode reliable --surface feed --json
 ```
 
+Generate crop-safe overlay guide geometry:
+
+```bash
+bun run overlay --ratio 4:5 --json
+```
+
 Export image using deterministic preset:
 
 ```bash
@@ -73,6 +79,7 @@ bun run fixtures:images
 bun run fixtures:images:raster
 bun run fixtures:e2e
 bun run fixtures:e2e:analyze
+bun run fixtures:e2e:overlay
 bun run fixtures:e2e:export
 bun run fixtures:visual
 bun run fixtures:pixel
