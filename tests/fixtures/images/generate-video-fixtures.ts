@@ -35,6 +35,32 @@ const jobs = [
       "libx264",
     ],
   },
+  {
+    out: join(dir, "portrait_video_audio_360x640.mp4"),
+    args: [
+      "-f",
+      "lavfi",
+      "-i",
+      "testsrc=size=360x640:rate=30",
+      "-f",
+      "lavfi",
+      "-i",
+      "sine=frequency=1000:sample_rate=48000",
+      "-t",
+      "1",
+      "-pix_fmt",
+      "yuv420p",
+      "-c:v",
+      "libx264",
+      "-c:a",
+      "aac",
+      "-b:a",
+      "96k",
+      "-movflags",
+      "+faststart",
+      "-shortest",
+    ],
+  },
 ];
 
 for (const job of jobs) {

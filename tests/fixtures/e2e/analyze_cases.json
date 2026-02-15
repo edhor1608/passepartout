@@ -26,5 +26,9 @@
   {
     "id": "analyze-reliable-feed-landscape-mov",
     "args": ["tests/fixtures/images/landscape_video_640x360.mov", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "analyze-reliable-reel-portrait-mp4-audio",
+    "args": ["tests/fixtures/images/portrait_video_audio_360x640.mp4", "--mode", "reliable", "--surface", "reel", "--workflow", "unknown", "--json"]
   }
 ]
