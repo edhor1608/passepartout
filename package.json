@@ -15,6 +15,7 @@
     "test:property": "bun test tests/property",
     "test:all": "bun test",
     "fixtures:images": "bun run tests/fixtures/images/generate-fixtures.ts",
+    "fixtures:images:raster": "bun run tests/fixtures/images/generate-raster-fixtures.ts",
     "fixtures:e2e": "bun run tests/fixtures/e2e/generate-snapshots.ts",
     "fixtures:e2e:analyze": "bun run tests/fixtures/e2e/generate-analyze-snapshots.ts",
     "fixtures:visual": "bun run tests/fixtures/visual/generate-snapshots.ts",
