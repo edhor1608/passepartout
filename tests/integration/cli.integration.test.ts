@@ -82,7 +82,7 @@ describe("cli integration", () => {
     expect(result.stderr).toContain("Invalid canvas style");
   });
 
-  test("white-canvas on non-feed is ignored deterministically", async () => {
+  test("white-canvas on story is enabled with surface default profile", async () => {
     const result = await runRecommendCli([
       "--mode",
       "reliable",
@@ -98,14 +98,14 @@ describe("cli integration", () => {
 
     const payload = parseJsonStdout(result.stdout);
     expect(result.exitCode).toBe(0);
-    expect(payload.workflow_note).toBe("White-canvas is feed-only in Phase 1; ignored for story.");
+    expect(payload.workflow_note).toBe("Using story_default white-canvas profile.");
     expect(payload.white_canvas).toEqual({
-      contain_only: false,
-      enabled: false,
-      margins: null,
-      no_crop: false,
-      profile: null,
-      style: null,
+      contain_only: true,
+      enabled: true,
+      margins: { bottom: 54, left: 54, right: 54, top: 54 },
+      no_crop: true,
+      profile: "story_default",
+      style: "gallery_clean",
     });
   });
 });

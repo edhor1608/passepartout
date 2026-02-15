@@ -4,6 +4,7 @@ export type Orientation = "portrait" | "square" | "landscape";
 export type Workflow = "app_direct" | "api_scheduler" | "unknown";
 export type CanvasProfile = "feed_compat" | "feed_app_direct";
 export type CanvasStyle = "gallery_clean" | "polaroid_classic";
+export type WhiteCanvasResolvedProfile = CanvasProfile | "story_default" | "reel_default";
 export type RiskLevel = "low" | "medium" | "high";
 export type Resolution = `${number}x${number}`;
 
@@ -51,7 +52,7 @@ export type RecommendInput = {
 
 export type WhiteCanvasOutput = {
   enabled: boolean;
-  profile: CanvasProfile | null;
+  profile: WhiteCanvasResolvedProfile | null;
   style: CanvasStyle | null;
   margins: Margins | null;
   contain_only: boolean;

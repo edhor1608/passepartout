@@ -14,5 +14,9 @@
   {
     "id": "report-reliable-feed-landscape-white-classic",
     "args": ["tests/fixtures/images/landscape_sample_48x32.jpg", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--white-canvas", "--canvas-style", "polaroid_classic", "--json"]
+  },
+  {
+    "id": "report-reliable-story-white-canvas",
+    "args": ["tests/fixtures/images/portrait_sample_30x40.png", "--mode", "reliable", "--surface", "story", "--workflow", "unknown", "--white-canvas", "--json"]
   }
 ]

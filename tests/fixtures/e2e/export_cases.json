@@ -14,5 +14,9 @@
   {
     "id": "export-experimental-story",
     "args": ["tests/fixtures/images/portrait_sample_30x40.png", "--out", "tests/fixtures/exports/e2e_export_experimental_story.jpg", "--mode", "experimental", "--surface", "story", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "export-reliable-story-white-canvas",
+    "args": ["tests/fixtures/images/portrait_sample_30x40.png", "--out", "tests/fixtures/exports/e2e_export_reliable_story_white_canvas.jpg", "--mode", "reliable", "--surface", "story", "--workflow", "unknown", "--white-canvas", "--json"]
   }
 ]

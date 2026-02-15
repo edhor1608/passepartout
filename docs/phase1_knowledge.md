@@ -27,6 +27,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - White-canvas style presets:
   - `gallery_clean` (baseline v1 margins)
   - `polaroid_classic` (deterministic larger bottom margin)
+- White-canvas support expanded beyond feed to optional `story` and `reel` contain variants (`story_default`, `reel_default`).
 - CLI style selection via `--canvas-style <gallery_clean|polaroid_classic>` across `recommend`, `analyze`, `report`, `report-export`, `benchmark`, `export-image`, and `export-video`.
 - CLI command and JSON/human outputs.
 - Added `report` CLI + domain slice with deterministic checklist checks and stable JSON snapshots.
@@ -62,6 +63,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Expanded visual and pixel-level snapshot matrices with `classic` style scenarios.
 - Regenerated e2e snapshots for style-enabled analyze/report/export/report-export/benchmark/recommend paths.
 - Added failing-first tests for `audio_channel_layout` + `audio_sample_format` and extended analyze/report/report-export/benchmark snapshots.
+- Added failing-first tests and e2e cases for non-feed white-canvas behavior (story/reel recommend + export/report/report-export/benchmark flows).
 
 ## Deferred
 

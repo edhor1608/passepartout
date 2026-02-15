@@ -111,4 +111,31 @@ describe("export-image integration", () => {
       "scale=994:810:force_original_aspect_ratio=decrease,pad=994:810:(ow-iw)/2:(oh-ih)/2:white,pad=1080:1350:43:216:white",
     );
   });
+
+  test("white-canvas export supports story surface", async () => {
+    const input = join(fixtures, "portrait_sample_30x40.png");
+    const output = resetOut("portrait_white_canvas_story.jpg");
+
+    const exportResult = await runExportImageCli([
+      input,
+      "--out",
+      output,
+      "--mode",
+      "reliable",
+      "--surface",
+      "story",
+      "--workflow",
+      "unknown",
+      "--white-canvas",
+      "--json",
+    ]);
+
+    expect(exportResult.exitCode).toBe(0);
+    expect(existsSync(output)).toBe(true);
+
+    const payload = parseJsonStdout(exportResult.stdout);
+    expect(payload).toHaveProperty("target_resolution", "1080x1920");
+    expect(payload).toHaveProperty("white_canvas_enabled", true);
+    expect(payload).toHaveProperty("selected_profile", "reliable_story_white_canvas_story_default");
+  });
 });

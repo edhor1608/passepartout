@@ -126,6 +126,33 @@ describe("recommend", () => {
     );
   });
 
+  test("white-canvas supports story and reel with surface default profiles", () => {
+    const story = recommend({
+      mode: "reliable",
+      surface: "story",
+      orientation: "portrait",
+      workflow: "unknown",
+      whiteCanvas: true,
+    });
+    const reel = recommend({
+      mode: "reliable",
+      surface: "reel",
+      orientation: "portrait",
+      workflow: "unknown",
+      whiteCanvas: true,
+    });
+
+    expect(story.target_resolution).toBe("1080x1920");
+    expect(story.white_canvas.enabled).toBe(true);
+    expect(story.white_canvas.profile).toBe("story_default");
+    expect(story.white_canvas.margins).not.toBeNull();
+
+    expect(reel.target_resolution).toBe("1080x1920");
+    expect(reel.white_canvas.enabled).toBe(true);
+    expect(reel.white_canvas.profile).toBe("reel_default");
+    expect(reel.white_canvas.margins).not.toBeNull();
+  });
+
   test("deterministic output is stable for same input", () => {
     const input = {
       mode: "experimental" as const,
