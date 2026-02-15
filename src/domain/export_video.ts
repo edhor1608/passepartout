@@ -108,5 +108,7 @@ export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
     output_height: outputMeta.height,
     output_codec: outputMeta.codec,
     output_fps: outputMeta.fps,
+    output_has_audio: outputMeta.has_audio,
+    output_audio_codec: outputMeta.audio_codec,
   };
 }
