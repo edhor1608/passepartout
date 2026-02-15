@@ -270,3 +270,21 @@ export type OverlayOutput = {
   };
   output_svg_path?: string;
 };
+
+export type GridPreviewOutput = {
+  ratio: OverlayRatio;
+  canvas_resolution: Resolution;
+  canvas: {
+    width: number;
+    height: number;
+  };
+  grid_crop_square: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    size: number;
+  };
+  visible_fraction_percent: number;
+  output_svg_path?: string;
+};

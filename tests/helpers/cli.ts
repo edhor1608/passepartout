@@ -13,6 +13,7 @@ async function runCli(
     | "recommend"
     | "analyze"
     | "overlay"
+    | "grid-preview"
     | "export-image"
     | "export-video"
     | "report"
@@ -46,6 +47,10 @@ export async function runAnalyzeCli(args: string[]): Promise<CliRunResult> {
 
 export async function runOverlayCli(args: string[]): Promise<CliRunResult> {
   return runCli("overlay", args);
+}
+
+export async function runGridPreviewCli(args: string[]): Promise<CliRunResult> {
+  return runCli("grid-preview", args);
 }
 
 export async function runExportImageCli(args: string[]): Promise<CliRunResult> {

@@ -1,6 +1,6 @@
 import type { OverlayOutput, OverlayRatio, Resolution } from "../types/contracts";
 
-function ratioCanvas(ratio: OverlayRatio): { width: number; height: number } {
+export function canvasForRatio(ratio: OverlayRatio): { width: number; height: number } {
   switch (ratio) {
     case "4:5":
       return { width: 1080, height: 1350 };
@@ -12,7 +12,7 @@ function ratioCanvas(ratio: OverlayRatio): { width: number; height: number } {
 }
 
 export function createOverlay(ratio: OverlayRatio): OverlayOutput {
-  const { width, height } = ratioCanvas(ratio);
+  const { width, height } = canvasForRatio(ratio);
   const insetX = Math.round(width * 0.05);
   const insetY = Math.round(height * 0.05);
 
