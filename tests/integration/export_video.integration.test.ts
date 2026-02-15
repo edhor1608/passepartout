@@ -38,6 +38,8 @@ describe("export-video integration", () => {
     expect(exportPayload.output_height).toBe(1920);
     expect(exportPayload.output_codec).toBe("h264");
     expect(exportPayload.output_fps).toBe(30);
+    expect(exportPayload.output_has_audio).toBe(false);
+    expect(exportPayload.output_audio_codec).toBeNull();
 
     const analyzeResult = await runAnalyzeCli([
       output,
@@ -89,6 +91,48 @@ describe("export-video integration", () => {
     expect(payload.output_height).toBe(1350);
     expect(payload.output_codec).toBe("h264");
     expect(payload.output_fps).toBe(24);
+    expect(payload.output_has_audio).toBe(false);
+    expect(payload.output_audio_codec).toBeNull();
+  });
+
+  test("export-video strips audio track from audio input", async () => {
+    const input = join(fixtures, "portrait_video_audio_360x640.mp4");
+    const output = resetOut("portrait_audio_input_stripped.mp4");
+
+    const inputAnalyze = await runAnalyzeCli([
+      input,
+      "--mode",
+      "reliable",
+      "--surface",
+      "reel",
+      "--workflow",
+      "unknown",
+      "--json",
+    ]);
+    expect(inputAnalyze.exitCode).toBe(0);
+    const inputPayload = parseJsonStdout(inputAnalyze.stdout);
+    expect(inputPayload.input?.has_audio).toBe(true);
+    expect(inputPayload.input?.audio_codec).not.toBeNull();
+
+    const exportResult = await runExportVideoCli([
+      input,
+      "--out",
+      output,
+      "--mode",
+      "reliable",
+      "--surface",
+      "reel",
+      "--workflow",
+      "unknown",
+      "--json",
+    ]);
+
+    expect(exportResult.exitCode).toBe(0);
+    expect(existsSync(output)).toBe(true);
+
+    const payload = parseJsonStdout(exportResult.stdout);
+    expect(payload.output_has_audio).toBe(false);
+    expect(payload.output_audio_codec).toBeNull();
   });
 
   test("missing value for --mode fails with explicit error", async () => {

@@ -168,4 +168,6 @@ export type ExportVideoOutput = {
   output_height: number;
   output_codec: string | null;
   output_fps: number;
+  output_has_audio: boolean;
+  output_audio_codec: string | null;
 };
