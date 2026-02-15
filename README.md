@@ -30,6 +30,12 @@ Analyze from file:
 bun run analyze tests/fixtures/images/portrait_sample_30x40.ppm --mode reliable --surface feed --json
 ```
 
+Export image using deterministic preset:
+
+```bash
+bun run export-image tests/fixtures/images/portrait_sample_30x40.png --out tests/fixtures/exports/demo.jpg --mode reliable --surface feed --json
+```
+
 Analyze supports this slice's image fixtures:
 
 - `PPM` (`.ppm`)
@@ -61,6 +67,7 @@ bun run fixtures:images
 bun run fixtures:images:raster
 bun run fixtures:e2e
 bun run fixtures:e2e:analyze
+bun run fixtures:e2e:export
 bun run fixtures:visual
 bun run fixtures:pixel
 ```

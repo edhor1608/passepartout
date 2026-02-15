@@ -9,6 +9,7 @@ Implement the smallest executable slice of P17 that validates locked recommendat
 - Deterministic recommendation engine (`recommend`) with mode/surface/orientation/workflow inputs.
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Analyze media inspector expanded to support `PNG` and `JPEG` dimension inspection in addition to `PPM`.
+- Added `export-image` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing.
 - Externalized rules in `config/ruleset.v1.json`.
 - White-canvas policy logic for feed profiles with workflow-gated `feed_app_direct` fallback.
 - Locked margin formula v1 and contain/no-crop invariant flags.
@@ -28,6 +29,7 @@ Implement the smallest executable slice of P17 that validates locked recommendat
 - Added real image fixtures in `tests/fixtures/images` (PPM) and used them in visual tests.
 - Added media inspector baseline for PPM (`P3` + `P6`) and wired analyze e2e snapshot tests.
 - Added raster fixture generation (`sips`) and analyze e2e coverage for PNG/JPEG fixtures.
+- Added export integration/e2e snapshot tests with fixture outputs in `tests/fixtures/exports`.
 
 ## Deferred
 
