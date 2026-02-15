@@ -79,6 +79,37 @@ describe("export-image integration", () => {
     expect(payload).toHaveProperty("target_resolution", "1080x1350");
     expect(payload).toHaveProperty("white_canvas_enabled", true);
   });
+  test("white-canvas polaroid_classic applies larger bottom border in filter", async () => {
+    const input = join(fixtures, "landscape_sample_48x32.jpg");
+    const output = resetOut("landscape_white_canvas_classic.jpg");
+
+    const exportResult = await runExportImageCli([
+      input,
+      "--out",
+      output,
+      "--mode",
+      "reliable",
+      "--surface",
+      "feed",
+      "--workflow",
+      "unknown",
+      "--white-canvas",
+      "--canvas-profile",
+      "feed_compat",
+      "--canvas-style",
+      "polaroid_classic",
+      "--json",
+    ]);
+
+    expect(exportResult.exitCode).toBe(0);
+    expect(existsSync(output)).toBe(true);
+
+    const payload = parseJsonStdout(exportResult.stdout);
+    expect(payload).toHaveProperty(
+      "ffmpeg_filter",
+      "scale=994:810:force_original_aspect_ratio=decrease,pad=994:810:(ow-iw)/2:(oh-ih)/2:white,pad=1080:1350:43:216:white",
+    );
+  });
 
   test("missing value for --mode fails with explicit error", async () => {
     const input = join(fixtures, "portrait_sample_30x40.png");

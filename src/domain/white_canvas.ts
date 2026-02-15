@@ -1,4 +1,10 @@
-import type { CanvasProfile, Margins, Ruleset, Workflow } from "../types/contracts";
+import type {
+  CanvasProfile,
+  CanvasStyle,
+  Margins,
+  Ruleset,
+  Workflow,
+} from "../types/contracts";
 
 type MarginInput = {
   canvasWidth: number;
@@ -21,6 +27,33 @@ export function computeMarginsV1({ canvasWidth, canvasHeight, sourceRatio }: Mar
     top: Math.round(0.16 * canvasHeight),
     right: Math.round(0.04 * canvasWidth),
     bottom: Math.round(0.16 * canvasHeight),
+  };
+}
+
+type StyledMarginInput = MarginInput & {
+  style: CanvasStyle;
+  ruleset: Ruleset;
+};
+
+export function computeStyledMargins({
+  canvasWidth,
+  canvasHeight,
+  sourceRatio,
+  style,
+  ruleset,
+}: StyledMarginInput): Margins {
+  const base = computeMarginsV1({ canvasWidth, canvasHeight, sourceRatio });
+  const styleConfig = ruleset.white_canvas?.styles?.[style];
+  if (!styleConfig) {
+    throw new Error(`Missing white_canvas style config for '${style}'`);
+  }
+  const extraBottom = Math.round(styleConfig.extra_bottom_ratio * canvasHeight);
+
+  return {
+    left: base.left,
+    top: base.top,
+    right: base.right,
+    bottom: base.bottom + extraBottom,
   };
 }
 
@@ -57,4 +90,8 @@ export function resolveCanvasProfile({
     profile: selected,
     workflowNote: "Using feed_app_direct white-canvas profile for app_direct workflow.",
   };
+}
+
+export function resolveCanvasStyle(requestedStyle: CanvasStyle | undefined, ruleset: Ruleset): CanvasStyle {
+  return requestedStyle ?? ruleset.white_canvas.default_style;
 }

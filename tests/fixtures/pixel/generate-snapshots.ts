@@ -24,6 +24,7 @@ for (const file of readdirSync(imageDir).filter((name) => name.endsWith(".ppm"))
       workflow: scenario.workflow,
       whiteCanvas: true,
       canvasProfile: scenario.canvasProfile,
+      canvasStyle: scenario.canvasStyle,
       sourceRatio: source.width / source.height,
     });
 

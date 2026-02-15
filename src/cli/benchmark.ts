@@ -1,10 +1,12 @@
 import {
+  CANVAS_STYLES,
   CANVAS_PROFILES,
   MODES,
   SURFACES,
   WORKFLOWS,
   type BenchmarkInput,
   type CanvasProfile,
+  type CanvasStyle,
   type Mode,
   type Surface,
   type Workflow,
@@ -26,6 +28,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let workflow: Workflow = "unknown";
   let whiteCanvas = false;
   let canvasProfile: CanvasProfile | undefined;
+  let canvasStyle: CanvasStyle | undefined;
   let json = false;
 
   const requireValue = (flag: string, value: string | undefined): string => {
@@ -66,6 +69,10 @@ function parseArgs(argv: string[]): ParsedArgs {
         canvasProfile = requireValue("--canvas-profile", next) as CanvasProfile;
         i += 1;
         break;
+      case "--canvas-style":
+        canvasStyle = requireValue("--canvas-style", next) as CanvasStyle;
+        i += 1;
+        break;
       case "--json":
         json = true;
         break;
@@ -94,7 +101,11 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
-  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, json };
+  if (canvasStyle && !CANVAS_STYLES.includes(canvasStyle)) {
+    throw new Error(`Invalid canvas style: ${canvasStyle}`);
+  }
+
+  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, canvasStyle, json };
 }
 
 function printHumanOutput(result: ReturnType<typeof benchmark>): void {

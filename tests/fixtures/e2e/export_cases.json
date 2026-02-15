@@ -8,6 +8,10 @@
     "args": ["tests/fixtures/images/landscape_sample_48x32.jpg", "--out", "tests/fixtures/exports/e2e_export_reliable_feed_landscape_white.jpg", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--white-canvas", "--canvas-profile", "feed_compat", "--json"]
   },
   {
+    "id": "export-reliable-feed-landscape-white-classic",
+    "args": ["tests/fixtures/images/landscape_sample_48x32.jpg", "--out", "tests/fixtures/exports/e2e_export_reliable_feed_landscape_white_classic.jpg", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--white-canvas", "--canvas-profile", "feed_compat", "--canvas-style", "polaroid_classic", "--json"]
+  },
+  {
     "id": "export-experimental-story",
     "args": ["tests/fixtures/images/portrait_sample_30x40.png", "--out", "tests/fixtures/exports/e2e_export_experimental_story.jpg", "--mode", "experimental", "--surface", "story", "--workflow", "unknown", "--json"]
   }

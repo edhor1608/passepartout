@@ -61,6 +61,7 @@ export function buildReportExport(input: ReportExportInput): ReportExportOutput 
     workflow,
     whiteCanvas: input.whiteCanvas,
     canvasProfile: input.canvasProfile,
+    canvasStyle: input.canvasStyle,
   });
 
   const exportResult =
@@ -73,6 +74,7 @@ export function buildReportExport(input: ReportExportInput): ReportExportOutput 
           workflow,
           whiteCanvas: input.whiteCanvas,
           canvasProfile: input.canvasProfile,
+          canvasStyle: input.canvasStyle,
         })
       : exportVideo({
           file: input.file,
@@ -82,6 +84,7 @@ export function buildReportExport(input: ReportExportInput): ReportExportOutput 
           workflow,
           whiteCanvas: input.whiteCanvas,
           canvasProfile: input.canvasProfile,
+          canvasStyle: input.canvasStyle,
         });
 
   const outputAnalyze = analyze({
