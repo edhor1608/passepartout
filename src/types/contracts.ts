@@ -179,3 +179,33 @@ export type ReportOutput = {
   checks: ReportCheck[];
   next_actions: string[];
 };
+
+export type ReportExportInput = {
+  file: string;
+  out: string;
+  mode: Mode;
+  surface: Surface;
+  workflow?: Workflow;
+  whiteCanvas?: boolean;
+  canvasProfile?: CanvasProfile;
+};
+
+export type ReportExportOutput = {
+  input_analyze: AnalyzeOutput;
+  export: ExportImageOutput | ExportVideoOutput;
+  output_analyze: AnalyzeOutput;
+  comparison: {
+    input_resolution: Resolution;
+    output_resolution: Resolution;
+    target_resolution: Resolution;
+    output_matches_target: boolean;
+    input_bitrate_kbps: number | null;
+    output_bitrate_kbps: number | null;
+    bitrate_delta_kbps: number | null;
+    input_colorspace: string;
+    output_colorspace: string;
+    input_has_audio: boolean;
+    output_has_audio: boolean;
+    notes: string[];
+  };
+};
