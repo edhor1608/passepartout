@@ -23,6 +23,10 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Externalized rules in `config/ruleset.v1.json`.
 - White-canvas policy logic for feed profiles with workflow-gated `feed_app_direct` fallback.
 - Locked margin formula v1 and contain/no-crop invariant flags.
+- White-canvas style presets:
+  - `gallery_clean` (baseline v1 margins)
+  - `polaroid_classic` (deterministic larger bottom margin)
+- CLI style selection via `--canvas-style <gallery_clean|polaroid_classic>` across `recommend`, `analyze`, `report`, `report-export`, `benchmark`, `export-image`, and `export-video`.
 - CLI command and JSON/human outputs.
 - Added `report` CLI + domain slice with deterministic checklist checks and stable JSON snapshots.
 - Added `report-export` CLI + domain slice with deterministic comparison fields (resolution/bitrate/colorspace/audio).
@@ -53,9 +57,13 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added report integration/e2e snapshot tests and deterministic report fixtures.
 - Added report-export integration/e2e snapshot tests and deterministic report-export fixtures.
 - Added benchmark integration/e2e snapshot tests and deterministic benchmark fixtures.
+- Added failing-first style tests for `white_canvas`, `recommend`, `export-image`, and `export-video`.
+- Expanded visual and pixel-level snapshot matrices with `classic` style scenarios.
+- Regenerated e2e snapshots for style-enabled analyze/report/export/report-export/benchmark/recommend paths.
 
 ## Deferred
 
 - Remaining audio stream metadata (`channel_layout`, `sample_fmt`) and color metadata are still deferred.
 - Advanced video export/transcode policies (audio mapping, bitrate controls, codec variants beyond baseline MP4/H.264).
 - Empirical quality validation harness.
+- Additional style profiles beyond `gallery_clean` + `polaroid_classic` remain deferred.

@@ -38,6 +38,7 @@ describe("e2e matrix", () => {
                 margins: null,
                 no_crop: false,
                 profile: null,
+                style: null,
               });
             }
           });

@@ -81,6 +81,15 @@
     },
     "app_direct_only_profiles": [
       "feed_app_direct"
-    ]
+    ],
+    "default_style": "gallery_clean",
+    "styles": {
+      "gallery_clean": {
+        "extra_bottom_ratio": 0
+      },
+      "polaroid_classic": {
+        "extra_bottom_ratio": 0.08
+      }
+    }
   }
 }

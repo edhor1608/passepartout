@@ -14,6 +14,7 @@ export function analyze(input: AnalyzeInput): AnalyzeOutput {
     workflow,
     whiteCanvas: input.whiteCanvas,
     canvasProfile: input.canvasProfile,
+    canvasStyle: input.canvasStyle,
     sourceRatio: media.width / media.height,
   });
 

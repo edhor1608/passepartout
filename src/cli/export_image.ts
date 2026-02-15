@@ -1,5 +1,6 @@
 import type {
   CanvasProfile,
+  CanvasStyle,
   ExportImageInput,
   Mode,
   Surface,
@@ -22,6 +23,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let workflow: Workflow = "unknown";
   let whiteCanvas = false;
   let canvasProfile: CanvasProfile | undefined;
+  let canvasStyle: CanvasStyle | undefined;
   let quality: number | undefined;
   let json = false;
 
@@ -51,6 +53,10 @@ function parseArgs(argv: string[]): ParsedArgs {
         break;
       case "--canvas-profile":
         canvasProfile = next as CanvasProfile;
+        i += 1;
+        break;
+      case "--canvas-style":
+        canvasStyle = next as CanvasStyle;
         i += 1;
         break;
       case "--quality":
@@ -85,11 +91,15 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
+  if (canvasStyle && !["gallery_clean", "polaroid_classic"].includes(canvasStyle)) {
+    throw new Error(`Invalid canvas style: ${canvasStyle}`);
+  }
+
   if (quality !== undefined && (!Number.isFinite(quality) || quality < 1 || quality > 31)) {
     throw new Error(`Invalid quality: ${quality}`);
   }
 
-  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, quality, json };
+  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, canvasStyle, quality, json };
 }
 
 function printHumanOutput(result: ReturnType<typeof exportImage>): void {

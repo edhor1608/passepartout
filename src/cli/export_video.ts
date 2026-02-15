@@ -1,5 +1,6 @@
 import type {
   CanvasProfile,
+  CanvasStyle,
   ExportVideoInput,
   Mode,
   Surface,
@@ -22,6 +23,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let workflow: Workflow = "unknown";
   let whiteCanvas = false;
   let canvasProfile: CanvasProfile | undefined;
+  let canvasStyle: CanvasStyle | undefined;
   let crf: number | undefined;
   let json = false;
 
@@ -51,6 +53,10 @@ function parseArgs(argv: string[]): ParsedArgs {
         break;
       case "--canvas-profile":
         canvasProfile = next as CanvasProfile;
+        i += 1;
+        break;
+      case "--canvas-style":
+        canvasStyle = next as CanvasStyle;
         i += 1;
         break;
       case "--crf":
@@ -85,11 +91,15 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
+  if (canvasStyle && !["gallery_clean", "polaroid_classic"].includes(canvasStyle)) {
+    throw new Error(`Invalid canvas style: ${canvasStyle}`);
+  }
+
   if (crf !== undefined && (!Number.isFinite(crf) || crf < 0 || crf > 51)) {
     throw new Error(`Invalid crf: ${crf}`);
   }
 
-  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, crf, json };
+  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, canvasStyle, crf, json };
 }
 
 function printHumanOutput(result: ReturnType<typeof exportVideo>): void {

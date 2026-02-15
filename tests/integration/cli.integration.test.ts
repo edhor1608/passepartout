@@ -64,6 +64,24 @@ describe("cli integration", () => {
     expect(result.stderr).toContain("Invalid mode");
   });
 
+  test("invalid canvas style fails with non-zero exit", async () => {
+    const result = await runRecommendCli([
+      "--mode",
+      "reliable",
+      "--surface",
+      "feed",
+      "--orientation",
+      "portrait",
+      "--white-canvas",
+      "--canvas-style",
+      "bad_style",
+      "--json",
+    ]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("Invalid canvas style");
+  });
+
   test("white-canvas on non-feed is ignored deterministically", async () => {
     const result = await runRecommendCli([
       "--mode",
@@ -87,6 +105,7 @@ describe("cli integration", () => {
       margins: null,
       no_crop: false,
       profile: null,
+      style: null,
     });
   });
 });

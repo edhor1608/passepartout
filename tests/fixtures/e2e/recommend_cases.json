@@ -16,6 +16,10 @@
     "args": ["--mode", "reliable", "--surface", "feed", "--orientation", "landscape", "--workflow", "app_direct", "--white-canvas", "--canvas-profile", "feed_app_direct", "--json"]
   },
   {
+    "id": "reliable-feed-portrait-white-classic",
+    "args": ["--mode", "reliable", "--surface", "feed", "--orientation", "portrait", "--workflow", "unknown", "--white-canvas", "--canvas-style", "polaroid_classic", "--json"]
+  },
+  {
     "id": "reliable-story-portrait",
     "args": ["--mode", "reliable", "--surface", "story", "--orientation", "portrait", "--workflow", "unknown", "--json"]
   },

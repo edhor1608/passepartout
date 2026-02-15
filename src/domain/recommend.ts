@@ -7,7 +7,7 @@ import type {
   WhiteCanvasOutput,
 } from "../types/contracts";
 import { loadRuleset, parseResolution, selectProfileRule } from "./rules";
-import { computeMarginsV1, resolveCanvasProfile } from "./white_canvas";
+import { computeStyledMargins, resolveCanvasProfile, resolveCanvasStyle } from "./white_canvas";
 
 const DEFAULT_RULESET = loadRuleset();
 
@@ -25,6 +25,7 @@ function disabledWhiteCanvas(): WhiteCanvasOutput {
   return {
     enabled: false,
     profile: null,
+    style: null,
     margins: null,
     contain_only: false,
     no_crop: false,
@@ -55,19 +56,23 @@ export function recommend(input: RecommendInput, ruleset: Ruleset = DEFAULT_RULE
       const canvasResolution = ruleset.white_canvas.profiles[resolved.profile].resolution;
       const { width, height } = parseResolution(canvasResolution);
       const sourceRatio = input.sourceRatio ?? sourceRatioFromOrientation(input.orientation);
+      const style = resolveCanvasStyle(input.canvasStyle, ruleset);
 
       selectedProfile = `${input.mode}_feed_white_canvas_${resolved.profile}`;
       targetResolution = canvasResolution;
-      reason = `White-canvas contain profile ${resolved.profile} selected for ${input.orientation} source.`;
+      reason = `White-canvas contain profile ${resolved.profile} with style ${style} selected for ${input.orientation} source.`;
       riskLevel = input.mode === "experimental" ? "medium" : "low";
       workflowNote = resolved.workflowNote;
       whiteCanvas = {
         enabled: true,
         profile: resolved.profile,
-        margins: computeMarginsV1({
+        style,
+        margins: computeStyledMargins({
           canvasWidth: width,
           canvasHeight: height,
           sourceRatio,
+          style,
+          ruleset,
         }),
         contain_only: true,
         no_crop: true,

@@ -46,6 +46,7 @@ export function exportImage(input: ExportImageInput): ExportImageOutput {
     workflow,
     whiteCanvas: input.whiteCanvas,
     canvasProfile: input.canvasProfile,
+    canvasStyle: input.canvasStyle,
     sourceRatio: media.width / media.height,
   });
 

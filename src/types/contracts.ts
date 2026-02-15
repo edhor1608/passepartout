@@ -3,6 +3,7 @@ export type Surface = "feed" | "story" | "reel";
 export type Orientation = "portrait" | "square" | "landscape";
 export type Workflow = "app_direct" | "api_scheduler" | "unknown";
 export type CanvasProfile = "feed_compat" | "feed_app_direct";
+export type CanvasStyle = "gallery_clean" | "polaroid_classic";
 export type RiskLevel = "low" | "medium" | "high";
 export type Resolution = `${number}x${number}`;
 
@@ -32,6 +33,8 @@ export type Ruleset = {
   white_canvas: {
     profiles: Record<CanvasProfile, { resolution: Resolution }>;
     app_direct_only_profiles: CanvasProfile[];
+    default_style: CanvasStyle;
+    styles: Record<CanvasStyle, { extra_bottom_ratio: number }>;
   };
 };
 
@@ -42,12 +45,14 @@ export type RecommendInput = {
   workflow?: Workflow;
   whiteCanvas?: boolean;
   canvasProfile?: CanvasProfile;
+  canvasStyle?: CanvasStyle;
   sourceRatio?: number;
 };
 
 export type WhiteCanvasOutput = {
   enabled: boolean;
   profile: CanvasProfile | null;
+  style: CanvasStyle | null;
   margins: Margins | null;
   contain_only: boolean;
   no_crop: boolean;
@@ -100,6 +105,7 @@ export type AnalyzeInput = {
   workflow?: Workflow;
   whiteCanvas?: boolean;
   canvasProfile?: CanvasProfile;
+  canvasStyle?: CanvasStyle;
 };
 
 export type AnalyzeOutput = {
@@ -123,6 +129,7 @@ export type ExportImageInput = {
   workflow?: Workflow;
   whiteCanvas?: boolean;
   canvasProfile?: CanvasProfile;
+  canvasStyle?: CanvasStyle;
   quality?: number;
 };
 
@@ -143,6 +150,7 @@ export type ExportVideoInput = {
   workflow?: Workflow;
   whiteCanvas?: boolean;
   canvasProfile?: CanvasProfile;
+  canvasStyle?: CanvasStyle;
   crf?: number;
 };
 
@@ -188,6 +196,7 @@ export type ReportExportInput = {
   workflow?: Workflow;
   whiteCanvas?: boolean;
   canvasProfile?: CanvasProfile;
+  canvasStyle?: CanvasStyle;
 };
 
 export type ReportExportOutput = {

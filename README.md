@@ -4,7 +4,7 @@ Phase 1 implements a deterministic `recommend` vertical slice for Instagram prof
 
 Example fixture image used in tests:
 
-- `/Users/jonas/repos/instagram-upload-quality-lab/tests/fixtures/images/portrait_sample_30x40.ppm`
+- `/Users/jonas/repos/passepartout/tests/fixtures/images/portrait_sample_30x40.ppm`
 
 ## Install
 
@@ -34,6 +34,12 @@ Export image using deterministic preset:
 
 ```bash
 bun run export-image tests/fixtures/images/portrait_sample_30x40.png --out tests/fixtures/exports/demo.jpg --mode reliable --surface feed --json
+```
+
+Export image with white-canvas `polaroid_classic` style:
+
+```bash
+bun run export-image tests/fixtures/images/landscape_sample_48x32.jpg --out tests/fixtures/exports/demo_white_classic.jpg --mode reliable --surface feed --white-canvas --canvas-profile feed_compat --canvas-style polaroid_classic --json
 ```
 
 Analyze supports this slice's image fixtures:

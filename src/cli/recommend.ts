@@ -1,5 +1,6 @@
 import type {
   CanvasProfile,
+  CanvasStyle,
   Mode,
   Orientation,
   RecommendInput,
@@ -17,6 +18,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let workflow: Workflow = "unknown";
   let whiteCanvas = false;
   let canvasProfile: CanvasProfile | undefined;
+  let canvasStyle: CanvasStyle | undefined;
   let json = false;
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -45,6 +47,10 @@ function parseArgs(argv: string[]): ParsedArgs {
         break;
       case "--canvas-profile":
         canvasProfile = next as CanvasProfile;
+        i += 1;
+        break;
+      case "--canvas-style":
+        canvasStyle = next as CanvasStyle;
         i += 1;
         break;
       case "--json":
@@ -79,7 +85,11 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
-  return { mode, surface, orientation, workflow, whiteCanvas, canvasProfile, json };
+  if (canvasStyle && !["gallery_clean", "polaroid_classic"].includes(canvasStyle)) {
+    throw new Error(`Invalid canvas style: ${canvasStyle}`);
+  }
+
+  return { mode, surface, orientation, workflow, whiteCanvas, canvasProfile, canvasStyle, json };
 }
 
 function printHumanOutput(result: ReturnType<typeof recommend>, surface: Surface, orientation: Orientation): void {

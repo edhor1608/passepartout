@@ -18,6 +18,12 @@ const scenarios = [
     workflow: "api_scheduler" as const,
     canvasProfile: "feed_app_direct" as const,
   },
+  {
+    suffix: "classic",
+    workflow: "unknown" as const,
+    canvasProfile: "feed_compat" as const,
+    canvasStyle: "polaroid_classic" as const,
+  },
 ];
 
 describe("pixel-level visual regression", () => {
@@ -35,6 +41,7 @@ describe("pixel-level visual regression", () => {
           workflow: scenario.workflow,
           whiteCanvas: true,
           canvasProfile: scenario.canvasProfile,
+          canvasStyle: scenario.canvasStyle,
           sourceRatio: source.width / source.height,
         });
 
