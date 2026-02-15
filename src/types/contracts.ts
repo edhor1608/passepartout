@@ -136,3 +136,25 @@ export type ExportImageOutput = {
   white_canvas_enabled: boolean;
   ffmpeg_filter: string;
 };
+
+export type ExportVideoInput = {
+  file: string;
+  out: string;
+  mode: Mode;
+  surface: Surface;
+  workflow?: Workflow;
+  whiteCanvas?: boolean;
+  canvasProfile?: CanvasProfile;
+  crf?: number;
+};
+
+export type ExportVideoOutput = {
+  input_path: string;
+  output_path: string;
+  selected_profile: string;
+  target_resolution: Resolution;
+  white_canvas_enabled: boolean;
+  ffmpeg_filter: string;
+  video_codec: string;
+  fps: number;
+};

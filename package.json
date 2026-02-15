@@ -7,6 +7,7 @@
     "recommend": "bun run src/cli/recommend.ts",
     "analyze": "bun run src/cli/analyze.ts",
     "export-image": "bun run src/cli/export_image.ts",
+    "export-video": "bun run src/cli/export_video.ts",
     "test": "bun test",
     "test:unit": "bun test tests/recommend.test.ts tests/white_canvas.test.ts tests/media_inspector.test.ts tests/tier.test.ts",
     "test:integration": "bun test tests/integration",
@@ -20,6 +21,7 @@
     "fixtures:e2e": "bun run tests/fixtures/e2e/generate-snapshots.ts",
     "fixtures:e2e:analyze": "bun run tests/fixtures/e2e/generate-analyze-snapshots.ts",
     "fixtures:e2e:export": "bun run tests/fixtures/e2e/generate-export-snapshots.ts",
+    "fixtures:e2e:export-video": "bun run tests/fixtures/e2e/generate-export-video-snapshots.ts",
     "fixtures:visual": "bun run tests/fixtures/visual/generate-snapshots.ts",
     "fixtures:pixel": "bun run tests/fixtures/pixel/generate-snapshots.ts"
   },
