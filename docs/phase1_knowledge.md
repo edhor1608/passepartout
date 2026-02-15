@@ -16,6 +16,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Analyze metadata baseline extended for video to include `duration_seconds` and `bitrate_kbps`.
 - Analyze metadata baseline extended for audio presence with `has_audio` and `audio_codec`.
 - Analyze metadata baseline extended for detailed audio fields: `audio_channels`, `audio_sample_rate_hz`, `audio_bitrate_kbps`.
+- Analyze metadata baseline extended for additional audio stream detail: `audio_channel_layout`, `audio_sample_format`.
 - Added `export-image` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing.
 - Added `export-video` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing (`MP4`/H.264 output).
 - `export-video` contract now includes output-probed metadata (`output_width`, `output_height`, `output_codec`, `output_fps`).
@@ -60,10 +61,11 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Failing-first style tests now cover `white_canvas`, `recommend`, `export-image`, and `export-video`.
 - Visual and pixel-level snapshot matrices now include `classic` style scenarios.
 - E2E snapshots were regenerated for style-enabled analyze/report/export/report-export/benchmark/recommend paths.
+- Added failing-first tests for `audio_channel_layout` + `audio_sample_format` and extended analyze/report/report-export/benchmark snapshots.
 
 ## Deferred
 
-- Remaining audio stream metadata (`channel_layout`, `sample_fmt`) and color metadata are still deferred.
+- Remaining advanced media metadata (beyond current audio/video baseline) and color metadata are still deferred.
 - Advanced video export/transcode policies (audio mapping, bitrate controls, codec variants beyond baseline MP4/H.264).
 - Empirical quality validation harness.
 - Additional style profiles beyond `gallery_clean` + `polaroid_classic` remain deferred.
