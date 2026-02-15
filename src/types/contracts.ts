@@ -218,3 +218,17 @@ export type ReportExportOutput = {
     notes: string[];
   };
 };
+
+export type BenchmarkInput = ReportExportInput;
+
+export type BenchmarkOutput = {
+  benchmark_version: "v1";
+  report_export: ReportExportOutput;
+  score: {
+    total: number;
+    grade: "A" | "B" | "C" | "D";
+    resolution_score: number;
+    bitrate_score: number;
+    codec_score: number;
+  };
+};

@@ -15,7 +15,8 @@ async function runCli(
     | "export-image"
     | "export-video"
     | "report"
-    | "report-export",
+    | "report-export"
+    | "benchmark",
   args: string[],
 ): Promise<CliRunResult> {
   const proc = Bun.spawn({
@@ -58,7 +59,14 @@ export async function runReportExportCli(args: string[]): Promise<CliRunResult> 
   return runCli("report-export", args);
 }
 
-export function parseJsonStdout(stdout: string, context = "stdout"): Record<string, unknown> {
+export async function runBenchmarkCli(args: string[]): Promise<CliRunResult> {
+  return runCli("benchmark", args);
+}
+
+export function parseJsonStdout(
+  stdout: string,
+  context = "stdout",
+): Record<string, unknown> {
   const lines = stdout
     .split("\n")
     .map((line) => line.trim())
