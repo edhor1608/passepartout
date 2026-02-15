@@ -101,6 +101,10 @@ function sortKeysDeep(value: unknown): unknown {
   return value;
 }
 
+export function stableStringify(value: unknown): string {
+  return JSON.stringify(sortKeysDeep(value));
+}
+
 export function toStableJson(output: RecommendationOutput): string {
-  return JSON.stringify(sortKeysDeep(output));
+  return stableStringify(output);
 }

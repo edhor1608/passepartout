@@ -7,6 +7,7 @@ Implement the smallest executable slice of P17 that validates locked recommendat
 ## What Was Implemented
 
 - Deterministic recommendation engine (`recommend`) with mode/surface/orientation/workflow inputs.
+- Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Externalized rules in `config/ruleset.v1.json`.
 - White-canvas policy logic for feed profiles with workflow-gated `feed_app_direct` fallback.
 - Locked margin formula v1 and contain/no-crop invariant flags.
@@ -24,6 +25,7 @@ Implement the smallest executable slice of P17 that validates locked recommendat
 - Tests were written first and run to failure before implementation.
 - Strict TypeScript check caught undefined parsing risk in resolution parsing; fixed in `src/domain/rules.ts`.
 - Added real image fixtures in `tests/fixtures/images` (PPM) and used them in visual tests.
+- Added media inspector baseline for PPM (`P3` + `P6`) and wired analyze e2e snapshot tests.
 
 ## Deferred
 
