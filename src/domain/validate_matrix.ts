@@ -139,11 +139,57 @@ export function validateMatrix(input: ValidateMatrixInput): ValidateMatrixOutput
     }
   }
 
+  const okBenchmarks = results.reduce<NonNullable<ValidateMatrixOutput["results"][number]["benchmark"]>[]>(
+    (acc, row) => {
+      if (row.status === "ok" && row.benchmark !== null) {
+        acc.push(row.benchmark);
+      }
+      return acc;
+    },
+    [],
+  );
+
+  const gradeCounts: ValidateMatrixOutput["summary"]["grade_counts"] = {
+    A: 0,
+    B: 0,
+    C: 0,
+    D: 0,
+  };
+  const confidenceCounts: ValidateMatrixOutput["summary"]["confidence_counts"] = {
+    low: 0,
+    medium: 0,
+    high: 0,
+  };
+
+  let totalScore = 0;
+  let totalConfidence = 0;
+  for (const bench of okBenchmarks) {
+    totalScore += bench.score.total;
+    totalConfidence += bench.confidence.value;
+    gradeCounts[bench.score.grade] += 1;
+    confidenceCounts[bench.confidence.label] += 1;
+  }
+
+  const avgTotalScore =
+    okBenchmarks.length > 0
+      ? Number.parseFloat((totalScore / okBenchmarks.length).toFixed(3))
+      : null;
+  const avgConfidence =
+    okBenchmarks.length > 0
+      ? Number.parseFloat((totalConfidence / okBenchmarks.length).toFixed(3))
+      : null;
+
   return {
     matrix_version: "v1",
     cases_total: cases.length,
     cases_succeeded: succeeded,
     cases_failed: failed,
+    summary: {
+      avg_total_score: avgTotalScore,
+      avg_confidence: avgConfidence,
+      grade_counts: gradeCounts,
+      confidence_counts: confidenceCounts,
+    },
     results,
   };
 }

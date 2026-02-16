@@ -21,6 +21,7 @@ describe("validate-matrix cli integration", () => {
     expect(payload).toHaveProperty("cases_total", 2);
     expect(payload).toHaveProperty("cases_succeeded", 2);
     expect(payload).toHaveProperty("cases_failed", 0);
+    expect(payload).toHaveProperty("summary");
 
     const results = payload.results as Array<Record<string, unknown>>;
     expect(results.length).toBe(2);
@@ -33,6 +34,21 @@ describe("validate-matrix cli integration", () => {
     expect(second).toHaveProperty("status", "ok");
     expect((first.benchmark as Record<string, unknown>).benchmark_version).toBe("v1");
     expect((second.benchmark as Record<string, unknown>).benchmark_version).toBe("v1");
+
+    const summary = payload.summary as Record<string, unknown>;
+    expect(typeof summary.avg_total_score).toBe("number");
+    expect(typeof summary.avg_confidence).toBe("number");
+
+    const gradeCounts = summary.grade_counts as Record<string, unknown>;
+    expect(typeof gradeCounts.A).toBe("number");
+    expect(typeof gradeCounts.B).toBe("number");
+    expect(typeof gradeCounts.C).toBe("number");
+    expect(typeof gradeCounts.D).toBe("number");
+
+    const confidenceCounts = summary.confidence_counts as Record<string, unknown>;
+    expect(typeof confidenceCounts.low).toBe("number");
+    expect(typeof confidenceCounts.medium).toBe("number");
+    expect(typeof confidenceCounts.high).toBe("number");
 
     expect(existsSync(join(exportsDir, "matrix_basic_portrait.jpg"))).toBe(true);
     expect(existsSync(join(exportsDir, "matrix_basic_reel.mp4"))).toBe(true);

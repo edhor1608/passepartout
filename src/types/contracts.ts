@@ -267,6 +267,21 @@ export type ValidateMatrixOutput = {
   cases_total: number;
   cases_succeeded: number;
   cases_failed: number;
+  summary: {
+    avg_total_score: number | null;
+    avg_confidence: number | null;
+    grade_counts: {
+      A: number;
+      B: number;
+      C: number;
+      D: number;
+    };
+    confidence_counts: {
+      low: number;
+      medium: number;
+      high: number;
+    };
+  };
   results: Array<{
     id: string;
     status: "ok" | "error";
