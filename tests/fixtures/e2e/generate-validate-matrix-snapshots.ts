@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { stableStringify } from "../../../src/domain/recommend";
 
 type Case = { id: string; args: string[]; expected_exit_code?: number };
 
@@ -9,6 +10,20 @@ const snapshotDir = join(fixturesDir, "snapshots", "validate_matrix");
 mkdirSync(snapshotDir, { recursive: true });
 
 const cases = JSON.parse(readFileSync(join(fixturesDir, "validate_matrix_cases.json"), "utf8")) as Case[];
+
+function normalizePayload(raw: string): string {
+  const parsed = JSON.parse(raw) as {
+    duration_ms?: number;
+    results?: Array<{ duration_ms?: number }>;
+  };
+  parsed.duration_ms = 0;
+  if (Array.isArray(parsed.results)) {
+    for (const row of parsed.results) {
+      row.duration_ms = 0;
+    }
+  }
+  return stableStringify(parsed);
+}
 
 for (const testCase of cases) {
   const proc = Bun.spawnSync({
@@ -36,7 +51,7 @@ for (const testCase of cases) {
     throw new Error(`no json payload for ${testCase.id}`);
   }
 
-  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${payload}\n`, "utf8");
+  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${normalizePayload(payload)}\n`, "utf8");
 }
 
 console.log(`generated ${cases.length} validate-matrix snapshots`);

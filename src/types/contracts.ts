@@ -264,6 +264,7 @@ export type ValidateMatrixInput = {
 
 export type ValidateMatrixOutput = {
   matrix_version: "v1";
+  duration_ms: number;
   cases_total: number;
   cases_succeeded: number;
   cases_failed: number;
@@ -285,6 +286,7 @@ export type ValidateMatrixOutput = {
   results: Array<{
     id: string;
     status: "ok" | "error";
+    duration_ms: number;
     benchmark: BenchmarkOutput | null;
     error: string | null;
   }>;

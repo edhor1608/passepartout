@@ -103,12 +103,14 @@ function parseCases(casesFile: string): ValidateMatrixCase[] {
 }
 
 export function validateMatrix(input: ValidateMatrixInput): ValidateMatrixOutput {
+  const startedAt = Date.now();
   const cases = parseCases(input.casesFile);
   const results: ValidateMatrixOutput["results"] = [];
   let succeeded = 0;
   let failed = 0;
 
   for (const testCase of cases) {
+    const caseStartedAt = Date.now();
     try {
       const benchmarkResult = benchmark({
         file: testCase.file,
@@ -125,6 +127,7 @@ export function validateMatrix(input: ValidateMatrixInput): ValidateMatrixOutput
       results.push({
         id: testCase.id,
         status: "ok",
+        duration_ms: Date.now() - caseStartedAt,
         benchmark: benchmarkResult,
         error: null,
       });
@@ -133,6 +136,7 @@ export function validateMatrix(input: ValidateMatrixInput): ValidateMatrixOutput
       results.push({
         id: testCase.id,
         status: "error",
+        duration_ms: Date.now() - caseStartedAt,
         benchmark: null,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -181,6 +185,7 @@ export function validateMatrix(input: ValidateMatrixInput): ValidateMatrixOutput
 
   return {
     matrix_version: "v1",
+    duration_ms: Date.now() - startedAt,
     cases_total: cases.length,
     cases_succeeded: succeeded,
     cases_failed: failed,

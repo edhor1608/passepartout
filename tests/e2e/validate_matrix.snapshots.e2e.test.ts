@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { stableStringify } from "../../src/domain/recommend";
 import { runValidateMatrixCli } from "../helpers/cli";
 
 type Case = { id: string; args: string[]; expected_exit_code?: number };
@@ -8,6 +9,20 @@ type Case = { id: string; args: string[]; expected_exit_code?: number };
 const fixtureDir = join(import.meta.dir, "..", "fixtures", "e2e");
 const snapshotDir = join(fixtureDir, "snapshots", "validate_matrix");
 const cases = JSON.parse(readFileSync(join(fixtureDir, "validate_matrix_cases.json"), "utf8")) as Case[];
+
+function normalizePayload(raw: string): string {
+  const parsed = JSON.parse(raw) as {
+    duration_ms?: number;
+    results?: Array<{ duration_ms?: number }>;
+  };
+  parsed.duration_ms = 0;
+  if (Array.isArray(parsed.results)) {
+    for (const row of parsed.results) {
+      row.duration_ms = 0;
+    }
+  }
+  return stableStringify(parsed);
+}
 
 describe("validate-matrix e2e snapshots", () => {
   for (const scenario of cases) {
@@ -22,7 +37,7 @@ describe("validate-matrix e2e snapshots", () => {
         .filter(Boolean)
         .at(-1);
 
-      expect(actual).toBe(expected);
+      expect(normalizePayload(actual ?? "")).toBe(expected);
     });
   }
 });

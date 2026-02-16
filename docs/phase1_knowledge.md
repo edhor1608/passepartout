@@ -17,6 +17,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Deterministic validate-matrix aggregate summary output (`avg_total_score`, `avg_confidence`, grade/confidence distributions).
 - Deterministic validate-matrix artifact export via `--out-json` for overnight run persistence.
 - Deterministic validate-matrix failure gating via `--fail-on-error` for CI/automation workflows.
+- Validate-matrix timing visibility via `duration_ms` at run-level and per-case result level.
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Deterministic report engine (`report`) layered on analyze output with checklist + next-actions contract.
 - Deterministic report-export engine (`report-export`) that executes export and compares input/output media characteristics.
@@ -87,6 +88,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added failing-first validate-matrix integration checks for aggregate summary fields and regenerated validate-matrix snapshots.
 - Added failing-first validate-matrix integration checks for `--out-json` artifact writing with deterministic payload persistence.
 - Added failing-first validate-matrix integration/e2e checks for partial-failure scenarios and non-zero exit gating with `--fail-on-error`.
+- Added failing-first validate-matrix timing assertions and snapshot normalization strategy for volatile `duration_ms` fields.
 
 ## Deferred
 
