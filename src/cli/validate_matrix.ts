@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { ValidateMatrixInput } from "../types/contracts";
 import { stableStringify } from "../domain/recommend";
@@ -16,6 +16,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let outJson: string | undefined;
   let outMd: string | undefined;
   let onlyIds: string[] | undefined;
+  let onlyFile: string | undefined;
   let failOnError = false;
   let json = false;
 
@@ -43,6 +44,10 @@ function parseArgs(argv: string[]): ParsedArgs {
           .filter((token) => token.length > 0);
         i += 1;
         break;
+      case "--only-file":
+        onlyFile = next;
+        i += 1;
+        break;
       case "--fail-on-error":
         failOnError = true;
         break;
@@ -63,8 +68,25 @@ function parseArgs(argv: string[]): ParsedArgs {
   if (outMd !== undefined && outMd.length === 0) {
     throw new Error("Invalid --out-md path");
   }
+  if (onlyIds !== undefined && onlyFile !== undefined) {
+    throw new Error("Cannot combine --only with --only-file");
+  }
+  if (onlyFile !== undefined && onlyFile.length === 0) {
+    throw new Error("Invalid --only-file path");
+  }
   if (onlyIds !== undefined && onlyIds.length === 0) {
     throw new Error("Invalid --only list");
+  }
+  if (onlyFile) {
+    const absOnlyFile = resolve(onlyFile);
+    const parsedIds = readFileSync(absOnlyFile, "utf8")
+      .split(/\r?\n/g)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0 && !line.startsWith("#"));
+    if (parsedIds.length === 0) {
+      throw new Error("Invalid --only-file list");
+    }
+    onlyIds = parsedIds;
   }
 
   return { casesFile, outJson, outMd, onlyIds, json, failOnError };

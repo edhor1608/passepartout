@@ -6,6 +6,7 @@ import { parseJsonStdout, runValidateMatrixCli } from "../helpers/cli";
 const fixturesDir = join(import.meta.dir, "..", "fixtures");
 const casesFile = join(fixturesDir, "matrix", "cases_basic.json");
 const failureCasesFile = join(fixturesDir, "matrix", "cases_with_failure.json");
+const onlyPortraitFile = join(fixturesDir, "matrix", "only_portrait.txt");
 const exportsDir = join(fixturesDir, "exports");
 
 describe("validate-matrix cli integration", () => {
@@ -143,5 +144,43 @@ describe("validate-matrix cli integration", () => {
     expect(result.exitCode).toBe(1);
     const payload = parseJsonStdout(result.stdout);
     expect(payload).toHaveProperty("error", "Unknown case id(s) in --only: missing-case-id");
+  });
+
+  test("runs selected case ids from --only-file", async () => {
+    const portraitOut = join(exportsDir, "matrix_basic_portrait.jpg");
+    const reelOut = join(exportsDir, "matrix_basic_reel.mp4");
+    rmSync(portraitOut, { force: true });
+    rmSync(reelOut, { force: true });
+
+    const result = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--only-file",
+      onlyPortraitFile,
+      "--json",
+    ]);
+    expect(result.exitCode).toBe(0);
+
+    const payload = parseJsonStdout(result.stdout);
+    expect(payload).toHaveProperty("cases_total", 1);
+    expect(payload.selected_case_ids).toEqual(["matrix-basic-reliable-feed-portrait"]);
+    expect(existsSync(portraitOut)).toBe(true);
+    expect(existsSync(reelOut)).toBe(false);
+  });
+
+  test("returns non-zero when --only and --only-file are both provided", async () => {
+    const result = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--only",
+      "matrix-basic-reliable-feed-portrait",
+      "--only-file",
+      onlyPortraitFile,
+      "--json",
+    ]);
+    expect(result.exitCode).toBe(1);
+
+    const payload = parseJsonStdout(result.stdout);
+    expect(payload).toHaveProperty("error", "Cannot combine --only with --only-file");
   });
 });
