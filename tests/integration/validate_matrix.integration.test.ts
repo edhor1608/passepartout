@@ -245,4 +245,49 @@ describe("validate-matrix cli integration", () => {
     expect(lines[1]).toContain("matrix-basic-reliable-feed-portrait");
     expect(lines[2]).toContain("matrix-basic-reliable-reel-video");
   });
+
+  test("appends capture rows via --append-capture-csv without duplicating header", async () => {
+    const capturePath = join(exportsDir, "matrix_capture_append.csv");
+    rmSync(capturePath, { force: true });
+
+    const first = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--out-capture-csv",
+      capturePath,
+      "--json",
+    ]);
+    expect(first.exitCode).toBe(0);
+
+    const second = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--max-cases",
+      "1",
+      "--out-capture-csv",
+      capturePath,
+      "--append-capture-csv",
+      "--json",
+    ]);
+    expect(second.exitCode).toBe(0);
+
+    const csv = readFileSync(capturePath, "utf8").trim();
+    const lines = csv.split("\n");
+    expect(lines.length).toBe(4);
+    expect(lines.filter((line) => line.startsWith("case_id,")).length).toBe(1);
+    expect(lines[3]).toContain("matrix-basic-reliable-feed-portrait");
+  });
+
+  test("returns non-zero when --append-capture-csv is set without --out-capture-csv", async () => {
+    const result = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--append-capture-csv",
+      "--json",
+    ]);
+    expect(result.exitCode).toBe(1);
+
+    const payload = parseJsonStdout(result.stdout);
+    expect(payload).toHaveProperty("error", "Missing required args: --out-capture-csv for --append-capture-csv");
+  });
 });

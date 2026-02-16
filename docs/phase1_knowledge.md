@@ -27,6 +27,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Deterministic validate-matrix bounded execution via `--max-cases <n>` for quick targeted runs.
 - Deterministic validate-matrix skipped-case visibility via top-level `cases_skipped` in success outputs.
 - Deterministic validate-matrix manual empirical capture artifact via `--out-capture-csv <path>`.
+- Deterministic validate-matrix capture CSV append mode via `--append-capture-csv`.
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Deterministic report engine (`report`) layered on analyze output with checklist + next-actions contract.
 - Deterministic report-export engine (`report-export`) that executes export and compares input/output media characteristics.
@@ -107,6 +108,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added failing-first validate-matrix integration + e2e snapshot coverage for bounded execution via `--max-cases`.
 - Added failing-first validate-matrix integration + e2e snapshot coverage for `cases_skipped` output visibility.
 - Added failing-first validate-matrix integration coverage for deterministic manual-capture CSV artifact output (`--out-capture-csv`).
+- Added failing-first validate-matrix integration coverage for header-safe append capture mode (`--append-capture-csv`).
 
 ## Deferred
 
