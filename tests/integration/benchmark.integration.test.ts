@@ -38,6 +38,7 @@ describe("benchmark cli integration", () => {
     expect(payload).toHaveProperty("benchmark_version", "v1");
     expect(payload).toHaveProperty("report_export");
     expect(payload).toHaveProperty("score");
+    expect(payload).toHaveProperty("confidence");
 
     const score = payload.score as Record<string, unknown>;
     expect(typeof score.total).toBe("number");
@@ -45,5 +46,12 @@ describe("benchmark cli integration", () => {
     expect(score.total).toBeLessThanOrEqual(100);
     expect(typeof score.grade).toBe("string");
     expect(["A", "B", "C", "D"]).toContain(score.grade as string);
+
+    const confidence = payload.confidence as Record<string, unknown>;
+    expect(typeof confidence.value).toBe("number");
+    expect((confidence.value as number) >= 0).toBe(true);
+    expect((confidence.value as number) <= 1).toBe(true);
+    expect(typeof confidence.label).toBe("string");
+    expect(["low", "medium", "high"]).toContain(confidence.label as string);
   });
 });

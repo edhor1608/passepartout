@@ -240,6 +240,10 @@ export type BenchmarkOutput = {
     bitrate_score: number;
     codec_score: number;
   };
+  confidence: {
+    value: number;
+    label: "low" | "medium" | "high";
+  };
 };
 
 export type ValidateMatrixCase = {

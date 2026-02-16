@@ -101,6 +101,7 @@ function printHumanOutput(result: ReturnType<typeof benchmark>): void {
   console.log(
     `Breakdown: resolution=${result.score.resolution_score} bitrate=${result.score.bitrate_score} codec=${result.score.codec_score}`,
   );
+  console.log(`Confidence: ${result.confidence.value} (${result.confidence.label})`);
   console.log("Next action: rerun with --json for machine-readable output.");
 }
 
