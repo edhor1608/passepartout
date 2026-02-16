@@ -293,6 +293,7 @@ export type WatchFolderInput = {
   canvasStyle?: CanvasStyle;
   once?: boolean;
   intervalSeconds?: number;
+  maxCycles?: number;
 };
 
 export type WatchFolderOutput = {

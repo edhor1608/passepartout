@@ -75,4 +75,48 @@ describe("watch-folder cli integration", () => {
     };
     expect(Object.keys(state.items).length).toBe(2);
   });
+
+  test("supports finite polling via max-cycles and returns deterministic cycle outputs", async () => {
+    resetWatchDirs();
+    copyFileSync(
+      join(fixtures, "portrait_sample_30x40.png"),
+      join(inputDir, "portrait_sample_30x40.png"),
+    );
+    copyFileSync(
+      join(fixtures, "portrait_video_360x640.mp4"),
+      join(inputDir, "portrait_video_360x640.mp4"),
+    );
+
+    const run = await runWatchFolderCli([
+      "--in",
+      inputDir,
+      "--out",
+      outputDir,
+      "--mode",
+      "reliable",
+      "--surface",
+      "feed",
+      "--workflow",
+      "unknown",
+      "--interval-sec",
+      "1",
+      "--max-cycles",
+      "2",
+      "--json",
+    ]);
+
+    expect(run.exitCode).toBe(0);
+    const payloads = run.stdout
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.startsWith("{"))
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+
+    expect(payloads.length).toBe(2);
+    expect(payloads[0]).toHaveProperty("processed_count", 2);
+    expect(payloads[0]).toHaveProperty("skipped_count", 0);
+    expect(payloads[1]).toHaveProperty("processed_count", 0);
+    expect(payloads[1]).toHaveProperty("skipped_count", 2);
+    expect(payloads[1]).toHaveProperty("once", false);
+  });
 });

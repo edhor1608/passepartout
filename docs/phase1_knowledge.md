@@ -10,6 +10,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Deterministic overlay guide engine (`overlay`) for crop-safe framing guides (`4:5`, `3:4`, `9:16`) with JSON + SVG output.
 - Deterministic profile-grid preview engine (`grid-preview`) for center-square crop simulation (`4:5`, `3:4`, `9:16`) with JSON + SVG output.
 - Deterministic watch-folder engine (`watch-folder`) for batch input directories with `--once` scan mode and stateful dedupe.
+- Deterministic finite polling for watch-folder via `--max-cycles` to make repeated scan loops testable and bounded.
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Deterministic report engine (`report`) layered on analyze output with checklist + next-actions contract.
 - Deterministic report-export engine (`report-export`) that executes export and compares input/output media characteristics.
@@ -73,6 +74,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added failing-first tests for export profile selection and export output profile fields (`export_profile_id`, `quality_used`, `crf_used`).
 - Added failing-first integration and e2e snapshot tests for `watch-folder --once` with deterministic processed/skipped/error summaries.
 - Added fixture directories for watch-folder coverage (`tests/fixtures/watch`, `tests/fixtures/watch_e2e`) and deterministic state file snapshot baselines.
+- Added failing-first integration + e2e coverage for `watch-folder` finite polling (`--interval-sec` + `--max-cycles`) and deterministic multi-cycle output behavior.
 
 ## Deferred
 

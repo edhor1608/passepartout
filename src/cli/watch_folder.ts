@@ -15,6 +15,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let canvasStyle: CanvasStyle | undefined;
   let once = false;
   let intervalSeconds = 10;
+  let maxCycles: number | undefined;
   let json = false;
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -60,6 +61,10 @@ function parseArgs(argv: string[]): ParsedArgs {
         intervalSeconds = Number.parseInt(next ?? "", 10);
         i += 1;
         break;
+      case "--max-cycles":
+        maxCycles = Number.parseInt(next ?? "", 10);
+        i += 1;
+        break;
       case "--json":
         json = true;
         break;
@@ -89,6 +94,9 @@ function parseArgs(argv: string[]): ParsedArgs {
   if (!Number.isFinite(intervalSeconds) || intervalSeconds < 1 || intervalSeconds > 3600) {
     throw new Error(`Invalid interval-sec: ${intervalSeconds}`);
   }
+  if (maxCycles !== undefined && (!Number.isFinite(maxCycles) || maxCycles < 1 || maxCycles > 100000)) {
+    throw new Error(`Invalid max-cycles: ${maxCycles}`);
+  }
 
   return {
     inDir,
@@ -101,6 +109,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     canvasStyle,
     once,
     intervalSeconds,
+    maxCycles,
     json,
   };
 }
@@ -119,8 +128,10 @@ function delay(ms: number): Promise<void> {
 
 async function main(): Promise<void> {
   const parsed = parseArgs(process.argv.slice(2));
+  let cycles = 0;
 
   while (true) {
+    cycles += 1;
     const result = runWatchCycle(parsed);
 
     if (parsed.json) {
@@ -130,6 +141,9 @@ async function main(): Promise<void> {
     }
 
     if (parsed.once) {
+      break;
+    }
+    if (parsed.maxCycles !== undefined && cycles >= parsed.maxCycles) {
       break;
     }
 
