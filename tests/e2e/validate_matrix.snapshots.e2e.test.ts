@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { runValidateMatrixCli } from "../helpers/cli";
 
-type Case = { id: string; args: string[] };
+type Case = { id: string; args: string[]; expected_exit_code?: number };
 
 const fixtureDir = join(import.meta.dir, "..", "fixtures", "e2e");
 const snapshotDir = join(fixtureDir, "snapshots", "validate_matrix");
@@ -13,7 +13,7 @@ describe("validate-matrix e2e snapshots", () => {
   for (const scenario of cases) {
     test(scenario.id, async () => {
       const result = await runValidateMatrixCli(scenario.args);
-      expect(result.exitCode).toBe(0);
+      expect(result.exitCode).toBe(scenario.expected_exit_code ?? 0);
 
       const expected = readFileSync(join(snapshotDir, `${scenario.id}.json`), "utf8").trim();
       const actual = result.stdout

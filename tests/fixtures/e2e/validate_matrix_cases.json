@@ -5,6 +5,17 @@
       "--cases",
       "tests/fixtures/matrix/cases_basic.json",
       "--json"
-    ]
+    ],
+    "expected_exit_code": 0
+  },
+  {
+    "id": "validate-matrix-with-failure-fail-on-error",
+    "args": [
+      "--cases",
+      "tests/fixtures/matrix/cases_with_failure.json",
+      "--fail-on-error",
+      "--json"
+    ],
+    "expected_exit_code": 1
   }
 ]

@@ -5,6 +5,7 @@ import { parseJsonStdout, runValidateMatrixCli } from "../helpers/cli";
 
 const fixturesDir = join(import.meta.dir, "..", "fixtures");
 const casesFile = join(fixturesDir, "matrix", "cases_basic.json");
+const failureCasesFile = join(fixturesDir, "matrix", "cases_with_failure.json");
 const exportsDir = join(fixturesDir, "exports");
 
 describe("validate-matrix cli integration", () => {
@@ -58,5 +59,27 @@ describe("validate-matrix cli integration", () => {
     const report = JSON.parse(readFileSync(reportPath, "utf8")) as Record<string, unknown>;
     expect(report).toHaveProperty("matrix_version", "v1");
     expect(report).toHaveProperty("cases_total", 2);
+  });
+
+  test("keeps exit code zero by default when some cases fail", async () => {
+    rmSync(join(exportsDir, "matrix_fail_portrait.jpg"), { force: true });
+
+    const result = await runValidateMatrixCli(["--cases", failureCasesFile, "--json"]);
+    expect(result.exitCode).toBe(0);
+
+    const payload = parseJsonStdout(result.stdout);
+    expect(payload).toHaveProperty("cases_total", 2);
+    expect(payload).toHaveProperty("cases_succeeded", 1);
+    expect(payload).toHaveProperty("cases_failed", 1);
+  });
+
+  test("returns non-zero with --fail-on-error when some cases fail", async () => {
+    const result = await runValidateMatrixCli(["--cases", failureCasesFile, "--fail-on-error", "--json"]);
+    expect(result.exitCode).toBe(1);
+
+    const payload = parseJsonStdout(result.stdout);
+    expect(payload).toHaveProperty("cases_total", 2);
+    expect(payload).toHaveProperty("cases_succeeded", 1);
+    expect(payload).toHaveProperty("cases_failed", 1);
   });
 });

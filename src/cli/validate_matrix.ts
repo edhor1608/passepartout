@@ -4,11 +4,12 @@ import type { ValidateMatrixInput } from "../types/contracts";
 import { stableStringify } from "../domain/recommend";
 import { validateMatrix } from "../domain/validate_matrix";
 
-type ParsedArgs = ValidateMatrixInput & { json: boolean; outJson?: string };
+type ParsedArgs = ValidateMatrixInput & { json: boolean; outJson?: string; failOnError: boolean };
 
 function parseArgs(argv: string[]): ParsedArgs {
   let casesFile: string | undefined;
   let outJson: string | undefined;
+  let failOnError = false;
   let json = false;
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -23,6 +24,9 @@ function parseArgs(argv: string[]): ParsedArgs {
       case "--out-json":
         outJson = next;
         i += 1;
+        break;
+      case "--fail-on-error":
+        failOnError = true;
         break;
       case "--json":
         json = true;
@@ -39,7 +43,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error("Invalid --out-json path");
   }
 
-  return { casesFile, outJson, json };
+  return { casesFile, outJson, json, failOnError };
 }
 
 function printHumanOutput(result: ReturnType<typeof validateMatrix>): void {
@@ -65,6 +69,10 @@ function main(): void {
     const outPath = resolve(parsed.outJson);
     mkdirSync(dirname(outPath), { recursive: true });
     writeFileSync(outPath, `${payload}\n`, "utf8");
+  }
+
+  if (parsed.failOnError && result.cases_failed > 0) {
+    process.exitCode = 1;
   }
 
   if (parsed.json) {

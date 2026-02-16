@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-type Case = { id: string; args: string[] };
+type Case = { id: string; args: string[]; expected_exit_code?: number };
 
 const fixturesDir = import.meta.dir;
 const repoRoot = join(fixturesDir, "..", "..", "..");
@@ -18,8 +18,11 @@ for (const testCase of cases) {
     stderr: "pipe",
   });
 
-  if (proc.exitCode !== 0) {
-    throw new Error(`failed for ${testCase.id}: ${proc.stderr.toString()}`);
+  const expectedExit = testCase.expected_exit_code ?? 0;
+  if (proc.exitCode !== expectedExit) {
+    throw new Error(
+      `failed for ${testCase.id}: expected exit ${expectedExit}, got ${proc.exitCode}: ${proc.stderr.toString()}`,
+    );
   }
 
   const lines = proc.stdout
