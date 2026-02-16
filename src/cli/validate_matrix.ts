@@ -8,6 +8,7 @@ type ParsedArgs = ValidateMatrixInput & {
   json: boolean;
   outJson?: string;
   outMd?: string;
+  outCaptureCsv?: string;
   failOnError: boolean;
 };
 
@@ -15,6 +16,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let casesFile: string | undefined;
   let outJson: string | undefined;
   let outMd: string | undefined;
+  let outCaptureCsv: string | undefined;
   let onlyIds: string[] | undefined;
   let onlyFile: string | undefined;
   let maxCases: number | undefined;
@@ -36,6 +38,10 @@ function parseArgs(argv: string[]): ParsedArgs {
         break;
       case "--out-md":
         outMd = next;
+        i += 1;
+        break;
+      case "--out-capture-csv":
+        outCaptureCsv = next;
         i += 1;
         break;
       case "--only":
@@ -76,6 +82,9 @@ function parseArgs(argv: string[]): ParsedArgs {
   if (outMd !== undefined && outMd.length === 0) {
     throw new Error("Invalid --out-md path");
   }
+  if (outCaptureCsv !== undefined && outCaptureCsv.length === 0) {
+    throw new Error("Invalid --out-capture-csv path");
+  }
   if (onlyIds !== undefined && onlyFile !== undefined) {
     throw new Error("Cannot combine --only with --only-file");
   }
@@ -100,7 +109,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error("Invalid --max-cases value");
   }
 
-  return { casesFile, outJson, outMd, onlyIds, maxCases, json, failOnError };
+  return { casesFile, outJson, outMd, outCaptureCsv, onlyIds, maxCases, json, failOnError };
 }
 
 function buildMarkdownReport(result: ReturnType<typeof validateMatrix>): string {
@@ -154,6 +163,71 @@ function printHumanOutput(result: ReturnType<typeof validateMatrix>): void {
   console.log("Next action: rerun with --json for machine-readable output.");
 }
 
+function toCsvValue(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+  const text = String(value);
+  if (text.includes(",") || text.includes('"') || text.includes("\n")) {
+    return `"${text.replaceAll('"', '""')}"`;
+  }
+  return text;
+}
+
+function buildCaptureCsv(result: ReturnType<typeof validateMatrix>): string {
+  const header = [
+    "case_id",
+    "status",
+    "duration_ms",
+    "score_total",
+    "grade",
+    "confidence_value",
+    "confidence_label",
+    "selected_profile",
+    "target_resolution",
+    "input_path",
+    "output_path",
+    "error",
+    "upload_account",
+    "uploaded_at",
+    "downloaded_at",
+    "post_url",
+    "grid_view_ok",
+    "post_view_ok",
+    "artifact_notes",
+    "compression_notes",
+  ];
+  const rows = result.results.map((row) => {
+    const benchmark = row.status === "ok" ? row.benchmark : null;
+    const exportArtifact = benchmark?.report_export.export ?? null;
+    return [
+      row.id,
+      row.status,
+      row.duration_ms,
+      benchmark?.score.total ?? null,
+      benchmark?.score.grade ?? null,
+      benchmark?.confidence.value ?? null,
+      benchmark?.confidence.label ?? null,
+      exportArtifact?.selected_profile ?? null,
+      exportArtifact?.target_resolution ?? null,
+      exportArtifact?.input_path ?? null,
+      exportArtifact?.output_path ?? null,
+      row.error,
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]
+      .map(toCsvValue)
+      .join(",");
+  });
+  return `${header.join(",")}\n${rows.join("\n")}\n`;
+}
+
 function main(): void {
   const parsed = parseArgs(process.argv.slice(2));
   const result = validateMatrix(parsed);
@@ -168,6 +242,11 @@ function main(): void {
     const outPath = resolve(parsed.outMd);
     mkdirSync(dirname(outPath), { recursive: true });
     writeFileSync(outPath, buildMarkdownReport(result), "utf8");
+  }
+  if (parsed.outCaptureCsv) {
+    const outPath = resolve(parsed.outCaptureCsv);
+    mkdirSync(dirname(outPath), { recursive: true });
+    writeFileSync(outPath, buildCaptureCsv(result), "utf8");
   }
 
   if (parsed.failOnError && result.cases_failed > 0) {

@@ -222,4 +222,27 @@ describe("validate-matrix cli integration", () => {
     const payload = parseJsonStdout(result.stdout);
     expect(payload).toHaveProperty("error", "Invalid --max-cases value");
   });
+
+  test("writes manual empirical capture csv via --out-capture-csv", async () => {
+    const capturePath = join(exportsDir, "matrix_capture_template.csv");
+    rmSync(capturePath, { force: true });
+
+    const result = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--out-capture-csv",
+      capturePath,
+      "--json",
+    ]);
+    expect(result.exitCode).toBe(0);
+    expect(existsSync(capturePath)).toBe(true);
+
+    const csv = readFileSync(capturePath, "utf8").trim();
+    const lines = csv.split("\n");
+    expect(lines.length).toBe(3);
+    expect(lines[0]).toContain("case_id,status,duration_ms,score_total,grade,confidence_value,confidence_label");
+    expect(lines[0]).toContain("upload_account,uploaded_at,downloaded_at,post_url,grid_view_ok,post_view_ok");
+    expect(lines[1]).toContain("matrix-basic-reliable-feed-portrait");
+    expect(lines[2]).toContain("matrix-basic-reliable-reel-video");
+  });
 });
