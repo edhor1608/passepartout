@@ -1,0 +1,10 @@
+[
+  {
+    "id": "validate-matrix-basic",
+    "args": [
+      "--cases",
+      "tests/fixtures/matrix/cases_basic.json",
+      "--json"
+    ]
+  }
+]

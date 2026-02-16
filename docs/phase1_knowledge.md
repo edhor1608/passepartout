@@ -11,6 +11,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Deterministic profile-grid preview engine (`grid-preview`) for center-square crop simulation (`4:5`, `3:4`, `9:16`) with JSON + SVG output.
 - Deterministic watch-folder engine (`watch-folder`) for batch input directories with `--once` scan mode and stateful dedupe.
 - Deterministic finite polling for watch-folder via `--max-cycles` to make repeated scan loops testable and bounded.
+- Deterministic validation matrix runner (`validate-matrix`) for batch execution of benchmark cases from a JSON matrix file.
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Deterministic report engine (`report`) layered on analyze output with checklist + next-actions contract.
 - Deterministic report-export engine (`report-export`) that executes export and compares input/output media characteristics.
@@ -75,6 +76,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added failing-first integration and e2e snapshot tests for `watch-folder --once` with deterministic processed/skipped/error summaries.
 - Added fixture directories for watch-folder coverage (`tests/fixtures/watch`, `tests/fixtures/watch_e2e`) and deterministic state file snapshot baselines.
 - Added failing-first integration + e2e coverage for `watch-folder` finite polling (`--interval-sec` + `--max-cycles`) and deterministic multi-cycle output behavior.
+- Added failing-first integration + e2e coverage for `validate-matrix` with fixture-based matrix case execution and deterministic snapshot output.
 
 ## Deferred
 

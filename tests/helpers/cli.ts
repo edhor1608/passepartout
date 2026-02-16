@@ -15,6 +15,7 @@ async function runCli(
     | "overlay"
     | "grid-preview"
     | "watch-folder"
+    | "validate-matrix"
     | "export-image"
     | "export-video"
     | "report"
@@ -56,6 +57,10 @@ export async function runGridPreviewCli(args: string[]): Promise<CliRunResult> {
 
 export async function runWatchFolderCli(args: string[]): Promise<CliRunResult> {
   return runCli("watch-folder", args);
+}
+
+export async function runValidateMatrixCli(args: string[]): Promise<CliRunResult> {
+  return runCli("validate-matrix", args);
 }
 
 export async function runExportImageCli(args: string[]): Promise<CliRunResult> {

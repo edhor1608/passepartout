@@ -240,6 +240,35 @@ export type BenchmarkOutput = {
   };
 };
 
+export type ValidateMatrixCase = {
+  id: string;
+  file: string;
+  out: string;
+  mode: Mode;
+  surface: Surface;
+  workflow?: Workflow;
+  whiteCanvas?: boolean;
+  canvasProfile?: CanvasProfile;
+  canvasStyle?: CanvasStyle;
+};
+
+export type ValidateMatrixInput = {
+  casesFile: string;
+};
+
+export type ValidateMatrixOutput = {
+  matrix_version: "v1";
+  cases_total: number;
+  cases_succeeded: number;
+  cases_failed: number;
+  results: Array<{
+    id: string;
+    status: "ok" | "error";
+    benchmark: BenchmarkOutput | null;
+    error: string | null;
+  }>;
+};
+
 export type OverlayRatio = "4:5" | "3:4" | "9:16";
 
 export type OverlayOutput = {
