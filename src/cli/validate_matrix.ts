@@ -10,6 +10,7 @@ type ParsedArgs = ValidateMatrixInput & {
   outMd?: string;
   outCaptureCsv?: string;
   appendCaptureCsv: boolean;
+  captureRunId?: string;
   failOnError: boolean;
 };
 
@@ -19,6 +20,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let outMd: string | undefined;
   let outCaptureCsv: string | undefined;
   let appendCaptureCsv = false;
+  let captureRunId: string | undefined;
   let onlyIds: string[] | undefined;
   let onlyFile: string | undefined;
   let maxCases: number | undefined;
@@ -48,6 +50,10 @@ function parseArgs(argv: string[]): ParsedArgs {
         break;
       case "--append-capture-csv":
         appendCaptureCsv = true;
+        break;
+      case "--capture-run-id":
+        captureRunId = next;
+        i += 1;
         break;
       case "--only":
         onlyIds = (next ?? "")
@@ -93,6 +99,12 @@ function parseArgs(argv: string[]): ParsedArgs {
   if (appendCaptureCsv && !outCaptureCsv) {
     throw new Error("Missing required args: --out-capture-csv for --append-capture-csv");
   }
+  if (captureRunId !== undefined && captureRunId.length === 0) {
+    throw new Error("Invalid --capture-run-id value");
+  }
+  if (captureRunId !== undefined && !outCaptureCsv) {
+    throw new Error("Missing required args: --out-capture-csv for --capture-run-id");
+  }
   if (onlyIds !== undefined && onlyFile !== undefined) {
     throw new Error("Cannot combine --only with --only-file");
   }
@@ -117,7 +129,18 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error("Invalid --max-cases value");
   }
 
-  return { casesFile, outJson, outMd, outCaptureCsv, appendCaptureCsv, onlyIds, maxCases, json, failOnError };
+  return {
+    casesFile,
+    outJson,
+    outMd,
+    outCaptureCsv,
+    appendCaptureCsv,
+    captureRunId,
+    onlyIds,
+    maxCases,
+    json,
+    failOnError,
+  };
 }
 
 function buildMarkdownReport(result: ReturnType<typeof validateMatrix>): string {
@@ -183,6 +206,7 @@ function toCsvValue(value: string | number | null | undefined): string {
 }
 
 const CAPTURE_CSV_HEADER = [
+  "run_id",
   "case_id",
   "status",
   "duration_ms",
@@ -205,12 +229,13 @@ const CAPTURE_CSV_HEADER = [
   "compression_notes",
 ].join(",");
 
-function buildCaptureCsvRows(result: ReturnType<typeof validateMatrix>): string {
+function buildCaptureCsvRows(result: ReturnType<typeof validateMatrix>, captureRunId?: string): string {
   return result.results
     .map((row) => {
       const benchmark = row.status === "ok" ? row.benchmark : null;
       const exportArtifact = benchmark?.report_export.export ?? null;
       return [
+        captureRunId ?? "",
         row.id,
         row.status,
         row.duration_ms,
@@ -238,8 +263,8 @@ function buildCaptureCsvRows(result: ReturnType<typeof validateMatrix>): string 
     .join("\n");
 }
 
-function buildCaptureCsv(result: ReturnType<typeof validateMatrix>): string {
-  const rows = buildCaptureCsvRows(result);
+function buildCaptureCsv(result: ReturnType<typeof validateMatrix>, captureRunId?: string): string {
+  const rows = buildCaptureCsvRows(result, captureRunId);
   if (rows.length === 0) {
     return `${CAPTURE_CSV_HEADER}\n`;
   }
@@ -265,12 +290,12 @@ function main(): void {
     const outPath = resolve(parsed.outCaptureCsv);
     mkdirSync(dirname(outPath), { recursive: true });
     if (parsed.appendCaptureCsv && existsSync(outPath)) {
-      const rows = buildCaptureCsvRows(result);
+      const rows = buildCaptureCsvRows(result, parsed.captureRunId);
       if (rows.length > 0) {
         appendFileSync(outPath, `${rows}\n`, "utf8");
       }
     } else {
-      writeFileSync(outPath, buildCaptureCsv(result), "utf8");
+      writeFileSync(outPath, buildCaptureCsv(result, parsed.captureRunId), "utf8");
     }
   }
 

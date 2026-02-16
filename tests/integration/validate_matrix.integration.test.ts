@@ -232,6 +232,8 @@ describe("validate-matrix cli integration", () => {
       casesFile,
       "--out-capture-csv",
       capturePath,
+      "--capture-run-id",
+      "nightly_001",
       "--json",
     ]);
     expect(result.exitCode).toBe(0);
@@ -240,10 +242,10 @@ describe("validate-matrix cli integration", () => {
     const csv = readFileSync(capturePath, "utf8").trim();
     const lines = csv.split("\n");
     expect(lines.length).toBe(3);
-    expect(lines[0]).toContain("case_id,status,duration_ms,score_total,grade,confidence_value,confidence_label");
+    expect(lines[0]).toContain("run_id,case_id,status,duration_ms,score_total,grade,confidence_value,confidence_label");
     expect(lines[0]).toContain("upload_account,uploaded_at,downloaded_at,post_url,grid_view_ok,post_view_ok");
-    expect(lines[1]).toContain("matrix-basic-reliable-feed-portrait");
-    expect(lines[2]).toContain("matrix-basic-reliable-reel-video");
+    expect(lines[1]).toContain("nightly_001,matrix-basic-reliable-feed-portrait");
+    expect(lines[2]).toContain("nightly_001,matrix-basic-reliable-reel-video");
   });
 
   test("appends capture rows via --append-capture-csv without duplicating header", async () => {
@@ -274,7 +276,7 @@ describe("validate-matrix cli integration", () => {
     const csv = readFileSync(capturePath, "utf8").trim();
     const lines = csv.split("\n");
     expect(lines.length).toBe(4);
-    expect(lines.filter((line) => line.startsWith("case_id,")).length).toBe(1);
+    expect(lines.filter((line) => line.startsWith("run_id,case_id,")).length).toBe(1);
     expect(lines[3]).toContain("matrix-basic-reliable-feed-portrait");
   });
 
@@ -289,5 +291,19 @@ describe("validate-matrix cli integration", () => {
 
     const payload = parseJsonStdout(result.stdout);
     expect(payload).toHaveProperty("error", "Missing required args: --out-capture-csv for --append-capture-csv");
+  });
+
+  test("returns non-zero when --capture-run-id is set without --out-capture-csv", async () => {
+    const result = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--capture-run-id",
+      "nightly_002",
+      "--json",
+    ]);
+    expect(result.exitCode).toBe(1);
+
+    const payload = parseJsonStdout(result.stdout);
+    expect(payload).toHaveProperty("error", "Missing required args: --out-capture-csv for --capture-run-id");
   });
 });
