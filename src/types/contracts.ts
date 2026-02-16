@@ -222,6 +222,8 @@ export type ReportExportOutput = {
     output_colorspace: string;
     input_has_audio: boolean;
     output_has_audio: boolean;
+    psnr_db: number | null;
+    ssim: number | null;
     notes: string[];
   };
 };
