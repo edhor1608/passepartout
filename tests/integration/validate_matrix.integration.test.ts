@@ -35,6 +35,7 @@ describe("validate-matrix cli integration", () => {
     expect(payload).toHaveProperty("cases_total", 2);
     expect(payload).toHaveProperty("cases_succeeded", 2);
     expect(payload).toHaveProperty("cases_failed", 0);
+    expect(payload).toHaveProperty("cases_skipped", 0);
     expect(payload).toHaveProperty("selected_case_ids");
     expect(typeof payload.duration_ms).toBe("number");
     expect((payload.duration_ms as number) >= 0).toBe(true);
@@ -128,6 +129,7 @@ describe("validate-matrix cli integration", () => {
     expect(payload).toHaveProperty("cases_total", 1);
     expect(payload).toHaveProperty("cases_succeeded", 1);
     expect(payload).toHaveProperty("cases_failed", 0);
+    expect(payload).toHaveProperty("cases_skipped", 1);
     expect(payload.selected_case_ids).toEqual(["matrix-basic-reliable-feed-portrait"]);
     expect(existsSync(portraitOut)).toBe(true);
     expect(existsSync(reelOut)).toBe(false);
@@ -163,6 +165,7 @@ describe("validate-matrix cli integration", () => {
 
     const payload = parseJsonStdout(result.stdout);
     expect(payload).toHaveProperty("cases_total", 1);
+    expect(payload).toHaveProperty("cases_skipped", 1);
     expect(payload.selected_case_ids).toEqual(["matrix-basic-reliable-feed-portrait"]);
     expect(existsSync(portraitOut)).toBe(true);
     expect(existsSync(reelOut)).toBe(false);

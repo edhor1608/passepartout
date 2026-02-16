@@ -108,6 +108,7 @@ function buildMarkdownReport(result: ReturnType<typeof validateMatrix>): string 
   lines.push("# Validate Matrix Report");
   lines.push("");
   lines.push(`Cases total: ${result.cases_total}`);
+  lines.push(`Cases skipped: ${result.cases_skipped}`);
   lines.push(`Cases succeeded: ${result.cases_succeeded}`);
   lines.push(`Cases failed: ${result.cases_failed}`);
   lines.push(`Duration ms: ${result.duration_ms}`);
@@ -141,7 +142,7 @@ function buildMarkdownReport(result: ReturnType<typeof validateMatrix>): string 
 
 function printHumanOutput(result: ReturnType<typeof validateMatrix>): void {
   console.log(
-    `Summary: total=${result.cases_total} succeeded=${result.cases_succeeded} failed=${result.cases_failed}`,
+    `Summary: total=${result.cases_total} skipped=${result.cases_skipped} succeeded=${result.cases_succeeded} failed=${result.cases_failed}`,
   );
   for (const row of result.results) {
     if (row.status === "ok" && row.benchmark) {

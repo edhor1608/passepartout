@@ -198,6 +198,7 @@ export function validateMatrix(input: ValidateMatrixInput): ValidateMatrixOutput
     duration_ms: Date.now() - startedAt,
     selected_case_ids: cases.map((testCase) => testCase.id),
     cases_total: cases.length,
+    cases_skipped: allCases.length - cases.length,
     cases_succeeded: succeeded,
     cases_failed: failed,
     summary: {
