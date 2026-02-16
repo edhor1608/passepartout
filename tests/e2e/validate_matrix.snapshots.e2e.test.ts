@@ -11,14 +11,17 @@ const snapshotDir = join(fixtureDir, "snapshots", "validate_matrix");
 const cases = JSON.parse(readFileSync(join(fixtureDir, "validate_matrix_cases.json"), "utf8")) as Case[];
 
 function normalizePayload(raw: string): string {
-  const parsed = JSON.parse(raw) as {
-    duration_ms?: number;
-    results?: Array<{ duration_ms?: number }>;
+  const parsed = JSON.parse(raw) as Record<string, unknown> & {
+    results?: Array<Record<string, unknown>>;
   };
-  parsed.duration_ms = 0;
+  if (typeof parsed.duration_ms === "number") {
+    parsed.duration_ms = 0;
+  }
   if (Array.isArray(parsed.results)) {
     for (const row of parsed.results) {
-      row.duration_ms = 0;
+      if (typeof row.duration_ms === "number") {
+        row.duration_ms = 0;
+      }
     }
   }
   return stableStringify(parsed);

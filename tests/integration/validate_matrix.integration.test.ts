@@ -135,6 +135,7 @@ describe("validate-matrix cli integration", () => {
       "--json",
     ]);
     expect(result.exitCode).toBe(1);
-    expect(result.stderr.includes("Unknown case id(s) in --only: missing-case-id")).toBe(true);
+    const payload = parseJsonStdout(result.stdout);
+    expect(payload).toHaveProperty("error", "Unknown case id(s) in --only: missing-case-id");
   });
 });

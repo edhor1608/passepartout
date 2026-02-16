@@ -147,4 +147,19 @@ function main(): void {
   printHumanOutput(result);
 }
 
-main();
+function printError(message: string, json: boolean): void {
+  if (json) {
+    console.log(stableStringify({ error: message }));
+    return;
+  }
+  console.error(`Error: ${message}`);
+}
+
+try {
+  main();
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  const json = process.argv.slice(2).includes("--json");
+  printError(message, json);
+  process.exitCode = 1;
+}
