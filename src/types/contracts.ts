@@ -266,6 +266,7 @@ export type ValidateMatrixInput = {
 export type ValidateMatrixOutput = {
   matrix_version: "v1";
   duration_ms: number;
+  selected_case_ids: string[];
   cases_total: number;
   cases_succeeded: number;
   cases_failed: number;

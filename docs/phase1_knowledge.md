@@ -22,6 +22,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Deterministic validate-matrix case subset filtering via `--only <id1,id2,...>` for targeted reruns.
 - Deterministic validate-matrix strict subset validation: `--only` now fails on unknown case ids.
 - Deterministic validate-matrix JSON error envelopes on fatal setup errors when `--json` is enabled.
+- Deterministic validate-matrix selected case traceability via `selected_case_ids` in success output payloads.
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Deterministic report engine (`report`) layered on analyze output with checklist + next-actions contract.
 - Deterministic report-export engine (`report-export`) that executes export and compares input/output media characteristics.
@@ -97,6 +98,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added failing-first validate-matrix integration and e2e snapshot coverage for targeted subset execution via `--only`.
 - Added failing-first validate-matrix integration coverage proving `--only` fails fast on unknown ids.
 - Added failing-first validate-matrix integration + e2e snapshot coverage for deterministic JSON error payloads on fatal setup errors.
+- Added failing-first validate-matrix integration assertions and e2e snapshot coverage for `selected_case_ids` output traceability.
 
 ## Deferred
 

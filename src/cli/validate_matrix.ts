@@ -78,6 +78,7 @@ function buildMarkdownReport(result: ReturnType<typeof validateMatrix>): string 
   lines.push(`Cases succeeded: ${result.cases_succeeded}`);
   lines.push(`Cases failed: ${result.cases_failed}`);
   lines.push(`Duration ms: ${result.duration_ms}`);
+  lines.push(`Selected case ids: ${result.selected_case_ids.join(", ")}`);
   lines.push("");
   lines.push("## Summary");
   lines.push("");
