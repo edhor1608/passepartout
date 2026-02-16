@@ -183,4 +183,40 @@ describe("validate-matrix cli integration", () => {
     const payload = parseJsonStdout(result.stdout);
     expect(payload).toHaveProperty("error", "Cannot combine --only with --only-file");
   });
+
+  test("limits execution to first N cases with --max-cases", async () => {
+    const portraitOut = join(exportsDir, "matrix_basic_portrait.jpg");
+    const reelOut = join(exportsDir, "matrix_basic_reel.mp4");
+    rmSync(portraitOut, { force: true });
+    rmSync(reelOut, { force: true });
+
+    const result = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--max-cases",
+      "1",
+      "--json",
+    ]);
+    expect(result.exitCode).toBe(0);
+
+    const payload = parseJsonStdout(result.stdout);
+    expect(payload).toHaveProperty("cases_total", 1);
+    expect(payload.selected_case_ids).toEqual(["matrix-basic-reliable-feed-portrait"]);
+    expect(existsSync(portraitOut)).toBe(true);
+    expect(existsSync(reelOut)).toBe(false);
+  });
+
+  test("returns non-zero for invalid --max-cases values", async () => {
+    const result = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--max-cases",
+      "0",
+      "--json",
+    ]);
+    expect(result.exitCode).toBe(1);
+
+    const payload = parseJsonStdout(result.stdout);
+    expect(payload).toHaveProperty("error", "Invalid --max-cases value");
+  });
 });

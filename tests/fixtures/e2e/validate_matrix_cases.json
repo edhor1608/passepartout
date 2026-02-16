@@ -19,6 +19,17 @@
     "expected_exit_code": 1
   },
   {
+    "id": "validate-matrix-max-cases-1",
+    "args": [
+      "--cases",
+      "tests/fixtures/matrix/cases_basic.json",
+      "--max-cases",
+      "1",
+      "--json"
+    ],
+    "expected_exit_code": 0
+  },
+  {
     "id": "validate-matrix-only-portrait",
     "args": [
       "--cases",

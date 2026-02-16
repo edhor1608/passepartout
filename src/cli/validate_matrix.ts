@@ -17,6 +17,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let outMd: string | undefined;
   let onlyIds: string[] | undefined;
   let onlyFile: string | undefined;
+  let maxCases: number | undefined;
   let failOnError = false;
   let json = false;
 
@@ -46,6 +47,13 @@ function parseArgs(argv: string[]): ParsedArgs {
         break;
       case "--only-file":
         onlyFile = next;
+        i += 1;
+        break;
+      case "--max-cases":
+        if (!next || !/^[0-9]+$/.test(next)) {
+          throw new Error("Invalid --max-cases value");
+        }
+        maxCases = Number.parseInt(next, 10);
         i += 1;
         break;
       case "--fail-on-error":
@@ -88,8 +96,11 @@ function parseArgs(argv: string[]): ParsedArgs {
     }
     onlyIds = parsedIds;
   }
+  if (maxCases !== undefined && maxCases <= 0) {
+    throw new Error("Invalid --max-cases value");
+  }
 
-  return { casesFile, outJson, outMd, onlyIds, json, failOnError };
+  return { casesFile, outJson, outMd, onlyIds, maxCases, json, failOnError };
 }
 
 function buildMarkdownReport(result: ReturnType<typeof validateMatrix>): string {

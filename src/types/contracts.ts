@@ -261,6 +261,7 @@ export type ValidateMatrixCase = {
 export type ValidateMatrixInput = {
   casesFile: string;
   onlyIds?: string[];
+  maxCases?: number;
 };
 
 export type ValidateMatrixOutput = {

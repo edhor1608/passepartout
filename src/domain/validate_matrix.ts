@@ -113,7 +113,8 @@ export function validateMatrix(input: ValidateMatrixInput): ValidateMatrixOutput
       throw new Error(`Unknown case id(s) in --only: ${missing.join(", ")}`);
     }
   }
-  const cases = onlyIdSet ? allCases.filter((testCase) => onlyIdSet.has(testCase.id)) : allCases;
+  const filteredCases = onlyIdSet ? allCases.filter((testCase) => onlyIdSet.has(testCase.id)) : allCases;
+  const cases = input.maxCases ? filteredCases.slice(0, input.maxCases) : filteredCases;
   const results: ValidateMatrixOutput["results"] = [];
   let succeeded = 0;
   let failed = 0;
