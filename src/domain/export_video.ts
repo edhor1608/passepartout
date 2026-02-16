@@ -1,9 +1,12 @@
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { ExportVideoInput, ExportVideoOutput } from "../types/contracts";
+import { loadExportProfiles, selectVideoExportProfile } from "./export_profiles";
 import { inspectMedia } from "./media_inspector";
 import { recommend } from "./recommend";
 import { parseResolution } from "./rules";
+
+const EXPORT_PROFILES = loadExportProfiles();
 
 function buildFilter(params: {
   targetWidth: number;
@@ -36,9 +39,15 @@ function buildFilter(params: {
 
 export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
   const workflow = input.workflow ?? "unknown";
-  const crf = input.crf ?? 23;
 
   const media = inspectMedia(input.file);
+  const exportProfile = selectVideoExportProfile(EXPORT_PROFILES, {
+    mode: input.mode,
+    surface: input.surface,
+    orientation: media.orientation,
+  });
+  const crf = input.crf ?? exportProfile.crf_default;
+
   const recommendation = recommend({
     mode: input.mode,
     surface: input.surface,
@@ -77,14 +86,14 @@ export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
       "-r",
       String(fps),
       "-c:v",
-      "libx264",
+      exportProfile.ffmpeg_video_codec,
       "-crf",
       String(crf),
       "-pix_fmt",
-      "yuv420p",
+      exportProfile.pix_fmt,
       "-movflags",
-      "+faststart",
-      "-an",
+      exportProfile.movflags,
+      ...(exportProfile.strip_audio ? ["-an"] : []),
       outputPath,
     ],
     stdout: "pipe",
@@ -99,11 +108,13 @@ export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
   return {
     input_path: inputPath,
     output_path: outputPath,
+    export_profile_id: exportProfile.profile_id,
+    crf_used: crf,
     selected_profile: recommendation.selected_profile,
     target_resolution: recommendation.target_resolution,
     white_canvas_enabled: recommendation.white_canvas.enabled,
     ffmpeg_filter: filter,
-    video_codec: "h264",
+    video_codec: exportProfile.output_codec,
     fps,
     output_width: outputMeta.width,
     output_height: outputMeta.height,

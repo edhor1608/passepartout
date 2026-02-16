@@ -1,9 +1,12 @@
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { ExportImageInput, ExportImageOutput } from "../types/contracts";
+import { loadExportProfiles, selectImageExportProfile } from "./export_profiles";
 import { inspectMedia } from "./media_inspector";
 import { recommend } from "./recommend";
 import { parseResolution } from "./rules";
+
+const EXPORT_PROFILES = loadExportProfiles();
 
 function buildFilter(params: {
   targetWidth: number;
@@ -36,9 +39,15 @@ function buildFilter(params: {
 
 export function exportImage(input: ExportImageInput): ExportImageOutput {
   const workflow = input.workflow ?? "unknown";
-  const quality = input.quality ?? 2;
 
   const media = inspectMedia(input.file);
+  const exportProfile = selectImageExportProfile(EXPORT_PROFILES, {
+    mode: input.mode,
+    surface: input.surface,
+    orientation: media.orientation,
+  });
+  const quality = input.quality ?? exportProfile.quality_default;
+
   const recommendation = recommend({
     mode: input.mode,
     surface: input.surface,
@@ -90,6 +99,8 @@ export function exportImage(input: ExportImageInput): ExportImageOutput {
   return {
     input_path: inputPath,
     output_path: outputPath,
+    export_profile_id: exportProfile.profile_id,
+    quality_used: quality,
     selected_profile: recommendation.selected_profile,
     target_resolution: recommendation.target_resolution,
     white_canvas_enabled: recommendation.white_canvas.enabled,

@@ -40,6 +40,8 @@ describe("export-video integration", () => {
     expect(exportPayload.output_fps).toBe(30);
     expect(exportPayload.output_has_audio).toBe(false);
     expect(exportPayload.output_audio_codec).toBeNull();
+    expect(exportPayload.export_profile_id).toBe("vid_reliable_reel_v1");
+    expect(exportPayload.crf_used).toBe(23);
 
     const analyzeResult = await runAnalyzeCli([
       output,
@@ -93,6 +95,8 @@ describe("export-video integration", () => {
     expect(payload.output_fps).toBe(24);
     expect(payload.output_has_audio).toBe(false);
     expect(payload.output_audio_codec).toBeNull();
+    expect(payload.export_profile_id).toBe("vid_reliable_feed_landscape_v1");
+    expect(payload.crf_used).toBe(23);
   });
 
   test("white-canvas video polaroid_classic applies larger bottom border in filter", async () => {
@@ -125,6 +129,8 @@ describe("export-video integration", () => {
       "ffmpeg_filter",
       "scale=994:810:force_original_aspect_ratio=decrease,pad=994:810:(ow-iw)/2:(oh-ih)/2:white,pad=1080:1350:43:216:white",
     );
+    expect(payload.export_profile_id).toBe("vid_reliable_feed_landscape_v1");
+    expect(payload.crf_used).toBe(23);
   });
 
   test("white-canvas export-video supports reel surface", async () => {
@@ -154,6 +160,8 @@ describe("export-video integration", () => {
     expect(payload).toHaveProperty("selected_profile", "reliable_reel_white_canvas_reel_default");
     expect(payload.output_width).toBe(1080);
     expect(payload.output_height).toBe(1920);
+    expect(payload.export_profile_id).toBe("vid_reliable_reel_v1");
+    expect(payload.crf_used).toBe(23);
   });
 
   test("export-video strips audio track from audio input", async () => {

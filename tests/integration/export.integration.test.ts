@@ -78,6 +78,8 @@ describe("export-image integration", () => {
     const payload = parseJsonStdout(exportResult.stdout);
     expect(payload).toHaveProperty("target_resolution", "1080x1350");
     expect(payload).toHaveProperty("white_canvas_enabled", true);
+    expect(payload).toHaveProperty("export_profile_id", "img_reliable_feed_landscape_v1");
+    expect(payload).toHaveProperty("quality_used", 2);
   });
 
   test("white-canvas polaroid_classic applies larger bottom border in filter", async () => {
@@ -110,6 +112,8 @@ describe("export-image integration", () => {
       "ffmpeg_filter",
       "scale=994:810:force_original_aspect_ratio=decrease,pad=994:810:(ow-iw)/2:(oh-ih)/2:white,pad=1080:1350:43:216:white",
     );
+    expect(payload).toHaveProperty("export_profile_id", "img_reliable_feed_landscape_v1");
+    expect(payload).toHaveProperty("quality_used", 2);
   });
 
   test("white-canvas export supports story surface", async () => {
@@ -137,5 +141,7 @@ describe("export-image integration", () => {
     expect(payload).toHaveProperty("target_resolution", "1080x1920");
     expect(payload).toHaveProperty("white_canvas_enabled", true);
     expect(payload).toHaveProperty("selected_profile", "reliable_story_white_canvas_story_default");
+    expect(payload).toHaveProperty("export_profile_id", "img_reliable_story_v1");
+    expect(payload).toHaveProperty("quality_used", 2);
   });
 });
