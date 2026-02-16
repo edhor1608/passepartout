@@ -14,9 +14,19 @@ describe("validate-matrix cli integration", () => {
     rmSync(join(exportsDir, "matrix_basic_portrait.jpg"), { force: true });
     rmSync(join(exportsDir, "matrix_basic_reel.mp4"), { force: true });
     const reportPath = join(exportsDir, "matrix_basic_report.json");
+    const summaryPath = join(exportsDir, "matrix_basic_summary.md");
     rmSync(reportPath, { force: true });
+    rmSync(summaryPath, { force: true });
 
-    const result = await runValidateMatrixCli(["--cases", casesFile, "--out-json", reportPath, "--json"]);
+    const result = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--out-json",
+      reportPath,
+      "--out-md",
+      summaryPath,
+      "--json",
+    ]);
     expect(result.exitCode).toBe(0);
 
     const payload = parseJsonStdout(result.stdout);
@@ -60,9 +70,13 @@ describe("validate-matrix cli integration", () => {
     expect(existsSync(join(exportsDir, "matrix_basic_portrait.jpg"))).toBe(true);
     expect(existsSync(join(exportsDir, "matrix_basic_reel.mp4"))).toBe(true);
     expect(existsSync(reportPath)).toBe(true);
+    expect(existsSync(summaryPath)).toBe(true);
     const report = JSON.parse(readFileSync(reportPath, "utf8")) as Record<string, unknown>;
     expect(report).toHaveProperty("matrix_version", "v1");
     expect(report).toHaveProperty("cases_total", 2);
+    const summaryMarkdown = readFileSync(summaryPath, "utf8");
+    expect(summaryMarkdown.includes("# Validate Matrix Report")).toBe(true);
+    expect(summaryMarkdown.includes("Cases total: 2")).toBe(true);
   });
 
   test("keeps exit code zero by default when some cases fail", async () => {
