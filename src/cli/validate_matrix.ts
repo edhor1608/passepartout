@@ -15,6 +15,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let casesFile: string | undefined;
   let outJson: string | undefined;
   let outMd: string | undefined;
+  let onlyIds: string[] | undefined;
   let failOnError = false;
   let json = false;
 
@@ -33,6 +34,13 @@ function parseArgs(argv: string[]): ParsedArgs {
         break;
       case "--out-md":
         outMd = next;
+        i += 1;
+        break;
+      case "--only":
+        onlyIds = (next ?? "")
+          .split(",")
+          .map((token) => token.trim())
+          .filter((token) => token.length > 0);
         i += 1;
         break;
       case "--fail-on-error":
@@ -55,8 +63,11 @@ function parseArgs(argv: string[]): ParsedArgs {
   if (outMd !== undefined && outMd.length === 0) {
     throw new Error("Invalid --out-md path");
   }
+  if (onlyIds !== undefined && onlyIds.length === 0) {
+    throw new Error("Invalid --only list");
+  }
 
-  return { casesFile, outJson, outMd, json, failOnError };
+  return { casesFile, outJson, outMd, onlyIds, json, failOnError };
 }
 
 function buildMarkdownReport(result: ReturnType<typeof validateMatrix>): string {

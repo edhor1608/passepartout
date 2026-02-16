@@ -260,6 +260,7 @@ export type ValidateMatrixCase = {
 
 export type ValidateMatrixInput = {
   casesFile: string;
+  onlyIds?: string[];
 };
 
 export type ValidateMatrixOutput = {

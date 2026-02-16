@@ -102,4 +102,27 @@ describe("validate-matrix cli integration", () => {
     expect(payload).toHaveProperty("cases_failed", 1);
     expect(typeof payload.duration_ms).toBe("number");
   });
+
+  test("runs only selected case ids with --only filter", async () => {
+    const portraitOut = join(exportsDir, "matrix_basic_portrait.jpg");
+    const reelOut = join(exportsDir, "matrix_basic_reel.mp4");
+    rmSync(portraitOut, { force: true });
+    rmSync(reelOut, { force: true });
+
+    const result = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--only",
+      "matrix-basic-reliable-feed-portrait",
+      "--json",
+    ]);
+    expect(result.exitCode).toBe(0);
+
+    const payload = parseJsonStdout(result.stdout);
+    expect(payload).toHaveProperty("cases_total", 1);
+    expect(payload).toHaveProperty("cases_succeeded", 1);
+    expect(payload).toHaveProperty("cases_failed", 0);
+    expect(existsSync(portraitOut)).toBe(true);
+    expect(existsSync(reelOut)).toBe(false);
+  });
 });

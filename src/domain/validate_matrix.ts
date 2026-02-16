@@ -104,7 +104,9 @@ function parseCases(casesFile: string): ValidateMatrixCase[] {
 
 export function validateMatrix(input: ValidateMatrixInput): ValidateMatrixOutput {
   const startedAt = Date.now();
-  const cases = parseCases(input.casesFile);
+  const allCases = parseCases(input.casesFile);
+  const onlyIdSet = input.onlyIds ? new Set(input.onlyIds) : null;
+  const cases = onlyIdSet ? allCases.filter((testCase) => onlyIdSet.has(testCase.id)) : allCases;
   const results: ValidateMatrixOutput["results"] = [];
   let succeeded = 0;
   let failed = 0;
