@@ -125,4 +125,16 @@ describe("validate-matrix cli integration", () => {
     expect(existsSync(portraitOut)).toBe(true);
     expect(existsSync(reelOut)).toBe(false);
   });
+
+  test("returns non-zero when --only includes unknown case ids", async () => {
+    const result = await runValidateMatrixCli([
+      "--cases",
+      casesFile,
+      "--only",
+      "matrix-basic-reliable-feed-portrait,missing-case-id",
+      "--json",
+    ]);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr.includes("Unknown case id(s) in --only: missing-case-id")).toBe(true);
+  });
 });

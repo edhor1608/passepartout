@@ -105,7 +105,14 @@ function parseCases(casesFile: string): ValidateMatrixCase[] {
 export function validateMatrix(input: ValidateMatrixInput): ValidateMatrixOutput {
   const startedAt = Date.now();
   const allCases = parseCases(input.casesFile);
+  const allCaseIds = new Set(allCases.map((testCase) => testCase.id));
   const onlyIdSet = input.onlyIds ? new Set(input.onlyIds) : null;
+  if (onlyIdSet) {
+    const missing = [...onlyIdSet].filter((id) => !allCaseIds.has(id));
+    if (missing.length > 0) {
+      throw new Error(`Unknown case id(s) in --only: ${missing.join(", ")}`);
+    }
+  }
   const cases = onlyIdSet ? allCases.filter((testCase) => onlyIdSet.has(testCase.id)) : allCases;
   const results: ValidateMatrixOutput["results"] = [];
   let succeeded = 0;
