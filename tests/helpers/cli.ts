@@ -14,6 +14,7 @@ async function runCli(
     | "analyze"
     | "overlay"
     | "grid-preview"
+    | "watch-folder"
     | "export-image"
     | "export-video"
     | "report"
@@ -51,6 +52,10 @@ export async function runOverlayCli(args: string[]): Promise<CliRunResult> {
 
 export async function runGridPreviewCli(args: string[]): Promise<CliRunResult> {
   return runCli("grid-preview", args);
+}
+
+export async function runWatchFolderCli(args: string[]): Promise<CliRunResult> {
+  return runCli("watch-folder", args);
 }
 
 export async function runExportImageCli(args: string[]): Promise<CliRunResult> {

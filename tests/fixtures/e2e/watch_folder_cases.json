@@ -1,0 +1,19 @@
+[
+  {
+    "id": "watch-folder-once-reliable-feed",
+    "input_files": [
+      "portrait_sample_30x40.png",
+      "portrait_video_360x640.mp4"
+    ],
+    "args": [
+      "--mode",
+      "reliable",
+      "--surface",
+      "feed",
+      "--workflow",
+      "unknown",
+      "--once",
+      "--json"
+    ]
+  }
+]

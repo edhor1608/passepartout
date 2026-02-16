@@ -281,3 +281,39 @@ export type GridPreviewOutput = {
   visible_fraction_percent: number;
   output_svg_path?: string;
 };
+
+export type WatchFolderInput = {
+  inDir: string;
+  outDir: string;
+  mode: Mode;
+  surface: Surface;
+  workflow?: Workflow;
+  whiteCanvas?: boolean;
+  canvasProfile?: CanvasProfile;
+  canvasStyle?: CanvasStyle;
+  once?: boolean;
+  intervalSeconds?: number;
+};
+
+export type WatchFolderOutput = {
+  input_dir: string;
+  output_dir: string;
+  state_path: string;
+  once: boolean;
+  processed_count: number;
+  skipped_count: number;
+  error_count: number;
+  processed: Array<{
+    input_path: string;
+    output_path: string;
+    kind: "image" | "video";
+  }>;
+  skipped: Array<{
+    input_path: string;
+    reason: string;
+  }>;
+  errors: Array<{
+    input_path: string;
+    message: string;
+  }>;
+};

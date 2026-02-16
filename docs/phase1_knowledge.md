@@ -1,4 +1,4 @@
-# Phase 1 Knowledge (2026-02-15)
+# Phase 1 Knowledge (2026-02-16)
 
 ## Problem
 
@@ -9,6 +9,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Deterministic recommendation engine (`recommend`) with mode/surface/orientation/workflow inputs.
 - Deterministic overlay guide engine (`overlay`) for crop-safe framing guides (`4:5`, `3:4`, `9:16`) with JSON + SVG output.
 - Deterministic profile-grid preview engine (`grid-preview`) for center-square crop simulation (`4:5`, `3:4`, `9:16`) with JSON + SVG output.
+- Deterministic watch-folder engine (`watch-folder`) for batch input directories with `--once` scan mode and stateful dedupe.
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Deterministic report engine (`report`) layered on analyze output with checklist + next-actions contract.
 - Deterministic report-export engine (`report-export`) that executes export and compares input/output media characteristics.
@@ -70,6 +71,8 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added failing-first tests for overlay geometry + CLI output and fixture-based e2e snapshot coverage for overlay ratios.
 - Added failing-first tests for profile-grid crop simulation geometry + CLI output and fixture-based e2e snapshot coverage.
 - Added failing-first tests for export profile selection and export output profile fields (`export_profile_id`, `quality_used`, `crf_used`).
+- Added failing-first integration and e2e snapshot tests for `watch-folder --once` with deterministic processed/skipped/error summaries.
+- Added fixture directories for watch-folder coverage (`tests/fixtures/watch`, `tests/fixtures/watch_e2e`) and deterministic state file snapshot baselines.
 
 ## Deferred
 
