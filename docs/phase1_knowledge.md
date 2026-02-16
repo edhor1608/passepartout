@@ -15,6 +15,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Deterministic objective quality metrics baseline in report-export comparison output (`psnr_db`, `ssim`) via ffmpeg filters.
 - Deterministic benchmark confidence baseline (`value`, `label`) derived from output-match, bitrate, and objective metric availability.
 - Deterministic validate-matrix aggregate summary output (`avg_total_score`, `avg_confidence`, grade/confidence distributions).
+- Deterministic validate-matrix artifact export via `--out-json` for overnight run persistence.
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Deterministic report engine (`report`) layered on analyze output with checklist + next-actions contract.
 - Deterministic report-export engine (`report-export`) that executes export and compares input/output media characteristics.
@@ -83,6 +84,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added failing-first report-export integration checks for objective metrics fields and regenerated report-export/benchmark/validate-matrix e2e snapshots.
 - Added failing-first benchmark integration checks for confidence output and regenerated benchmark/validate-matrix snapshots.
 - Added failing-first validate-matrix integration checks for aggregate summary fields and regenerated validate-matrix snapshots.
+- Added failing-first validate-matrix integration checks for `--out-json` artifact writing with deterministic payload persistence.
 
 ## Deferred
 

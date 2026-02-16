@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { parseJsonStdout, runValidateMatrixCli } from "../helpers/cli";
 
@@ -12,8 +12,10 @@ describe("validate-matrix cli integration", () => {
     mkdirSync(exportsDir, { recursive: true });
     rmSync(join(exportsDir, "matrix_basic_portrait.jpg"), { force: true });
     rmSync(join(exportsDir, "matrix_basic_reel.mp4"), { force: true });
+    const reportPath = join(exportsDir, "matrix_basic_report.json");
+    rmSync(reportPath, { force: true });
 
-    const result = await runValidateMatrixCli(["--cases", casesFile, "--json"]);
+    const result = await runValidateMatrixCli(["--cases", casesFile, "--out-json", reportPath, "--json"]);
     expect(result.exitCode).toBe(0);
 
     const payload = parseJsonStdout(result.stdout);
@@ -52,5 +54,9 @@ describe("validate-matrix cli integration", () => {
 
     expect(existsSync(join(exportsDir, "matrix_basic_portrait.jpg"))).toBe(true);
     expect(existsSync(join(exportsDir, "matrix_basic_reel.mp4"))).toBe(true);
+    expect(existsSync(reportPath)).toBe(true);
+    const report = JSON.parse(readFileSync(reportPath, "utf8")) as Record<string, unknown>;
+    expect(report).toHaveProperty("matrix_version", "v1");
+    expect(report).toHaveProperty("cases_total", 2);
   });
 });

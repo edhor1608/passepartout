@@ -1,11 +1,14 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import type { ValidateMatrixInput } from "../types/contracts";
 import { stableStringify } from "../domain/recommend";
 import { validateMatrix } from "../domain/validate_matrix";
 
-type ParsedArgs = ValidateMatrixInput & { json: boolean };
+type ParsedArgs = ValidateMatrixInput & { json: boolean; outJson?: string };
 
 function parseArgs(argv: string[]): ParsedArgs {
   let casesFile: string | undefined;
+  let outJson: string | undefined;
   let json = false;
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -15,6 +18,10 @@ function parseArgs(argv: string[]): ParsedArgs {
     switch (token) {
       case "--cases":
         casesFile = next;
+        i += 1;
+        break;
+      case "--out-json":
+        outJson = next;
         i += 1;
         break;
       case "--json":
@@ -28,8 +35,11 @@ function parseArgs(argv: string[]): ParsedArgs {
   if (!casesFile) {
     throw new Error("Missing required args: --cases");
   }
+  if (outJson !== undefined && outJson.length === 0) {
+    throw new Error("Invalid --out-json path");
+  }
 
-  return { casesFile, json };
+  return { casesFile, outJson, json };
 }
 
 function printHumanOutput(result: ReturnType<typeof validateMatrix>): void {
@@ -49,9 +59,16 @@ function printHumanOutput(result: ReturnType<typeof validateMatrix>): void {
 function main(): void {
   const parsed = parseArgs(process.argv.slice(2));
   const result = validateMatrix(parsed);
+  const payload = stableStringify(result);
+
+  if (parsed.outJson) {
+    const outPath = resolve(parsed.outJson);
+    mkdirSync(dirname(outPath), { recursive: true });
+    writeFileSync(outPath, `${payload}\n`, "utf8");
+  }
 
   if (parsed.json) {
-    console.log(stableStringify(result));
+    console.log(payload);
     return;
   }
 
