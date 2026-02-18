@@ -21,4 +21,16 @@ describe("white canvas margins v1", () => {
     const margins = computeMarginsV1({ canvasWidth: 1080, canvasHeight: 1440, sourceRatio: 1.5 });
     expect(margins).toEqual({ left: 43, top: 230, right: 43, bottom: 230 });
   });
+
+  test("throws for non-positive inputs", () => {
+    expect(() => computeMarginsV1({ canvasWidth: 0, canvasHeight: 1440, sourceRatio: 1 })).toThrow(
+      "Invalid margin input",
+    );
+    expect(() => computeMarginsV1({ canvasWidth: 1080, canvasHeight: -1, sourceRatio: 1 })).toThrow(
+      "Invalid margin input",
+    );
+    expect(() => computeMarginsV1({ canvasWidth: 1080, canvasHeight: 1440, sourceRatio: 0 })).toThrow(
+      "Invalid margin input",
+    );
+  });
 });

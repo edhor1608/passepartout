@@ -10,7 +10,11 @@ const imageDir = join(visualDir, "..", "images");
 const outDir = join(visualDir, "snapshots");
 mkdirSync(outDir, { recursive: true });
 
-for (const file of readdirSync(imageDir).filter((name) => name.endsWith(".ppm"))) {
+const imageFiles = readdirSync(imageDir)
+  .filter((name) => name.endsWith(".ppm"))
+  .sort();
+
+for (const file of imageFiles) {
   const fullPath = join(imageDir, file);
   const meta = readPpmMeta(fullPath);
   const orientation = orientationFromSize(meta.width, meta.height);

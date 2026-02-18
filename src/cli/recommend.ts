@@ -25,18 +25,30 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     switch (token) {
       case "--mode":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --mode");
+        }
         mode = next as Mode;
         i += 1;
         break;
       case "--surface":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --surface");
+        }
         surface = next as Surface;
         i += 1;
         break;
       case "--orientation":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --orientation");
+        }
         orientation = next as Orientation;
         i += 1;
         break;
       case "--workflow":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --workflow");
+        }
         workflow = next as Workflow;
         i += 1;
         break;
@@ -44,6 +56,9 @@ function parseArgs(argv: string[]): ParsedArgs {
         whiteCanvas = true;
         break;
       case "--canvas-profile":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --canvas-profile");
+        }
         canvasProfile = next as CanvasProfile;
         i += 1;
         break;

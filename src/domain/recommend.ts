@@ -9,7 +9,14 @@ import type {
 import { loadRuleset, parseResolution, selectProfileRule } from "./rules";
 import { computeMarginsV1, resolveCanvasProfile } from "./white_canvas";
 
-const DEFAULT_RULESET = loadRuleset();
+let cachedRuleset: Ruleset | null = null;
+
+function getDefaultRuleset(): Ruleset {
+  if (!cachedRuleset) {
+    cachedRuleset = loadRuleset();
+  }
+  return cachedRuleset;
+}
 
 function sourceRatioFromOrientation(orientation: Orientation): number {
   if (orientation === "landscape") {
@@ -31,7 +38,7 @@ function disabledWhiteCanvas(): WhiteCanvasOutput {
   };
 }
 
-export function recommend(input: RecommendInput, ruleset: Ruleset = DEFAULT_RULESET): RecommendationOutput {
+export function recommend(input: RecommendInput, ruleset: Ruleset = getDefaultRuleset()): RecommendationOutput {
   const workflow = input.workflow ?? "unknown";
   const whiteCanvasEnabled = input.whiteCanvas ?? false;
   const base = selectProfileRule(ruleset, input.mode, input.surface, input.orientation);

@@ -27,7 +27,7 @@ describe("e2e matrix", () => {
             expect(result.exitCode).toBe(0);
             const payload = parseJsonStdout(result.stdout);
             expect(payload.selected_mode).toBe(mode);
-            expect(["low", "medium", "high"]).toContain(String(payload.risk_level));
+            expect(String(payload.risk_level)).toMatch(/^(low|medium|high)$/);
             expect(typeof payload.target_resolution).toBe("string");
             expect(String(payload.target_resolution)).toMatch(/^\d+x\d+$/);
 

@@ -19,7 +19,7 @@
     "fixtures:pixel": "bun run tests/fixtures/pixel/generate-snapshots.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "1.3.9"
   },
   "peerDependencies": {
     "typescript": "^5"

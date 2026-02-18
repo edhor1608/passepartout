@@ -7,6 +7,10 @@ type MarginInput = {
 };
 
 export function computeMarginsV1({ canvasWidth, canvasHeight, sourceRatio }: MarginInput): Margins {
+  if (canvasWidth <= 0 || canvasHeight <= 0 || sourceRatio <= 0) {
+    throw new Error("Invalid margin input: dimensions and ratio must be positive");
+  }
+
   if (sourceRatio <= 1.0) {
     const base = Math.round(0.05 * Math.min(canvasWidth, canvasHeight));
     return { left: base, top: base, right: base, bottom: base };

@@ -25,7 +25,7 @@ export async function runRecommendCli(args: string[]): Promise<CliRunResult> {
   return { exitCode, stdout, stderr };
 }
 
-export function parseJsonStdout(stdout: string): Record<string, unknown> {
+export function parseJsonStdout(stdout: string, context = "stdout"): Record<string, unknown> {
   const lines = stdout
     .split("\n")
     .map((line) => line.trim())
@@ -33,8 +33,13 @@ export function parseJsonStdout(stdout: string): Record<string, unknown> {
 
   const last = lines[lines.length - 1];
   if (!last || !last.startsWith("{")) {
-    throw new Error(`No JSON payload in stdout: ${stdout}`);
+    throw new Error(`No JSON payload in ${context}: ${stdout}`);
   }
 
-  return JSON.parse(last) as Record<string, unknown>;
+  try {
+    return JSON.parse(last) as Record<string, unknown>;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid JSON payload in ${context}: ${message}`);
+  }
 }

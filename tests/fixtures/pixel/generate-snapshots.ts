@@ -4,28 +4,19 @@ import { recommend } from "../../../src/domain/recommend";
 import { parseResolution } from "../../../src/domain/rules";
 import { readP3Image, renderContainCanvas, writeP6Image } from "../../helpers/image";
 import { orientationFromSize } from "../../helpers/ppm";
+import { pixelScenarios } from "./scenarios";
 
 const pixelDir = import.meta.dir;
 const imageDir = join(pixelDir, "..", "images");
 const outDir = join(pixelDir, "snapshots");
 mkdirSync(outDir, { recursive: true });
 
-const scenarios = [
-  { suffix: "compat", workflow: "unknown" as const, canvasProfile: "feed_compat" as const },
-  { suffix: "app_direct", workflow: "app_direct" as const, canvasProfile: "feed_app_direct" as const },
-  {
-    suffix: "fallback",
-    workflow: "api_scheduler" as const,
-    canvasProfile: "feed_app_direct" as const,
-  },
-];
-
-for (const file of readdirSync(imageDir).filter((name) => name.endsWith(".ppm"))) {
+for (const file of readdirSync(imageDir).filter((name) => name.endsWith(".ppm")).sort()) {
   const fullPath = join(imageDir, file);
   const source = readP3Image(fullPath);
   const orientation = orientationFromSize(source.width, source.height);
 
-  for (const scenario of scenarios) {
+  for (const scenario of pixelScenarios) {
     const rec = recommend({
       mode: "reliable",
       surface: "feed",

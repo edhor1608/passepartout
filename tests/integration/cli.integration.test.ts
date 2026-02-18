@@ -64,6 +64,30 @@ describe("cli integration", () => {
     expect(result.stderr).toContain("Invalid mode");
   });
 
+  test("missing value for --mode fails with explicit error", async () => {
+    const result = await runRecommendCli(["--mode", "--surface", "feed", "--orientation", "portrait", "--json"]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("Missing value for --mode");
+  });
+
+  test("missing value for --canvas-profile fails with explicit error", async () => {
+    const result = await runRecommendCli([
+      "--mode",
+      "reliable",
+      "--surface",
+      "feed",
+      "--orientation",
+      "portrait",
+      "--white-canvas",
+      "--canvas-profile",
+      "--json",
+    ]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("Missing value for --canvas-profile");
+  });
+
   test("white-canvas on non-feed is ignored deterministically", async () => {
     const result = await runRecommendCli([
       "--mode",

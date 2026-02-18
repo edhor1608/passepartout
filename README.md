@@ -4,7 +4,7 @@ Phase 1 implements a deterministic `recommend` vertical slice for Instagram prof
 
 Example fixture image used in tests:
 
-- `/Users/jonas/repos/instagram-upload-quality-lab/tests/fixtures/images/portrait_sample_30x40.ppm`
+- `tests/fixtures/images/portrait_sample_30x40.ppm`
 
 ## Install
 

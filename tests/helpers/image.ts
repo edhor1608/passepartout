@@ -78,11 +78,11 @@ function parseHeader(bytes: Uint8Array): {
 
 export function readP3Image(path: string): RgbImage {
   const text = readFileSync(path, "utf8");
-  const tokens = text
+  const cleaned = text.replace(/#[^\n]*/g, "");
+  const tokens = cleaned
     .split(/\s+/)
     .map((token) => token.trim())
-    .filter(Boolean)
-    .filter((token) => !token.startsWith("#"));
+    .filter(Boolean);
 
   if (tokens[0] !== "P3") {
     throw new Error(`Not a P3 image: ${path}`);
@@ -229,6 +229,6 @@ export function diffRgb(a: RgbImage, b: RgbImage): {
   return {
     mismatchPixels,
     maxChannelDelta,
-    meanChannelDelta: sum / a.pixels.length,
+    meanChannelDelta: sum / (a.pixels.length / 3),
   };
 }
