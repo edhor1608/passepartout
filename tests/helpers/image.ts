@@ -66,6 +66,12 @@ function parseHeader(bytes: Uint8Array): {
 
   while (state.index < bytes.length) {
     const c = bytes[state.index];
+    if (c === 35) {
+      while (state.index < bytes.length && bytes[state.index] !== 10) {
+        state.index += 1;
+      }
+      continue;
+    }
     if (c === 9 || c === 10 || c === 13 || c === 32) {
       state.index += 1;
       continue;

@@ -102,8 +102,8 @@ describe("cli integration", () => {
       "--json",
     ]);
 
-    const payload = parseJsonStdout(result.stdout);
     expect(result.exitCode).toBe(0);
+    const payload = parseJsonStdout(result.stdout);
     expect(payload.workflow_note).toBe("White-canvas is feed-only in Phase 1; ignored for story.");
     expect(payload.white_canvas).toEqual({
       contain_only: false,
