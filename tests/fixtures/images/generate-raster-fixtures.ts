@@ -17,7 +17,7 @@ const conversions = [
 
 for (const item of conversions) {
   const png = Bun.spawnSync({
-    cmd: ["sips", "-s", "format", "png", item.input, "--out", item.png],
+    cmd: ["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", item.input, "-frames:v", "1", item.png],
     stdout: "ignore",
     stderr: "pipe",
   });
@@ -26,7 +26,20 @@ for (const item of conversions) {
   }
 
   const jpg = Bun.spawnSync({
-    cmd: ["sips", "-s", "format", "jpeg", "-s", "formatOptions", "90", item.input, "--out", item.jpg],
+    cmd: [
+      "ffmpeg",
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      "-i",
+      item.input,
+      "-frames:v",
+      "1",
+      "-q:v",
+      "2",
+      item.jpg,
+    ],
     stdout: "ignore",
     stderr: "pipe",
   });

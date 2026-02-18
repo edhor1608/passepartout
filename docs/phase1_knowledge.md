@@ -27,7 +27,7 @@ Implement the smallest executable slice of P17 that validates locked recommendat
 - Strict TypeScript check caught undefined parsing risk in resolution parsing; fixed in `src/domain/rules.ts`.
 - Added real image fixtures in `tests/fixtures/images` (PPM) and used them in visual tests.
 - Added media inspector baseline for PPM (`P3` + `P6`) and wired analyze e2e snapshot tests.
-- Added raster fixture generation (`sips`) and analyze e2e coverage for PNG/JPEG fixtures.
+- Introduced raster fixture generation (`ffmpeg`) and analyze e2e coverage for PNG/JPEG fixtures.
 
 ## Deferred
 
