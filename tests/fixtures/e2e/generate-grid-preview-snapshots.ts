@@ -35,8 +35,15 @@ for (const testCase of cases) {
   if (!payload?.startsWith("{")) {
     throw new Error(`no json payload for ${testCase.id}`);
   }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(payload) as unknown;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`invalid json payload for ${testCase.id}: ${message}`);
+  }
 
-  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${payload}\n`, "utf8");
+  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${JSON.stringify(parsed)}\n`, "utf8");
 }
 
 console.log(`generated ${cases.length} grid-preview snapshots`);

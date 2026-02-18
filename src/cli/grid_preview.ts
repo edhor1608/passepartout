@@ -10,6 +10,13 @@ type ParsedArgs = {
   json: boolean;
 };
 
+function requireValue(flag: string, value: string | undefined): string {
+  if (!value || value.startsWith("--")) {
+    throw new Error(`Missing value for ${flag}`);
+  }
+  return value;
+}
+
 function parseArgs(argv: string[]): ParsedArgs {
   let ratio: OverlayRatio | undefined;
   let out: string | undefined;
@@ -21,11 +28,14 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     switch (token) {
       case "--ratio":
-        ratio = next as OverlayRatio;
+        ratio = requireValue(token, next) as OverlayRatio;
+        if (!["4:5", "3:4", "9:16"].includes(ratio)) {
+          throw new Error(`Invalid ratio: ${ratio}`);
+        }
         i += 1;
         break;
       case "--out":
-        out = next;
+        out = requireValue(token, next);
         i += 1;
         break;
       case "--json":
@@ -38,9 +48,6 @@ function parseArgs(argv: string[]): ParsedArgs {
 
   if (!ratio) {
     throw new Error("Missing required args: --ratio");
-  }
-  if (!["4:5", "3:4", "9:16"].includes(ratio)) {
-    throw new Error(`Invalid ratio: ${ratio}`);
   }
 
   return { ratio, out, json };

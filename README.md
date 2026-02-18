@@ -42,6 +42,21 @@ Simulate profile-grid square crop visibility:
 bun run grid-preview --ratio 4:5 --json
 ```
 
+`grid-preview` supports `--ratio <4:5|3:4|9:16>`, `--json`, and optional `--out <path>` for SVG export.  
+JSON output includes crop window coordinates/size (`grid_crop_square`) and `visible_fraction_percent`.
+
+```bash
+# JSON by ratio
+bun run grid-preview --ratio 4:5 --json
+bun run grid-preview --ratio 3:4 --json
+bun run grid-preview --ratio 9:16 --json
+
+# SVG by ratio
+bun run grid-preview --ratio 4:5 --out tests/fixtures/exports/grid-preview-4-5.svg
+bun run grid-preview --ratio 3:4 --out tests/fixtures/exports/grid-preview-3-4.svg
+bun run grid-preview --ratio 9:16 --out tests/fixtures/exports/grid-preview-9-16.svg
+```
+
 Export image using deterministic preset:
 
 ```bash

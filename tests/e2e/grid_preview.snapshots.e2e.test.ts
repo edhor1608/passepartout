@@ -24,6 +24,11 @@ describe("grid-preview e2e snapshots", () => {
         .map((line) => line.trim())
         .filter(Boolean)
         .at(-1);
+      if (!actual) {
+        throw new Error(
+          `Missing JSON stdout for ${scenario.id} (${join(snapshotDir, `${scenario.id}.json`)}). Raw stdout: ${result.stdout}`,
+        );
+      }
 
       expect(actual).toBe(expected);
     });
