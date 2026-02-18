@@ -265,28 +265,79 @@ function parseFps(raw: string | undefined): number {
   return Number.parseFloat(value.toFixed(3));
 }
 
+function parseRotationValue(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+function readRotation(stream: Record<string, unknown>): number {
+  let rotation: number | null = null;
+
+  const tags = stream.tags;
+  if (tags && typeof tags === "object") {
+    rotation = parseRotationValue((tags as Record<string, unknown>).rotate);
+  }
+
+  const sideData = stream.side_data_list;
+  if (Array.isArray(sideData)) {
+    for (const entry of sideData) {
+      if (!entry || typeof entry !== "object") {
+        continue;
+      }
+      const candidate = parseRotationValue((entry as Record<string, unknown>).rotation);
+      if (candidate !== null) {
+        rotation = candidate;
+        break;
+      }
+    }
+  }
+
+  if (rotation === null) {
+    return 0;
+  }
+
+  const normalized = ((Math.round(rotation) % 360) + 360) % 360;
+  if (normalized === 90 || normalized === 180 || normalized === 270) {
+    return normalized;
+  }
+  return 0;
+}
+
 function readVideoMetadata(path: string): {
   width: number;
   height: number;
   codec: string | null;
   fps: number;
 } {
-  const proc = Bun.spawnSync({
-    cmd: [
-      "ffprobe",
-      "-v",
-      "error",
-      "-select_streams",
-      "v:0",
-      "-show_entries",
-      "stream=width,height,codec_name,avg_frame_rate,r_frame_rate",
-      "-of",
-      "json",
-      path,
-    ],
-    stdout: "pipe",
-    stderr: "pipe",
-  });
+  let proc: ReturnType<typeof Bun.spawnSync>;
+  try {
+    proc = Bun.spawnSync({
+      cmd: [
+        "ffprobe",
+        "-v",
+        "error",
+        "-select_streams",
+        "v:0",
+        "-show_entries",
+        "stream=width,height,codec_name,avg_frame_rate,r_frame_rate:stream_tags=rotate:stream_side_data=rotation",
+        "-of",
+        "json",
+        path,
+      ],
+      stdout: "pipe",
+      stderr: "pipe",
+    });
+  } catch {
+    throw new Error("ffprobe is required for video analyze but was not found in PATH");
+  }
 
   if (proc.exitCode !== 0) {
     throw new Error(`ffprobe failed for ${path}: ${proc.stderr.toString().trim()}`);
@@ -310,6 +361,10 @@ function readVideoMetadata(path: string): {
   if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
     throw new Error(`Invalid video dimensions in ${path}`);
   }
+  const rotation = readRotation(stream);
+  const isQuarterTurn = rotation === 90 || rotation === 270;
+  const displayWidth = isQuarterTurn ? height : width;
+  const displayHeight = isQuarterTurn ? width : height;
 
   const codecToken = stream.codec_name;
   const codec = typeof codecToken === "string" && codecToken.length > 0 ? codecToken : null;
@@ -319,7 +374,7 @@ function readVideoMetadata(path: string): {
     typeof stream.r_frame_rate === "string" ? stream.r_frame_rate : undefined;
   const fps = parseFps(avgFrameRate) || parseFps(realFrameRate);
 
-  return { width, height, codec, fps };
+  return { width: displayWidth, height: displayHeight, codec, fps };
 }
 
 export function inspectMedia(filePath: string): MediaInspection {
