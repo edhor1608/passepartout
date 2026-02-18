@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { inspectMedia } from "../src/domain/media_inspector";
 
 const fixtures = join(import.meta.dir, "fixtures", "images");
@@ -36,5 +38,16 @@ describe("media inspector", () => {
     const relativePath = "tests/fixtures/images/portrait_sample_30x40.ppm";
     const meta = inspectMedia(relativePath);
     expect(meta.path).toBe(relativePath);
+  });
+
+  test("reads PPM dimensions when header comments exceed initial chunk size", () => {
+    const dir = mkdtempSync(join(tmpdir(), "passepartout-media-"));
+    const path = join(dir, "long-header.ppm");
+    const longComment = "# ".concat("x".repeat((16 * 1024) + 128));
+    writeFileSync(path, `P3\n${longComment}\n3 2\n255\n0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n`, "utf8");
+
+    const meta = inspectMedia(path);
+    expect(meta.width).toBe(3);
+    expect(meta.height).toBe(2);
   });
 });

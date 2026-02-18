@@ -29,6 +29,5 @@ Implement the smallest executable slice of P17 that validates locked recommendat
 
 ## Deferred
 
-- `analyze` command and media metadata extraction.
 - Any real renderer/export pipeline (FFmpeg/libvips).
 - Empirical quality validation harness.

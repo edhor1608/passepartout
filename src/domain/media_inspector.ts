@@ -35,19 +35,40 @@ function nextToken(source: Uint8Array, state: { index: number }): string | null 
 
 function readPpmSize(path: string): { width: number; height: number } {
   const fd = openSync(path, "r");
-  const headerBuffer = Buffer.alloc(16 * 1024);
-  let bytesRead = 0;
+  const chunkSize = 16 * 1024;
+  let bytes = new Uint8Array(0);
+  let fileOffset = 0;
+  let magic: string | null = null;
+  let widthToken: string | null = null;
+  let heightToken: string | null = null;
   try {
-    bytesRead = readSync(fd, headerBuffer, 0, headerBuffer.length, 0);
+    while (true) {
+      const chunk = Buffer.alloc(chunkSize);
+      const bytesRead = readSync(fd, chunk, 0, chunk.length, fileOffset);
+      if (bytesRead <= 0) {
+        break;
+      }
+      fileOffset += bytesRead;
+      const nextBytes = new Uint8Array(bytes.length + bytesRead);
+      nextBytes.set(bytes, 0);
+      nextBytes.set(chunk.subarray(0, bytesRead), bytes.length);
+      bytes = nextBytes;
+
+      const state = { index: 0 };
+      magic = nextToken(bytes, state);
+      widthToken = nextToken(bytes, state);
+      heightToken = nextToken(bytes, state);
+      if (magic && widthToken && heightToken) {
+        break;
+      }
+
+      if (bytesRead < chunkSize) {
+        break;
+      }
+    }
   } finally {
     closeSync(fd);
   }
-
-  const bytes = new Uint8Array(headerBuffer.subarray(0, bytesRead));
-  const state = { index: 0 };
-  const magic = nextToken(bytes, state);
-  const widthToken = nextToken(bytes, state);
-  const heightToken = nextToken(bytes, state);
 
   if (magic !== "P3" && magic !== "P6") {
     throw new Error(`Unsupported PPM magic in ${path}: ${magic ?? "<missing>"}`);

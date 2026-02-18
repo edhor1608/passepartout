@@ -123,4 +123,14 @@ function main(): void {
   printHumanOutput(result);
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (process.argv.slice(2).includes("--json")) {
+    console.error(stableStringify({ error: message }));
+  } else {
+    console.error(message);
+  }
+  process.exit(1);
+}
