@@ -31,4 +31,10 @@ describe("media inspector", () => {
   test("fails for unsupported extension", () => {
     expect(() => inspectMedia("/tmp/input.jpg")).toThrow("Unsupported media format");
   });
+
+  test("preserves caller-provided path string", () => {
+    const relativePath = "tests/fixtures/images/portrait_sample_30x40.ppm";
+    const meta = inspectMedia(relativePath);
+    expect(meta.path).toBe(relativePath);
+  });
 });

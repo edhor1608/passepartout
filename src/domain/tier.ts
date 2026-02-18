@@ -24,6 +24,14 @@ function isAspectSupported(ratio: number, surface: Surface): boolean {
 }
 
 export function classifyTier({ width, height, surface }: TierInput): TierOutput {
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return {
+      name: "tier_aspect_correction",
+      reason: "Invalid dimensions: width and height must be positive.",
+      risk_level: "high",
+    };
+  }
+
   const ratio = width / height;
 
   if (!isAspectSupported(ratio, surface)) {

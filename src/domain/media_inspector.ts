@@ -1,5 +1,4 @@
-import { resolve } from "node:path";
-import { readFileSync } from "node:fs";
+import { closeSync, openSync, readSync } from "node:fs";
 import type { MediaInspection, Orientation } from "../types/contracts";
 
 function nextToken(source: Uint8Array, state: { index: number }): string | null {
@@ -35,7 +34,16 @@ function nextToken(source: Uint8Array, state: { index: number }): string | null 
 }
 
 function readPpmSize(path: string): { width: number; height: number } {
-  const bytes = new Uint8Array(readFileSync(path));
+  const fd = openSync(path, "r");
+  const headerBuffer = Buffer.alloc(16 * 1024);
+  let bytesRead = 0;
+  try {
+    bytesRead = readSync(fd, headerBuffer, 0, headerBuffer.length, 0);
+  } finally {
+    closeSync(fd);
+  }
+
+  const bytes = new Uint8Array(headerBuffer.subarray(0, bytesRead));
   const state = { index: 0 };
   const magic = nextToken(bytes, state);
   const widthToken = nextToken(bytes, state);
@@ -47,7 +55,7 @@ function readPpmSize(path: string): { width: number; height: number } {
 
   const width = Number.parseInt(widthToken ?? "", 10);
   const height = Number.parseInt(heightToken ?? "", 10);
-  if (!Number.isFinite(width) || !Number.isFinite(height)) {
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
     throw new Error(`Invalid PPM dimensions in ${path}`);
   }
 
@@ -62,21 +70,23 @@ function detectOrientation(width: number, height: number): Orientation {
 }
 
 function formatAspect(width: number, height: number): string {
+  if (height <= 0) {
+    throw new Error("Cannot compute aspect ratio with non-positive height");
+  }
   return (width / height).toFixed(4);
 }
 
 export function inspectMedia(filePath: string): MediaInspection {
-  const resolvedPath = resolve(filePath);
-  const lower = resolvedPath.toLowerCase();
+  const lower = filePath.toLowerCase();
 
   if (!lower.endsWith(".ppm")) {
     throw new Error(`Unsupported media format for Phase 1 analyze: ${filePath}`);
   }
 
-  const { width, height } = readPpmSize(resolvedPath);
+  const { width, height } = readPpmSize(filePath);
 
   return {
-    path: resolvedPath,
+    path: filePath,
     width,
     height,
     aspect_ratio: formatAspect(width, height),
