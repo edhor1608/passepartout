@@ -14,6 +14,22 @@ const imageDir = join(import.meta.dir, "..", "fixtures", "images");
 const snapshotDir = join(fixtureDir, "snapshots", "watch_folder");
 const workRoot = join(import.meta.dir, "..", "fixtures", "watch_e2e");
 const cases = JSON.parse(readFileSync(join(fixtureDir, "watch_folder_cases.json"), "utf8")) as E2eCase[];
+const repoRoot = join(import.meta.dir, "..", "..");
+
+function normalizeSnapshotPaths(value: unknown): unknown {
+  if (typeof value === "string") {
+    return value.replaceAll(repoRoot, "<repo_root>");
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeSnapshotPaths(entry));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, normalizeSnapshotPaths(entry)]),
+    );
+  }
+  return value;
+}
 
 describe("watch-folder e2e snapshots", () => {
   for (const scenario of cases) {
@@ -44,7 +60,7 @@ describe("watch-folder e2e snapshots", () => {
         .filter(Boolean)
         .at(-1);
 
-      expect(actual).toBe(expected);
+      expect(JSON.stringify(normalizeSnapshotPaths(JSON.parse(actual ?? "{}")))).toBe(expected);
     });
   }
 });

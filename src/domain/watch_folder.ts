@@ -18,8 +18,35 @@ function statePath(outDir: string): string {
 function readState(path: string): WatchState {
   try {
     const raw = readFileSync(path, "utf8");
-    const parsed = JSON.parse(raw) as WatchState;
-    return parsed.items ? parsed : { items: {} };
+    const parsed = JSON.parse(raw) as unknown;
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      return { items: {} };
+    }
+    const parsedItems = (parsed as { items?: unknown }).items;
+    if (typeof parsedItems !== "object" || parsedItems === null || Array.isArray(parsedItems)) {
+      return { items: {} };
+    }
+
+    const items: WatchState["items"] = {};
+    for (const [key, value] of Object.entries(parsedItems)) {
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value) &&
+        typeof (value as { size?: unknown }).size === "number" &&
+        Number.isFinite((value as { size: number }).size) &&
+        typeof (value as { mtime_ms?: unknown }).mtime_ms === "number" &&
+        Number.isFinite((value as { mtime_ms: number }).mtime_ms) &&
+        typeof (value as { output_path?: unknown }).output_path === "string"
+      ) {
+        items[key] = {
+          size: (value as { size: number }).size,
+          mtime_ms: (value as { mtime_ms: number }).mtime_ms,
+          output_path: (value as { output_path: string }).output_path,
+        };
+      }
+    }
+    return { items };
   } catch {
     return { items: {} };
   }

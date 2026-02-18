@@ -4,6 +4,13 @@ import { runWatchCycle } from "../domain/watch_folder";
 
 type ParsedArgs = WatchFolderInput & { json: boolean };
 
+function requireValue(flag: string, value: string | undefined): string {
+  if (!value || value.startsWith("--")) {
+    throw new Error(`Missing value for ${flag}`);
+  }
+  return value;
+}
+
 function parseArgs(argv: string[]): ParsedArgs {
   let inDir: string | undefined;
   let outDir: string | undefined;
@@ -23,41 +30,44 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     switch (token) {
       case "--in":
-        inDir = next;
+        inDir = requireValue(token, next);
         i += 1;
         break;
       case "--out":
-        outDir = next;
+        outDir = requireValue(token, next);
         i += 1;
         break;
       case "--mode":
-        mode = next as Mode;
+        mode = requireValue(token, next) as Mode;
         i += 1;
         break;
       case "--surface":
-        surface = next as Surface;
+        surface = requireValue(token, next) as Surface;
         i += 1;
         break;
       case "--workflow":
-        workflow = next as Workflow;
+        workflow = requireValue(token, next) as Workflow;
         i += 1;
         break;
       case "--white-canvas":
         whiteCanvas = true;
         break;
       case "--canvas-profile":
-        canvasProfile = next as CanvasProfile;
+        canvasProfile = requireValue(token, next) as CanvasProfile;
         i += 1;
         break;
       case "--canvas-style":
-        canvasStyle = next as CanvasStyle;
+        canvasStyle = requireValue(token, next) as CanvasStyle;
         i += 1;
         break;
       case "--once":
         once = true;
         break;
       case "--interval-sec":
-        intervalSeconds = Number.parseInt(next ?? "", 10);
+        intervalSeconds = Number.parseInt(requireValue(token, next), 10);
+        if (!Number.isFinite(intervalSeconds)) {
+          throw new Error(`Missing value for ${token}`);
+        }
         i += 1;
         break;
       case "--json":
@@ -133,7 +143,7 @@ async function main(): Promise<void> {
       break;
     }
 
-    await delay((parsed.intervalSeconds ?? 10) * 1000);
+    await delay(parsed.intervalSeconds * 1000);
   }
 }
 

@@ -16,6 +16,21 @@ mkdirSync(snapshotDir, { recursive: true });
 
 const cases = JSON.parse(readFileSync(join(fixturesDir, "watch_folder_cases.json"), "utf8")) as E2eCase[];
 
+function normalizeSnapshotPaths(value: unknown): unknown {
+  if (typeof value === "string") {
+    return value.replaceAll(repoRoot, "<repo_root>");
+  }
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeSnapshotPaths(entry));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, normalizeSnapshotPaths(entry)]),
+    );
+  }
+  return value;
+}
+
 for (const testCase of cases) {
   rmSync(workRoot, { recursive: true, force: true });
   const inputDir = join(workRoot, "input");
@@ -48,8 +63,9 @@ for (const testCase of cases) {
   if (!payload?.startsWith("{")) {
     throw new Error(`no json payload for ${testCase.id}`);
   }
+  const normalized = normalizeSnapshotPaths(JSON.parse(payload));
 
-  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${payload}\n`, "utf8");
+  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${JSON.stringify(normalized)}\n`, "utf8");
 }
 
 console.log(`generated ${cases.length} watch-folder snapshots`);
