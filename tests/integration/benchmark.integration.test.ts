@@ -47,13 +47,13 @@ describe("benchmark cli integration", () => {
     expect(["A", "B", "C", "D"]).toContain(score.grade as string);
   });
 
-  test("missing value for --mode fails with explicit error", async () => {
+  test("flag passed as --mode value fails with explicit error", async () => {
     const input = join(fixtures, "portrait_sample_30x40.png");
     const output = resetOut("benchmark_missing_mode.jpg");
 
     const result = await runBenchmarkCli([input, "--out", output, "--mode", "--surface", "feed", "--json"]);
     expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("Missing value for --mode");
+    expect(result.stderr).toContain("Invalid value for --mode");
   });
 
   test("flag passed as --out value fails with explicit error", async () => {
