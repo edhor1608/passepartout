@@ -49,8 +49,8 @@ describe("benchmark cli integration", () => {
 
     const confidence = payload.confidence as Record<string, unknown>;
     expect(typeof confidence.value).toBe("number");
-    expect((confidence.value as number) >= 0).toBe(true);
-    expect((confidence.value as number) <= 1).toBe(true);
+    expect(confidence.value as number).toBeGreaterThanOrEqual(0);
+    expect(confidence.value as number).toBeLessThanOrEqual(1);
     expect(typeof confidence.label).toBe("string");
     expect(["low", "medium", "high"]).toContain(confidence.label as string);
   });
