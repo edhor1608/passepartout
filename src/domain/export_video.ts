@@ -57,9 +57,9 @@ export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
     margins: recommendation.white_canvas.margins,
   });
 
-  const inputPath = resolve(input.file);
-  const outputPath = resolve(input.out);
-  mkdirSync(dirname(outputPath), { recursive: true });
+  const resolvedInputPath = resolve(input.file);
+  const resolvedOutputPath = resolve(input.out);
+  mkdirSync(dirname(resolvedOutputPath), { recursive: true });
 
   const fps = media.fps > 0 ? media.fps : 30;
   const proc = Bun.spawnSync({
@@ -70,33 +70,41 @@ export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
       "-loglevel",
       "error",
       "-i",
-      inputPath,
+      resolvedInputPath,
+      "-map",
+      "0:v:0",
+      "-map",
+      "0:a?",
       "-vf",
       filter,
       "-r",
       String(fps),
       "-c:v",
       "libx264",
+      "-c:a",
+      "aac",
       "-crf",
       String(crf),
       "-pix_fmt",
       "yuv420p",
       "-movflags",
       "+faststart",
-      "-an",
-      outputPath,
+      resolvedOutputPath,
     ],
     stdout: "pipe",
     stderr: "pipe",
+    timeout: 60_000,
   });
 
   if (proc.exitCode !== 0) {
-    throw new Error(`ffmpeg video export failed: ${proc.stderr.toString().trim()}`);
+    throw new Error(
+      `ffmpeg video export failed (input: ${resolvedInputPath}, filter: ${filter}): ${proc.stderr.toString().trim()}`,
+    );
   }
 
   return {
-    input_path: inputPath,
-    output_path: outputPath,
+    input_path: input.file,
+    output_path: input.out,
     selected_profile: recommendation.selected_profile,
     target_resolution: recommendation.target_resolution,
     white_canvas_enabled: recommendation.white_canvas.enabled,

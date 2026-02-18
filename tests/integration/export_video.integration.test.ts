@@ -81,4 +81,32 @@ describe("export-video integration", () => {
     expect(payload).toHaveProperty("target_resolution", "1080x1350");
     expect(payload).toHaveProperty("white_canvas_enabled", true);
   });
+
+  test("missing value for --mode fails with explicit error", async () => {
+    const input = join(fixtures, "portrait_video_360x640.mp4");
+    const output = resetOut("video_missing_mode.mp4");
+    const result = await runExportVideoCli([input, "--out", output, "--mode", "--surface", "reel", "--json"]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("Missing value for --mode");
+  });
+
+  test("missing value for --crf fails with explicit error", async () => {
+    const input = join(fixtures, "portrait_video_360x640.mp4");
+    const output = resetOut("video_missing_crf.mp4");
+    const result = await runExportVideoCli([
+      input,
+      "--out",
+      output,
+      "--mode",
+      "reliable",
+      "--surface",
+      "reel",
+      "--crf",
+      "--json",
+    ]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("Missing value for --crf");
+  });
 });
