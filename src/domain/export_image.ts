@@ -57,9 +57,9 @@ export function exportImage(input: ExportImageInput): ExportImageOutput {
     margins: recommendation.white_canvas.margins,
   });
 
-  const inputPath = resolve(input.file);
-  const outputPath = resolve(input.out);
-  mkdirSync(dirname(outputPath), { recursive: true });
+  const resolvedInputPath = resolve(input.file);
+  const resolvedOutputPath = resolve(input.out);
+  mkdirSync(dirname(resolvedOutputPath), { recursive: true });
 
   const proc = Bun.spawnSync({
     cmd: [
@@ -69,17 +69,18 @@ export function exportImage(input: ExportImageInput): ExportImageOutput {
       "-loglevel",
       "error",
       "-i",
-      inputPath,
+      resolvedInputPath,
       "-vf",
       filter,
       "-frames:v",
       "1",
       "-q:v",
       String(quality),
-      outputPath,
+      resolvedOutputPath,
     ],
     stdout: "pipe",
     stderr: "pipe",
+    timeout: 60_000,
   });
 
   if (proc.exitCode !== 0) {
@@ -87,8 +88,8 @@ export function exportImage(input: ExportImageInput): ExportImageOutput {
   }
 
   return {
-    input_path: inputPath,
-    output_path: outputPath,
+    input_path: input.file,
+    output_path: input.out,
     selected_profile: recommendation.selected_profile,
     target_resolution: recommendation.target_resolution,
     white_canvas_enabled: recommendation.white_canvas.enabled,

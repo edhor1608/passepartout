@@ -79,4 +79,32 @@ describe("export-image integration", () => {
     expect(payload).toHaveProperty("target_resolution", "1080x1350");
     expect(payload).toHaveProperty("white_canvas_enabled", true);
   });
+
+  test("missing value for --mode fails with explicit error", async () => {
+    const input = join(fixtures, "portrait_sample_30x40.png");
+    const output = resetOut("missing_mode.jpg");
+    const result = await runExportImageCli([input, "--out", output, "--mode", "--surface", "feed", "--json"]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("Missing value for --mode");
+  });
+
+  test("missing value for --quality fails with explicit error", async () => {
+    const input = join(fixtures, "portrait_sample_30x40.png");
+    const output = resetOut("missing_quality.jpg");
+    const result = await runExportImageCli([
+      input,
+      "--out",
+      output,
+      "--mode",
+      "reliable",
+      "--surface",
+      "feed",
+      "--quality",
+      "--json",
+    ]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("Missing value for --quality");
+  });
 });

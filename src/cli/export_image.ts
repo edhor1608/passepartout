@@ -31,18 +31,30 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     switch (token) {
       case "--out":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --out");
+        }
         out = next;
         i += 1;
         break;
       case "--mode":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --mode");
+        }
         mode = next as Mode;
         i += 1;
         break;
       case "--surface":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --surface");
+        }
         surface = next as Surface;
         i += 1;
         break;
       case "--workflow":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --workflow");
+        }
         workflow = next as Workflow;
         i += 1;
         break;
@@ -50,10 +62,16 @@ function parseArgs(argv: string[]): ParsedArgs {
         whiteCanvas = true;
         break;
       case "--canvas-profile":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --canvas-profile");
+        }
         canvasProfile = next as CanvasProfile;
         i += 1;
         break;
       case "--quality":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --quality");
+        }
         quality = Number.parseInt(next ?? "", 10);
         i += 1;
         break;
@@ -101,15 +119,21 @@ function printHumanOutput(result: ReturnType<typeof exportImage>): void {
 }
 
 function main(): void {
-  const parsed = parseArgs(process.argv.slice(2));
-  const result = exportImage(parsed);
+  try {
+    const parsed = parseArgs(process.argv.slice(2));
+    const result = exportImage(parsed);
 
-  if (parsed.json) {
-    console.log(stableStringify(result));
-    return;
+    if (parsed.json) {
+      console.log(stableStringify(result));
+      return;
+    }
+
+    printHumanOutput(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Error: ${message}`);
+    process.exit(1);
   }
-
-  printHumanOutput(result);
 }
 
 main();
