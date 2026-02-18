@@ -1,4 +1,4 @@
-import { closeSync, openSync, readFileSync, readSync } from "node:fs";
+import { closeSync, openSync, readSync } from "node:fs";
 import { resolve } from "node:path";
 import type { MediaInspection, Orientation } from "../types/contracts";
 
@@ -105,7 +105,20 @@ function readBe32(bytes: Uint8Array, offset: number): number {
 }
 
 function readPngSize(path: string): { width: number; height: number } {
-  const bytes = new Uint8Array(readFileSync(path));
+  const fd = openSync(path, "r");
+  const header = Buffer.alloc(24);
+  let bytesRead = 0;
+  try {
+    bytesRead = readSync(fd, header, 0, header.length, 0);
+  } finally {
+    closeSync(fd);
+  }
+
+  if (bytesRead < header.length) {
+    throw new Error(`Invalid PNG signature in ${path}`);
+  }
+
+  const bytes = new Uint8Array(header);
   const pngSig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
   for (let i = 0; i < pngSig.length; i += 1) {
     if (bytes[i] !== pngSig[i]) {
@@ -146,44 +159,68 @@ function isSofMarker(marker: number): boolean {
 }
 
 function readJpegSize(path: string): { width: number; height: number } {
-  const bytes = new Uint8Array(readFileSync(path));
-  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) {
-    throw new Error(`Invalid JPEG SOI in ${path}`);
-  }
-
-  let i = 2;
-  while (i < bytes.length) {
-    while (bytes[i] === 0xff) {
-      i += 1;
-    }
-    const marker = bytes[i];
-    if (marker === undefined) {
-      break;
-    }
-    i += 1;
-
-    if (marker === 0xd8 || marker === 0xd9) {
-      continue;
-    }
-    if (marker === 0xda) {
-      break;
+  const fd = openSync(path, "r");
+  let position = 0;
+  try {
+    const soi = Buffer.alloc(2);
+    const soiRead = readSync(fd, soi, 0, soi.length, position);
+    position += soiRead;
+    if (soiRead !== 2 || soi[0] !== 0xff || soi[1] !== 0xd8) {
+      throw new Error(`Invalid JPEG SOI in ${path}`);
     }
 
-    const segmentLen = readBe16(bytes, i);
-    if (segmentLen < 2) {
-      throw new Error(`Invalid JPEG segment length in ${path}`);
-    }
+    while (true) {
+      const markerBuf = Buffer.alloc(1);
+      let markerRead = 0;
+      do {
+        markerRead = readSync(fd, markerBuf, 0, markerBuf.length, position);
+        if (markerRead !== 1) {
+          throw new Error(`JPEG SOF segment not found in ${path}`);
+        }
+        position += 1;
+      } while (markerBuf[0] === 0xff);
 
-    if (isSofMarker(marker)) {
-      const height = readBe16(bytes, i + 3);
-      const width = readBe16(bytes, i + 5);
-      if (width <= 0 || height <= 0) {
-        throw new Error(`Invalid JPEG dimensions in ${path}`);
+      const marker = markerBuf[0]!;
+      if (marker === 0xd8 || marker === 0xd9) {
+        continue;
       }
-      return { width, height };
-    }
+      if (marker === 0xda) {
+        break;
+      }
 
-    i += segmentLen;
+      const segmentLenBytes = Buffer.alloc(2);
+      const segmentLenRead = readSync(fd, segmentLenBytes, 0, segmentLenBytes.length, position);
+      if (segmentLenRead !== 2) {
+        throw new Error(`JPEG SOF segment not found in ${path}`);
+      }
+      position += 2;
+      const segmentLen = readBe16(new Uint8Array(segmentLenBytes), 0);
+      if (segmentLen < 2) {
+        throw new Error(`Invalid JPEG segment length in ${path}`);
+      }
+
+      if (isSofMarker(marker)) {
+        if (segmentLen < 7) {
+          throw new Error(`Invalid JPEG segment length in ${path}`);
+        }
+        const sofHeader = Buffer.alloc(5);
+        const sofRead = readSync(fd, sofHeader, 0, sofHeader.length, position);
+        if (sofRead !== 5) {
+          throw new Error(`JPEG SOF segment not found in ${path}`);
+        }
+        const sofBytes = new Uint8Array(sofHeader);
+        const height = readBe16(sofBytes, 1);
+        const width = readBe16(sofBytes, 3);
+        if (width <= 0 || height <= 0) {
+          throw new Error(`Invalid JPEG dimensions in ${path}`);
+        }
+        return { width, height };
+      }
+
+      position += segmentLen - 2;
+    }
+  } finally {
+    closeSync(fd);
   }
 
   throw new Error(`JPEG SOF segment not found in ${path}`);
