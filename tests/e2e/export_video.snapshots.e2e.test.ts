@@ -2,11 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseJsonStdout, runExportVideoCli } from "../helpers/cli";
-
-type ExportCase = {
-  id: string;
-  args: string[];
-};
+import type { ExportCase } from "../helpers/types";
 
 const fixtureDir = join(import.meta.dir, "..", "fixtures", "e2e");
 const snapshotDir = join(fixtureDir, "snapshots", "export_video");
@@ -32,7 +28,7 @@ describe("export-video e2e snapshots", () => {
         JSON.parse(readFileSync(join(snapshotDir, `${scenario.id}.json`), "utf8")) as Record<string, unknown>,
       );
       const actual = normalizeExportVideoPayload(parseJsonStdout(result.stdout, scenario.id));
-      expect(JSON.stringify(actual)).toBe(JSON.stringify(expected));
+      expect(actual).toEqual(expected);
     });
   }
 });

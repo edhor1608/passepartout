@@ -1,11 +1,7 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { parseJsonStdout } from "../../helpers/cli";
-
-type ExportCase = {
-  id: string;
-  args: string[];
-};
+import type { ExportCase } from "../../helpers/types";
 
 const fixturesDir = import.meta.dir;
 const repoRoot = join(fixturesDir, "..", "..", "..");
