@@ -1,14 +1,22 @@
-import type {
-  CanvasProfile,
-  ExportImageInput,
-  Mode,
-  Surface,
-  Workflow,
+import {
+  CANVAS_PROFILES,
+  MODES,
+  SURFACES,
+  WORKFLOWS,
+  type CanvasProfile,
+  type ExportImageInput,
+  type Mode,
+  type Surface,
+  type Workflow,
 } from "../types/contracts";
 import { exportImage } from "../domain/export_image";
 import { stableStringify } from "../domain/recommend";
 
 type ParsedArgs = ExportImageInput & { json: boolean };
+
+function isAllowedValue<T extends string>(value: string, allowed: readonly T[]): value is T {
+  return (allowed as readonly string[]).includes(value);
+}
 
 function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0 || argv[0]?.startsWith("--")) {
@@ -72,7 +80,7 @@ function parseArgs(argv: string[]): ParsedArgs {
         if (!next || next.startsWith("--")) {
           throw new Error("Missing value for --quality");
         }
-        quality = Number.parseInt(next ?? "", 10);
+        quality = Number.parseInt(next, 10);
         i += 1;
         break;
       case "--json":
@@ -87,19 +95,19 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error("Missing required args: --out --mode --surface");
   }
 
-  if (!["reliable", "experimental"].includes(mode)) {
+  if (!isAllowedValue(mode, MODES)) {
     throw new Error(`Invalid mode: ${mode}`);
   }
 
-  if (!["feed", "story", "reel"].includes(surface)) {
+  if (!isAllowedValue(surface, SURFACES)) {
     throw new Error(`Invalid surface: ${surface}`);
   }
 
-  if (!["app_direct", "api_scheduler", "unknown"].includes(workflow)) {
+  if (!isAllowedValue(workflow, WORKFLOWS)) {
     throw new Error(`Invalid workflow: ${workflow}`);
   }
 
-  if (canvasProfile && !["feed_compat", "feed_app_direct"].includes(canvasProfile)) {
+  if (canvasProfile && !isAllowedValue(canvasProfile, CANVAS_PROFILES)) {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
