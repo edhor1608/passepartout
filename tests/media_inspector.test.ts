@@ -137,6 +137,48 @@ describe("media inspector", () => {
     expect(meta.audio_bitrate_kbps).toBeGreaterThan(0);
   });
 
+  test("marks has_audio true when ffprobe reports audio stream without codec_name", () => {
+    const originalSpawnSync = Bun.spawnSync;
+    const bunRef = Bun as unknown as { spawnSync: typeof Bun.spawnSync };
+    bunRef.spawnSync = (() =>
+      ({
+        exitCode: 0,
+        stdout: Buffer.from(
+          JSON.stringify({
+            streams: [
+              {
+                codec_type: "video",
+                codec_name: "h264",
+                width: 360,
+                height: 640,
+                avg_frame_rate: "30/1",
+                r_frame_rate: "30/1",
+              },
+              {
+                codec_type: "audio",
+                channels: 2,
+                sample_rate: "48000",
+                bit_rate: "128000",
+              },
+            ],
+            format: { duration: "1.0", bit_rate: "500000" },
+          }),
+        ),
+        stderr: Buffer.from(""),
+      }) as ReturnType<typeof Bun.spawnSync>) as typeof Bun.spawnSync;
+
+    try {
+      const meta = inspectMedia("tests/fixtures/images/synthetic_no_codec_name.mp4");
+      expect(meta.has_audio).toBe(true);
+      expect(meta.audio_codec).toBeNull();
+      expect(meta.audio_channels).toBe(2);
+      expect(meta.audio_sample_rate_hz).toBe(48000);
+      expect(meta.audio_bitrate_kbps).toBe(128);
+    } finally {
+      bunRef.spawnSync = originalSpawnSync;
+    }
+  });
+
   test("fails for unsupported extension", () => {
     expect(() => inspectMedia("/tmp/input.gif")).toThrow("Unsupported media format");
   });

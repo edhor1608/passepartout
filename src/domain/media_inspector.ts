@@ -431,15 +431,17 @@ function readVideoMetadata(path: string): {
   const durationSeconds = parseDurationSeconds(durationRaw);
   const bitrateKbps = parseBitrateKbps(bitrateRaw);
 
+  const hasAudio = Boolean(audioStream);
   const audioCodecToken = audioStream?.codec_name;
   const audioCodec =
-    typeof audioCodecToken === "string" && audioCodecToken.length > 0 ? audioCodecToken : null;
-  const hasAudio = audioCodec !== null;
-  const audioChannels = parseChannels(audioStream?.channels);
-  const audioSampleRateHz = parseSampleRate(audioStream?.sample_rate);
+    hasAudio && typeof audioCodecToken === "string" && audioCodecToken.length > 0
+      ? audioCodecToken
+      : null;
+  const audioChannels = hasAudio ? parseChannels(audioStream?.channels) : null;
+  const audioSampleRateHz = hasAudio ? parseSampleRate(audioStream?.sample_rate) : null;
   const audioBitrateRaw =
-    typeof audioStream?.bit_rate === "string" ? audioStream.bit_rate : undefined;
-  const audioBitrateKbps = parseBitrateKbps(audioBitrateRaw);
+    hasAudio && typeof audioStream?.bit_rate === "string" ? audioStream.bit_rate : undefined;
+  const audioBitrateKbps = hasAudio ? parseBitrateKbps(audioBitrateRaw) : null;
 
   return {
     width: displayWidth,
