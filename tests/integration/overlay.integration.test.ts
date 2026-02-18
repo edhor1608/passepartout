@@ -44,4 +44,16 @@ describe("overlay cli integration", () => {
     expect(svg).toContain("viewBox=\"0 0 1080 1440\"");
     expect(svg).toContain("id=\"safe-zone\"");
   });
+
+  test("missing value for --ratio fails with explicit error", async () => {
+    const result = await runOverlayCli(["--ratio", "--json"]);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Missing value for --ratio");
+  });
+
+  test("missing value for --out fails with explicit error", async () => {
+    const result = await runOverlayCli(["--ratio", "4:5", "--out", "--json"]);
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("Missing value for --out");
+  });
 });

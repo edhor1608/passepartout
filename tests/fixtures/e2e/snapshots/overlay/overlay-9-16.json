@@ -1,1 +1,26 @@
-{"canvas":{"height":1920,"width":1080},"canvas_resolution":"1080x1920","ratio":"9:16","safe_zone":{"bottom":1824,"height":1728,"left":54,"right":1026,"top":96,"width":972},"thirds":{"horizontal":[640,1280],"vertical":[360,720]}}
+{
+  "canvas": {
+    "height": 1920,
+    "width": 1080
+  },
+  "canvas_resolution": "1080x1920",
+  "ratio": "9:16",
+  "safe_zone": {
+    "bottom": 1824,
+    "height": 1728,
+    "left": 54,
+    "right": 1026,
+    "top": 96,
+    "width": 972
+  },
+  "thirds": {
+    "horizontal": [
+      640,
+      1280
+    ],
+    "vertical": [
+      360,
+      720
+    ]
+  }
+}

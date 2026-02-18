@@ -63,9 +63,9 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Failing-first style tests now cover `white_canvas`, `recommend`, `export-image`, and `export-video`.
 - Visual and pixel-level snapshot matrices now include `classic` style scenarios.
 - E2E snapshots were regenerated for style-enabled analyze/report/export/report-export/benchmark/recommend paths.
-- Added failing-first tests for `audio_channel_layout` + `audio_sample_format` and extended analyze/report/report-export/benchmark snapshots.
-- Added failing-first tests and e2e cases for non-feed white-canvas behavior (story/reel recommend + export/report/report-export/benchmark flows).
-- Added failing-first tests for overlay geometry + CLI output and fixture-based e2e snapshot coverage for overlay ratios.
+- Introduced failing-first tests for `audio_channel_layout` + `audio_sample_format` and extended analyze/report/report-export/benchmark snapshots.
+- Expanded failing-first tests and e2e cases for non-feed white-canvas behavior (story/reel recommend + export/report/report-export/benchmark flows).
+- Covered overlay geometry + CLI output with failing-first tests and fixture-based e2e snapshot coverage for overlay ratios.
 
 ## Deferred
 

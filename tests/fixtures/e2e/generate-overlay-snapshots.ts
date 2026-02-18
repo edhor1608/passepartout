@@ -36,7 +36,15 @@ for (const testCase of cases) {
     throw new Error(`no json payload for ${testCase.id}`);
   }
 
-  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${payload}\n`, "utf8");
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(payload) as Record<string, unknown>;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`invalid json payload for ${testCase.id}: ${message}`);
+  }
+
+  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${JSON.stringify(parsed, null, 2)}\n`, "utf8");
 }
 
 console.log(`generated ${cases.length} overlay snapshots`);

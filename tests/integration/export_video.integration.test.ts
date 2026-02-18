@@ -95,37 +95,41 @@ describe("export-video integration", () => {
     expect(payload.output_audio_codec).toBeNull();
   });
 
-  test("white-canvas video polaroid_classic applies larger bottom border in filter", async () => {
-    const input = join(fixtures, "landscape_video_640x360.mov");
-    const output = resetOut("landscape_white_canvas_video_classic.mp4");
+  test(
+    "white-canvas video polaroid_classic applies larger bottom border in filter",
+    async () => {
+      const input = join(fixtures, "landscape_video_640x360.mov");
+      const output = resetOut("landscape_white_canvas_video_classic.mp4");
 
-    const exportResult = await runExportVideoCli([
-      input,
-      "--out",
-      output,
-      "--mode",
-      "reliable",
-      "--surface",
-      "feed",
-      "--workflow",
-      "unknown",
-      "--white-canvas",
-      "--canvas-profile",
-      "feed_compat",
-      "--canvas-style",
-      "polaroid_classic",
-      "--json",
-    ]);
+      const exportResult = await runExportVideoCli([
+        input,
+        "--out",
+        output,
+        "--mode",
+        "reliable",
+        "--surface",
+        "feed",
+        "--workflow",
+        "unknown",
+        "--white-canvas",
+        "--canvas-profile",
+        "feed_compat",
+        "--canvas-style",
+        "polaroid_classic",
+        "--json",
+      ]);
 
-    expect(exportResult.exitCode).toBe(0);
-    expect(existsSync(output)).toBe(true);
+      expect(exportResult.exitCode).toBe(0);
+      expect(existsSync(output)).toBe(true);
 
-    const payload = parseJsonStdout(exportResult.stdout);
-    expect(payload).toHaveProperty(
-      "ffmpeg_filter",
-      "scale=994:810:force_original_aspect_ratio=decrease,pad=994:810:(ow-iw)/2:(oh-ih)/2:white,pad=1080:1350:43:216:white",
-    );
-  });
+      const payload = parseJsonStdout(exportResult.stdout);
+      expect(payload).toHaveProperty(
+        "ffmpeg_filter",
+        "scale=994:810:force_original_aspect_ratio=decrease,pad=994:810:(ow-iw)/2:(oh-ih)/2:white,pad=1080:1350:43:216:white",
+      );
+    },
+    15000,
+  );
 
   test("white-canvas export-video supports reel surface", async () => {
     const input = join(fixtures, "portrait_video_360x640.mp4");

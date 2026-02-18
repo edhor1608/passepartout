@@ -21,10 +21,16 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     switch (token) {
       case "--ratio":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --ratio");
+        }
         ratio = next as OverlayRatio;
         i += 1;
         break;
       case "--out":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --out");
+        }
         out = next;
         i += 1;
         break;
