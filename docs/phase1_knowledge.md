@@ -68,7 +68,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added failing-first tests for `audio_channel_layout` + `audio_sample_format` and extended analyze/report/report-export/benchmark snapshots.
 - Added failing-first tests and e2e cases for non-feed white-canvas behavior (story/reel recommend + export/report/report-export/benchmark flows).
 - Added failing-first tests for overlay geometry + CLI output and fixture-based e2e snapshot coverage for overlay ratios.
-- Added failing-first tests for profile-grid crop simulation geometry + CLI output and fixture-based e2e snapshot coverage.
+- Introduced failing-first tests for profile-grid crop simulation geometry + CLI output and fixture-based e2e snapshot coverage.
 - Added failing-first tests for export profile selection and export output profile fields (`export_profile_id`, `quality_used`, `crf_used`).
 
 ## Deferred

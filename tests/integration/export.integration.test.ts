@@ -33,6 +33,9 @@ describe("export-image integration", () => {
 
     expect(exportResult.exitCode).toBe(0);
     expect(existsSync(output)).toBe(true);
+    const exportPayload = parseJsonStdout(exportResult.stdout);
+    expect(exportPayload).toHaveProperty("export_profile_id", "img_reliable_feed_portrait_v1");
+    expect(exportPayload).toHaveProperty("quality_used", 2);
 
     const analyzeResult = await runAnalyzeCli([
       output,

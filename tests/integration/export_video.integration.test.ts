@@ -204,6 +204,8 @@ describe("export-video integration", () => {
     expect(existsSync(output)).toBe(true);
 
     const payload = parseJsonStdout(exportResult.stdout);
+    expect(payload.export_profile_id).toBe("vid_reliable_reel_v1");
+    expect(payload.crf_used).toBe(23);
     expect(payload.output_has_audio).toBe(false);
     expect(payload.output_audio_codec).toBeNull();
   });
