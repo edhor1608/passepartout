@@ -1,10 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-
-type E2eCase = {
-  id: string;
-  args: string[];
-};
+import type { E2eCase } from "./e2e_types";
 
 const fixturesDir = import.meta.dir;
 const repoRoot = join(fixturesDir, "..", "..", "..");

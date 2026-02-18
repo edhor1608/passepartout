@@ -8,6 +8,8 @@ function ratioCanvas(ratio: OverlayRatio): { width: number; height: number } {
       return { width: 1080, height: 1440 };
     case "9:16":
       return { width: 1080, height: 1920 };
+    default:
+      throw new Error(`Unsupported ratio: ${ratio}`);
   }
 }
 

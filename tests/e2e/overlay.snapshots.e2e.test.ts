@@ -1,12 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import type { E2eCase } from "../fixtures/e2e/e2e_types";
 import { parseJsonStdout, runOverlayCli } from "../helpers/cli";
-
-type E2eCase = {
-  id: string;
-  args: string[];
-};
 
 const fixtureDir = join(import.meta.dir, "..", "fixtures", "e2e");
 const snapshotDir = join(fixtureDir, "snapshots", "overlay");

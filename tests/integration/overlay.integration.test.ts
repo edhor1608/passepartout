@@ -1,9 +1,10 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { parseJsonStdout, runOverlayCli } from "../helpers/cli";
 
 const outDir = join(import.meta.dir, "..", "fixtures", "exports");
+let generatedOutput: string | null = null;
 
 function resetOut(name: string): string {
   mkdirSync(outDir, { recursive: true });
@@ -13,6 +14,13 @@ function resetOut(name: string): string {
 }
 
 describe("overlay cli integration", () => {
+  afterEach(() => {
+    if (generatedOutput) {
+      rmSync(generatedOutput, { force: true });
+      generatedOutput = null;
+    }
+  });
+
   test("returns deterministic json for 4:5 ratio", async () => {
     const result = await runOverlayCli(["--ratio", "4:5", "--json"]);
 
@@ -26,6 +34,7 @@ describe("overlay cli integration", () => {
 
   test("writes svg file when --out is provided", async () => {
     const output = resetOut("overlay_3_4.svg");
+    generatedOutput = output;
     const result = await runOverlayCli([
       "--ratio",
       "3:4",
