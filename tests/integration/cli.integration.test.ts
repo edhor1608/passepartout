@@ -120,7 +120,6 @@ describe("cli integration", () => {
 
     expect(result.exitCode).toBe(0);
     const payload = parseJsonStdout(result.stdout);
-    const payload = parseJsonStdout(result.stdout);
     expect(payload.workflow_note).toBe("Using story_default white-canvas profile.");
     expect(payload.white_canvas).toEqual({
       contain_only: true,
