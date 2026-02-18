@@ -150,6 +150,8 @@ export type ExportImageInput = {
 export type ExportImageOutput = {
   input_path: string;
   output_path: string;
+  export_profile_id: string;
+  quality_used: number;
   selected_profile: string;
   target_resolution: Resolution;
   white_canvas_enabled: boolean;
@@ -171,6 +173,8 @@ export type ExportVideoInput = {
 export type ExportVideoOutput = {
   input_path: string;
   output_path: string;
+  export_profile_id: string;
+  crf_used: number;
   selected_profile: string;
   target_resolution: Resolution;
   white_canvas_enabled: boolean;

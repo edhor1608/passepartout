@@ -48,6 +48,12 @@ Export image using deterministic preset:
 bun run export-image tests/fixtures/images/portrait_sample_30x40.png --out tests/fixtures/exports/demo.jpg --mode reliable --surface feed --json
 ```
 
+Inspect deterministic export profile fields in JSON (`export_profile_id`, `quality_used`, `crf_used`):
+
+```bash
+bun run export-video tests/fixtures/images/portrait_video_360x640.mp4 --out tests/fixtures/exports/demo.mp4 --mode reliable --surface reel --json
+```
+
 Export image with white-canvas `polaroid_classic` style:
 
 ```bash

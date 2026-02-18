@@ -21,6 +21,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Analyze metadata baseline extended for additional audio stream detail: `audio_channel_layout`, `audio_sample_format`.
 - Added `export-image` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing.
 - Added `export-video` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing (`MP4`/H.264 output).
+- Added dedicated deterministic export profile registry in `config/export_profiles.v1.json` and wired export commands to profile IDs/default parameters.
 - `export-video` contract now includes output-probed metadata (`output_width`, `output_height`, `output_codec`, `output_fps`).
 - `export-video` contract now includes output audio-strip proof fields (`output_has_audio`, `output_audio_codec`), where `output_audio_codec` is `null` when `output_has_audio` is `false`.
 - Externalized rules in `config/ruleset.v1.json`.
@@ -68,6 +69,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added failing-first tests and e2e cases for non-feed white-canvas behavior (story/reel recommend + export/report/report-export/benchmark flows).
 - Added failing-first tests for overlay geometry + CLI output and fixture-based e2e snapshot coverage for overlay ratios.
 - Added failing-first tests for profile-grid crop simulation geometry + CLI output and fixture-based e2e snapshot coverage.
+- Added failing-first tests for export profile selection and export output profile fields (`export_profile_id`, `quality_used`, `crf_used`).
 
 ## Deferred
 
