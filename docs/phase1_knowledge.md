@@ -11,6 +11,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Analyze media inspector expanded from `PPM` to `PNG`, `JPEG`, `MP4`, and `MOV`.
 - Video probing baseline added with `ffprobe` (`width`, `height`, `aspect`, `orientation`, `codec`, `fps`).
 - Added `export-image` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing.
+- Added `export-video` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing (`MP4`/H.264 output).
 - Externalized rules in `config/ruleset.v1.json`.
 - White-canvas policy logic for feed profiles with workflow-gated `feed_app_direct` fallback.
 - Locked margin formula v1 and contain/no-crop invariant flags.
@@ -32,9 +33,10 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Introduced raster fixture generation (`ffmpeg`) and analyze e2e coverage for PNG/JPEG fixtures.
 - Added video fixture generation (`ffmpeg`) and analyze coverage for MP4/MOV fixtures.
 - Added export integration/e2e snapshot tests with fixture outputs in `tests/fixtures/exports`.
+- Added export-video integration/e2e snapshot tests and dedicated export-video snapshot fixtures.
 
 ## Deferred
 
 - Advanced video inspection fields (`bitrate`, `duration`, audio stream metadata, color metadata).
-- Video export/transcode profiles beyond image-frame export baseline.
+- Advanced video export/transcode policies (audio mapping, bitrate controls, codec variants beyond baseline MP4/H.264).
 - Empirical quality validation harness.

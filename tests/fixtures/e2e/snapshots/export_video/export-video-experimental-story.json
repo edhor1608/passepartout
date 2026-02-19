@@ -1,0 +1,1 @@
+{"ffmpeg_filter":"scale=2160:3840:force_original_aspect_ratio=increase,crop=2160:3840","fps":30,"input_path":"tests/fixtures/images/portrait_video_360x640.mp4","output_path":"tests/fixtures/exports/e2e_export_video_experimental_story.mp4","selected_profile":"experimental_story_2160","target_resolution":"2160x3840","video_codec":"h264","white_canvas_enabled":false}
