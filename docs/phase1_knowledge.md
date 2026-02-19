@@ -10,6 +10,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Analyze media inspector expanded from `PPM` to `PNG`, `JPEG`, `MP4`, and `MOV`.
 - Video probing baseline added with `ffprobe` (`width`, `height`, `aspect`, `orientation`, `codec`, `fps`).
+- Analyze metadata baseline extended for video to include `duration_seconds` and `bitrate_kbps`.
 - Added `export-image` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing.
 - Added `export-video` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing (`MP4`/H.264 output).
 - Externalized rules in `config/ruleset.v1.json`.
@@ -32,11 +33,12 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added media inspector baseline for PPM (`P3` + `P6`) and wired analyze e2e snapshot tests.
 - Introduced raster fixture generation (`ffmpeg`) and analyze e2e coverage for PNG/JPEG fixtures.
 - Added video fixture generation (`ffmpeg`) and analyze coverage for MP4/MOV fixtures.
+- Added failing-first tests and analyze snapshot updates for duration/bitrate metadata fields.
 - Added export integration/e2e snapshot tests with fixture outputs in `tests/fixtures/exports`.
 - Added export-video integration/e2e snapshot tests and dedicated export-video snapshot fixtures.
 
 ## Deferred
 
-- Advanced video inspection fields (`bitrate`, `duration`, audio stream metadata, color metadata).
+- Audio stream and color metadata are still deferred.
 - Advanced video export/transcode policies (audio mapping, bitrate controls, codec variants beyond baseline MP4/H.264).
 - Empirical quality validation harness.

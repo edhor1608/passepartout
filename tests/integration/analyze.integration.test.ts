@@ -89,6 +89,8 @@ describe("analyze cli integration", () => {
     expect(input.orientation).toBe("portrait");
     expect(input.codec).toBe("h264");
     expect(input.fps).toBe(30);
+    expect(input.duration_seconds).toBe(1);
+    expect(input.bitrate_kbps).toBeGreaterThan(0);
   });
 
   test("missing value for --mode fails with explicit error", async () => {
