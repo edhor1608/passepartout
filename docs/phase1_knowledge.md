@@ -10,6 +10,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
 - Deterministic report engine (`report`) layered on analyze output with checklist + next-actions contract.
 - Deterministic report-export engine (`report-export`) that executes export and compares input/output media characteristics.
+- Deterministic benchmark engine (`benchmark`) built on report-export with stable score/grade outputs.
 - Analyze media inspector expanded from `PPM` to `PNG`, `JPEG`, `MP4`, and `MOV`.
 - Video probing baseline added with `ffprobe` (`width`, `height`, `aspect`, `orientation`, `codec`, `fps`).
 - Analyze metadata baseline extended for video to include `duration_seconds` and `bitrate_kbps`.
@@ -25,6 +26,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - CLI command and JSON/human outputs.
 - Added `report` CLI + domain slice with deterministic checklist checks and stable JSON snapshots.
 - Added `report-export` CLI + domain slice with deterministic comparison fields (resolution/bitrate/colorspace/audio).
+- Added `benchmark` CLI + domain slice with deterministic scoring breakdown (`resolution`, `bitrate`, `codec`) and grade.
 - Layered test suite expansion:
   - unit tests
   - integration tests (CLI behavior and contract checks)
@@ -50,6 +52,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added failing-first export-video assertions proving audio is stripped from audio-input videos in baseline export mode.
 - Added report integration/e2e snapshot tests and deterministic report fixtures.
 - Added report-export integration/e2e snapshot tests and deterministic report-export fixtures.
+- Added benchmark integration/e2e snapshot tests and deterministic benchmark fixtures.
 
 ## Deferred
 
