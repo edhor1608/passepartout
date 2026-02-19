@@ -6,4 +6,10 @@ export const pixelScenarios = [
     workflow: "api_scheduler" as const,
     canvasProfile: "feed_app_direct" as const,
   },
+  {
+    suffix: "classic",
+    workflow: "unknown" as const,
+    canvasProfile: "feed_compat" as const,
+    canvasStyle: "polaroid_classic" as const,
+  },
 ] as const;

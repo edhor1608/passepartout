@@ -99,6 +99,31 @@ describe("recommend", () => {
     expect(result.white_canvas.enabled).toBe(true);
     expect(result.white_canvas.contain_only).toBe(true);
     expect(result.white_canvas.no_crop).toBe(true);
+    expect(result.white_canvas.style).toBe("gallery_clean");
+  });
+
+  test("white-canvas style defaults to gallery_clean and accepts polaroid_classic", () => {
+    const defaultStyle = recommend({
+      mode: "reliable",
+      surface: "feed",
+      orientation: "portrait",
+      workflow: "unknown",
+      whiteCanvas: true,
+    });
+    const classicStyle = recommend({
+      mode: "reliable",
+      surface: "feed",
+      orientation: "portrait",
+      workflow: "unknown",
+      whiteCanvas: true,
+      canvasStyle: "polaroid_classic",
+    });
+
+    expect(defaultStyle.white_canvas.style).toBe("gallery_clean");
+    expect(classicStyle.white_canvas.style).toBe("polaroid_classic");
+    expect(classicStyle.white_canvas.margins?.bottom).toBeGreaterThan(
+      classicStyle.white_canvas.margins?.top ?? 0,
+    );
   });
 
   test("deterministic output is stable for same input", () => {

@@ -1,9 +1,11 @@
 import {
+  CANVAS_STYLES,
   CANVAS_PROFILES,
   MODES,
   SURFACES,
   WORKFLOWS,
   type CanvasProfile,
+  type CanvasStyle,
   type ExportImageInput,
   type Mode,
   type Surface,
@@ -30,6 +32,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let workflow: Workflow = "unknown";
   let whiteCanvas = false;
   let canvasProfile: CanvasProfile | undefined;
+  let canvasStyle: CanvasStyle | undefined;
   let quality: number | undefined;
   let json = false;
 
@@ -76,6 +79,13 @@ function parseArgs(argv: string[]): ParsedArgs {
         canvasProfile = next as CanvasProfile;
         i += 1;
         break;
+      case "--canvas-style":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --canvas-style");
+        }
+        canvasStyle = next as CanvasStyle;
+        i += 1;
+        break;
       case "--quality":
         if (!next || next.startsWith("--")) {
           throw new Error("Missing value for --quality");
@@ -111,11 +121,15 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
+  if (canvasStyle && !isAllowedValue(canvasStyle, CANVAS_STYLES)) {
+    throw new Error(`Invalid canvas style: ${canvasStyle}`);
+  }
+
   if (quality !== undefined && (!Number.isFinite(quality) || quality < 1 || quality > 31)) {
     throw new Error(`Invalid quality: ${quality}`);
   }
 
-  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, quality, json };
+  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, canvasStyle, quality, json };
 }
 
 function printHumanOutput(result: ReturnType<typeof exportImage>): void {

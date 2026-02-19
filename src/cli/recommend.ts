@@ -1,10 +1,17 @@
-import type {
-  CanvasProfile,
-  Mode,
-  Orientation,
-  RecommendInput,
-  Surface,
-  Workflow,
+import {
+  CANVAS_PROFILES,
+  CANVAS_STYLES,
+  MODES,
+  ORIENTATIONS,
+  SURFACES,
+  WORKFLOWS,
+  type CanvasProfile,
+  type CanvasStyle,
+  type Mode,
+  type Orientation,
+  type RecommendInput,
+  type Surface,
+  type Workflow,
 } from "../types/contracts";
 import { recommend, toStableJson } from "../domain/recommend";
 
@@ -17,6 +24,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let workflow: Workflow = "unknown";
   let whiteCanvas = false;
   let canvasProfile: CanvasProfile | undefined;
+  let canvasStyle: CanvasStyle | undefined;
   let json = false;
 
   for (let i = 0; i < argv.length; i += 1) {
@@ -62,6 +70,13 @@ function parseArgs(argv: string[]): ParsedArgs {
         canvasProfile = next as CanvasProfile;
         i += 1;
         break;
+      case "--canvas-style":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --canvas-style");
+        }
+        canvasStyle = next as CanvasStyle;
+        i += 1;
+        break;
       case "--json":
         json = true;
         break;
@@ -74,27 +89,31 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error("Missing required args: --mode --surface --orientation");
   }
 
-  if (!["reliable", "experimental"].includes(mode)) {
+  if (!MODES.includes(mode)) {
     throw new Error(`Invalid mode: ${mode}`);
   }
 
-  if (!["feed", "story", "reel"].includes(surface)) {
+  if (!SURFACES.includes(surface)) {
     throw new Error(`Invalid surface: ${surface}`);
   }
 
-  if (!["portrait", "square", "landscape"].includes(orientation)) {
+  if (!ORIENTATIONS.includes(orientation)) {
     throw new Error(`Invalid orientation: ${orientation}`);
   }
 
-  if (!["app_direct", "api_scheduler", "unknown"].includes(workflow)) {
+  if (!WORKFLOWS.includes(workflow)) {
     throw new Error(`Invalid workflow: ${workflow}`);
   }
 
-  if (canvasProfile && !["feed_compat", "feed_app_direct"].includes(canvasProfile)) {
+  if (canvasProfile && !CANVAS_PROFILES.includes(canvasProfile)) {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
-  return { mode, surface, orientation, workflow, whiteCanvas, canvasProfile, json };
+  if (canvasStyle && !CANVAS_STYLES.includes(canvasStyle)) {
+    throw new Error(`Invalid canvas style: ${canvasStyle}`);
+  }
+
+  return { mode, surface, orientation, workflow, whiteCanvas, canvasProfile, canvasStyle, json };
 }
 
 function printHumanOutput(result: ReturnType<typeof recommend>, surface: Surface, orientation: Orientation): void {

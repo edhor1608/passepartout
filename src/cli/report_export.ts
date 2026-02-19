@@ -1,9 +1,11 @@
 import {
+  CANVAS_STYLES,
   CANVAS_PROFILES,
   MODES,
   SURFACES,
   WORKFLOWS,
   type CanvasProfile,
+  type CanvasStyle,
   type Mode,
   type ReportExportInput,
   type Surface,
@@ -30,6 +32,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let workflow: Workflow = "unknown";
   let whiteCanvas = false;
   let canvasProfile: CanvasProfile | undefined;
+  let canvasStyle: CanvasStyle | undefined;
   let json = false;
 
   for (let i = 1; i < argv.length; i += 1) {
@@ -75,6 +78,14 @@ function parseArgs(argv: string[]): ParsedArgs {
         canvasProfile = next as CanvasProfile;
         i += 1;
         break;
+      case "--style":
+      case "--canvas-style":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --canvas-style");
+        }
+        canvasStyle = next as CanvasStyle;
+        i += 1;
+        break;
       case "--json":
         json = true;
         break;
@@ -103,7 +114,11 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
-  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, json };
+  if (canvasStyle && !isAllowedValue(canvasStyle, CANVAS_STYLES)) {
+    throw new Error(`Invalid canvas style: ${canvasStyle}`);
+  }
+
+  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, canvasStyle, json };
 }
 
 function printHumanOutput(result: ReturnType<typeof buildReportExport>): void {

@@ -1,9 +1,15 @@
-import type {
-  CanvasProfile,
-  ExportVideoInput,
-  Mode,
-  Surface,
-  Workflow,
+import {
+  CANVAS_PROFILES,
+  CANVAS_STYLES,
+  MODES,
+  SURFACES,
+  WORKFLOWS,
+  type CanvasProfile,
+  type CanvasStyle,
+  type ExportVideoInput,
+  type Mode,
+  type Surface,
+  type Workflow,
 } from "../types/contracts";
 import { exportVideo } from "../domain/export_video";
 import { stableStringify } from "../domain/recommend";
@@ -22,6 +28,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let workflow: Workflow = "unknown";
   let whiteCanvas = false;
   let canvasProfile: CanvasProfile | undefined;
+  let canvasStyle: CanvasStyle | undefined;
   let crf: number | undefined;
   let json = false;
 
@@ -68,6 +75,13 @@ function parseArgs(argv: string[]): ParsedArgs {
         canvasProfile = next as CanvasProfile;
         i += 1;
         break;
+      case "--canvas-style":
+        if (!next || next.startsWith("--")) {
+          throw new Error("Missing value for --canvas-style");
+        }
+        canvasStyle = next as CanvasStyle;
+        i += 1;
+        break;
       case "--crf":
         if (!next || next.startsWith("--")) {
           throw new Error("Missing value for --crf");
@@ -87,27 +101,31 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error("Missing required args: --out --mode --surface");
   }
 
-  if (!["reliable", "experimental"].includes(mode)) {
+  if (!MODES.includes(mode)) {
     throw new Error(`Invalid mode: ${mode}`);
   }
 
-  if (!["feed", "story", "reel"].includes(surface)) {
+  if (!SURFACES.includes(surface)) {
     throw new Error(`Invalid surface: ${surface}`);
   }
 
-  if (!["app_direct", "api_scheduler", "unknown"].includes(workflow)) {
+  if (!WORKFLOWS.includes(workflow)) {
     throw new Error(`Invalid workflow: ${workflow}`);
   }
 
-  if (canvasProfile && !["feed_compat", "feed_app_direct"].includes(canvasProfile)) {
+  if (canvasProfile && !CANVAS_PROFILES.includes(canvasProfile)) {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
+  }
+
+  if (canvasStyle && !CANVAS_STYLES.includes(canvasStyle)) {
+    throw new Error(`Invalid canvas style: ${canvasStyle}`);
   }
 
   if (crf !== undefined && (!Number.isFinite(crf) || crf < 0 || crf > 51)) {
     throw new Error(`Invalid crf: ${crf}`);
   }
 
-  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, crf, json };
+  return { file, out, mode, surface, workflow, whiteCanvas, canvasProfile, canvasStyle, crf, json };
 }
 
 function printHumanOutput(result: ReturnType<typeof exportVideo>): void {

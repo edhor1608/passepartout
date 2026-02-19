@@ -26,6 +26,7 @@ describe("pixel-level visual regression", () => {
           workflow: scenario.workflow,
           whiteCanvas: true,
           canvasProfile: scenario.canvasProfile,
+          canvasStyle: scenario.canvasStyle,
           sourceRatio: source.width / source.height,
         });
 

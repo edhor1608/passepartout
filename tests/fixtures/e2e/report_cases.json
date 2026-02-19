@@ -10,5 +10,9 @@
   {
     "id": "report-reliable-feed-landscape-white",
     "args": ["tests/fixtures/images/landscape_sample_48x32.jpg", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--white-canvas", "--json"]
+  },
+  {
+    "id": "report-reliable-feed-landscape-white-classic",
+    "args": ["tests/fixtures/images/landscape_sample_48x32.jpg", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--white-canvas", "--canvas-style", "polaroid_classic", "--json"]
   }
 ]
