@@ -1,5 +1,5 @@
 import { mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, extname, resolve } from "node:path";
 import type { ExportVideoInput, ExportVideoOutput } from "../types/contracts";
 import { inspectMedia } from "./media_inspector";
 import { recommend } from "./recommend";
@@ -59,6 +59,10 @@ export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
 
   const resolvedInputPath = resolve(input.file);
   const resolvedOutputPath = resolve(input.out);
+  const outputExt = extname(resolvedOutputPath).toLowerCase();
+  if (outputExt !== ".mp4" && outputExt !== ".mov") {
+    throw new Error(`export-video output must be .mp4 or .mov for metadata probing: ${resolvedOutputPath}`);
+  }
   mkdirSync(dirname(resolvedOutputPath), { recursive: true });
 
   const fps = media.fps > 0 ? media.fps : 30;
@@ -101,6 +105,7 @@ export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
       `ffmpeg video export failed (input: ${resolvedInputPath}, filter: ${filter}): ${proc.stderr.toString().trim()}`,
     );
   }
+  const outputMeta = inspectMedia(resolvedOutputPath);
 
   return {
     input_path: input.file,
@@ -111,5 +116,9 @@ export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
     ffmpeg_filter: filter,
     video_codec: "h264",
     fps,
+    output_width: outputMeta.width,
+    output_height: outputMeta.height,
+    output_codec: outputMeta.codec,
+    output_fps: outputMeta.fps,
   };
 }
