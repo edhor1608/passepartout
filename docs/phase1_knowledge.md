@@ -16,6 +16,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added `export-image` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing.
 - Added `export-video` CLI baseline using `ffmpeg` with deterministic profile-driven output sizing (`MP4`/H.264 output).
 - `export-video` contract now includes output-probed metadata (`output_width`, `output_height`, `output_codec`, `output_fps`).
+- `export-video` contract now includes output audio-strip proof fields (`output_has_audio`, `output_audio_codec`), where `output_audio_codec` is `null` when `output_has_audio` is `false`.
 - Externalized rules in `config/ruleset.v1.json`.
 - White-canvas policy logic for feed profiles with workflow-gated `feed_app_direct` fallback.
 - Locked margin formula v1 and contain/no-crop invariant flags.
@@ -42,6 +43,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added export integration/e2e snapshot tests with fixture outputs in `tests/fixtures/exports`.
 - Added export-video integration/e2e snapshot tests and dedicated export-video snapshot fixtures.
 - Added failing-first export-video assertions to verify returned output metadata against the exported file.
+- Added failing-first export-video assertions proving audio is stripped from audio-input videos in baseline export mode.
 
 ## Deferred
 
