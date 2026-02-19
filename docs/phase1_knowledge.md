@@ -8,6 +8,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 
 - Deterministic recommendation engine (`recommend`) with mode/surface/orientation/workflow inputs.
 - Deterministic analyze engine (`analyze`) with file input and tier classification output.
+- Deterministic report engine (`report`) layered on analyze output with checklist + next-actions contract.
 - Analyze media inspector expanded from `PPM` to `PNG`, `JPEG`, `MP4`, and `MOV`.
 - Video probing baseline added with `ffprobe` (`width`, `height`, `aspect`, `orientation`, `codec`, `fps`).
 - Analyze metadata baseline extended for video to include `duration_seconds` and `bitrate_kbps`.
@@ -21,6 +22,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - White-canvas policy logic for feed profiles with workflow-gated `feed_app_direct` fallback.
 - Locked margin formula v1 and contain/no-crop invariant flags.
 - CLI command and JSON/human outputs.
+- Added `report` CLI + domain slice with deterministic checklist checks and stable JSON snapshots.
 - Layered test suite expansion:
   - unit tests
   - integration tests (CLI behavior and contract checks)
@@ -44,6 +46,7 @@ Implement executable, testable milestones of P17 without drifting from locked re
 - Added export-video integration/e2e snapshot tests and dedicated export-video snapshot fixtures.
 - Added failing-first export-video assertions to verify returned output metadata against the exported file.
 - Added failing-first export-video assertions proving audio is stripped from audio-input videos in baseline export mode.
+- Added report integration/e2e snapshot tests and deterministic report fixtures.
 
 ## Deferred
 

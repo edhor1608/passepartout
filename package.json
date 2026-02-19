@@ -6,6 +6,7 @@
   "scripts": {
     "recommend": "bun run src/cli/recommend.ts",
     "analyze": "bun run src/cli/analyze.ts",
+    "report": "bun run src/cli/report.ts",
     "export-image": "bun run src/cli/export_image.ts",
     "export-video": "bun run src/cli/export_video.ts",
     "test": "bun test",
@@ -20,6 +21,7 @@
     "fixtures:images:raster": "bun run tests/fixtures/images/generate-raster-fixtures.ts",
     "fixtures:e2e": "bun run tests/fixtures/e2e/generate-snapshots.ts",
     "fixtures:e2e:analyze": "bun run tests/fixtures/e2e/generate-analyze-snapshots.ts",
+    "fixtures:e2e:report": "bun run tests/fixtures/e2e/generate-report-snapshots.ts",
     "fixtures:e2e:export": "bun run tests/fixtures/e2e/generate-export-snapshots.ts",
     "fixtures:e2e:export-video": "bun run tests/fixtures/e2e/generate-export-video-snapshots.ts",
     "fixtures:visual": "bun run tests/fixtures/visual/generate-snapshots.ts",
