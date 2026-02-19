@@ -95,6 +95,8 @@ export type MediaInspection = {
   fps: number;
   duration_seconds: number | null;
   bitrate_kbps: number | null;
+  has_audio: boolean;
+  audio_codec: string | null;
 };
 
 export type AnalyzeInput = {

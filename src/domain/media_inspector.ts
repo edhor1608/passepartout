@@ -340,6 +340,8 @@ function readVideoMetadata(path: string): {
   fps: number;
   durationSeconds: number | null;
   bitrateKbps: number | null;
+  hasAudio: boolean;
+  audioCodec: string | null;
 } {
   let proc: ReturnType<typeof Bun.spawnSync>;
   try {
@@ -348,10 +350,8 @@ function readVideoMetadata(path: string): {
         "ffprobe",
         "-v",
         "error",
-        "-select_streams",
-        "v:0",
         "-show_entries",
-        "stream=width,height,codec_name,avg_frame_rate,r_frame_rate:stream_tags=rotate:stream_side_data=rotation:format=duration,bit_rate",
+        "stream=codec_type,codec_name,width,height,avg_frame_rate,r_frame_rate:stream_tags=rotate:stream_side_data=rotation:format=duration,bit_rate",
         "-of",
         "json",
         path,
@@ -375,35 +375,59 @@ function readVideoMetadata(path: string): {
   }
 
   const streams = (parsed as { streams?: Array<Record<string, unknown>> }).streams;
-  const stream = streams?.[0];
-  if (!stream) {
+  if (!streams || streams.length === 0) {
     throw new Error(`ffprobe returned no video stream for ${path}`);
   }
+
+  const videoStream =
+    streams.find((item) => item.codec_type === "video") ??
+    streams.find((item) => Number(item.width) > 0 && Number(item.height) > 0);
+  if (!videoStream) {
+    throw new Error(`ffprobe returned no video stream for ${path}`);
+  }
+
+  const audioStream = streams.find((item) => item.codec_type === "audio");
   const format = (parsed as { format?: Record<string, unknown> }).format;
 
-  const width = Number(stream.width);
-  const height = Number(stream.height);
+  const width = Number(videoStream.width);
+  const height = Number(videoStream.height);
   if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
     throw new Error(`Invalid video dimensions in ${path}`);
   }
-  const rotation = readRotation(stream);
+
+  const rotation = readRotation(videoStream);
   const isQuarterTurn = rotation === 90 || rotation === 270;
   const displayWidth = isQuarterTurn ? height : width;
   const displayHeight = isQuarterTurn ? width : height;
 
-  const codecToken = stream.codec_name;
+  const codecToken = videoStream.codec_name;
   const codec = typeof codecToken === "string" && codecToken.length > 0 ? codecToken : null;
   const avgFrameRate =
-    typeof stream.avg_frame_rate === "string" ? stream.avg_frame_rate : undefined;
+    typeof videoStream.avg_frame_rate === "string" ? videoStream.avg_frame_rate : undefined;
   const realFrameRate =
-    typeof stream.r_frame_rate === "string" ? stream.r_frame_rate : undefined;
+    typeof videoStream.r_frame_rate === "string" ? videoStream.r_frame_rate : undefined;
   const fps = parseFps(avgFrameRate) || parseFps(realFrameRate);
+
   const durationRaw = typeof format?.duration === "string" ? format.duration : undefined;
   const bitrateRaw = typeof format?.bit_rate === "string" ? format.bit_rate : undefined;
   const durationSeconds = parseDurationSeconds(durationRaw);
   const bitrateKbps = parseBitrateKbps(bitrateRaw);
 
-  return { width: displayWidth, height: displayHeight, codec, fps, durationSeconds, bitrateKbps };
+  const audioCodecToken = audioStream?.codec_name;
+  const audioCodec =
+    typeof audioCodecToken === "string" && audioCodecToken.length > 0 ? audioCodecToken : null;
+  const hasAudio = audioCodec !== null;
+
+  return {
+    width: displayWidth,
+    height: displayHeight,
+    codec,
+    fps,
+    durationSeconds,
+    bitrateKbps,
+    hasAudio,
+    audioCodec,
+  };
 }
 
 export function inspectMedia(filePath: string): MediaInspection {
@@ -416,6 +440,8 @@ export function inspectMedia(filePath: string): MediaInspection {
   let fps = 0;
   let durationSeconds: number | null = null;
   let bitrateKbps: number | null = null;
+  let hasAudio = false;
+  let audioCodec: string | null = null;
 
   if (lower.endsWith(".ppm")) {
     ({ width, height } = readPpmSize(resolvedPath));
@@ -425,7 +451,8 @@ export function inspectMedia(filePath: string): MediaInspection {
   } else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
     ({ width, height } = readJpegSize(resolvedPath));
   } else if (lower.endsWith(".mp4") || lower.endsWith(".mov")) {
-    ({ width, height, codec, fps, durationSeconds, bitrateKbps } = readVideoMetadata(resolvedPath));
+    ({ width, height, codec, fps, durationSeconds, bitrateKbps, hasAudio, audioCodec } =
+      readVideoMetadata(resolvedPath));
   } else {
     throw new Error(`Unsupported media format for current analyze slice: ${filePath}`);
   }
@@ -441,5 +468,7 @@ export function inspectMedia(filePath: string): MediaInspection {
     fps,
     duration_seconds: durationSeconds,
     bitrate_kbps: bitrateKbps,
+    has_audio: hasAudio,
+    audio_codec: audioCodec,
   };
 }

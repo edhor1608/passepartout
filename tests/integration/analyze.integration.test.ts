@@ -91,6 +91,35 @@ describe("analyze cli integration", () => {
     expect(input.fps).toBe(30);
     expect(input.duration_seconds).toBe(1);
     expect(input.bitrate_kbps).toBeGreaterThan(0);
+    expect(input.has_audio).toBe(false);
+    expect(input.audio_codec).toBeNull();
+  });
+
+  test("analyze exposes audio metadata for MP4 with audio track", async () => {
+    const file = join(fixtures, "portrait_video_audio_360x640.mp4");
+    const result = await runAnalyzeCli([
+      file,
+      "--mode",
+      "reliable",
+      "--surface",
+      "reel",
+      "--workflow",
+      "unknown",
+      "--json",
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    const payload = parseJsonStdout(result.stdout);
+    const input = payload.input as Record<string, unknown>;
+    expect(input.width).toBe(360);
+    expect(input.height).toBe(640);
+    expect(input.orientation).toBe("portrait");
+    expect(input.codec).toBe("h264");
+    expect(input.fps).toBe(30);
+    expect(input.duration_seconds).toBe(1);
+    expect(input.bitrate_kbps).toBeGreaterThan(0);
+    expect(input.has_audio).toBe(true);
+    expect(input.audio_codec).toBe("aac");
   });
 
   test("missing value for --mode fails with explicit error", async () => {

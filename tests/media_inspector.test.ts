@@ -21,6 +21,8 @@ describe("media inspector", () => {
     expect(meta.fps).toBe(0);
     expect(meta.duration_seconds).toBeNull();
     expect(meta.bitrate_kbps).toBeNull();
+    expect(meta.has_audio).toBe(false);
+    expect(meta.audio_codec).toBeNull();
   });
 
   test("reads P6 snapshot metadata", () => {
@@ -32,6 +34,8 @@ describe("media inspector", () => {
     expect(meta.orientation).toBe("portrait");
     expect(meta.duration_seconds).toBeNull();
     expect(meta.bitrate_kbps).toBeNull();
+    expect(meta.has_audio).toBe(false);
+    expect(meta.audio_codec).toBeNull();
   });
 
   test("reads PNG fixture metadata", () => {
@@ -45,6 +49,8 @@ describe("media inspector", () => {
     expect(meta.colorspace).toBe("unknown");
     expect(meta.duration_seconds).toBeNull();
     expect(meta.bitrate_kbps).toBeNull();
+    expect(meta.has_audio).toBe(false);
+    expect(meta.audio_codec).toBeNull();
   });
 
   test("reads JPEG fixture metadata", () => {
@@ -58,6 +64,8 @@ describe("media inspector", () => {
     expect(meta.colorspace).toBe("unknown");
     expect(meta.duration_seconds).toBeNull();
     expect(meta.bitrate_kbps).toBeNull();
+    expect(meta.has_audio).toBe(false);
+    expect(meta.audio_codec).toBeNull();
   });
 
   test("reads MP4 fixture metadata", () => {
@@ -72,6 +80,8 @@ describe("media inspector", () => {
     expect(meta.fps).toBe(30);
     expect(meta.duration_seconds).toBe(1);
     expect(meta.bitrate_kbps).toBeGreaterThan(0);
+    expect(meta.has_audio).toBe(false);
+    expect(meta.audio_codec).toBeNull();
   });
 
   test("reads MOV fixture metadata", () => {
@@ -86,6 +96,24 @@ describe("media inspector", () => {
     expect(meta.fps).toBe(24);
     expect(meta.duration_seconds).toBe(1);
     expect(meta.bitrate_kbps).toBeGreaterThan(0);
+    expect(meta.has_audio).toBe(false);
+    expect(meta.audio_codec).toBeNull();
+  });
+
+  test("reads MP4 fixture with audio metadata", () => {
+    const path = join(fixtures, "portrait_video_audio_360x640.mp4");
+    const meta = inspectMedia(path);
+
+    expect(meta.width).toBe(360);
+    expect(meta.height).toBe(640);
+    expect(meta.orientation).toBe("portrait");
+    expect(meta.aspect_ratio).toBe("0.5625");
+    expect(meta.codec).toContain("h264");
+    expect(meta.fps).toBe(30);
+    expect(meta.duration_seconds).toBe(1);
+    expect(meta.bitrate_kbps).toBeGreaterThan(0);
+    expect(meta.has_audio).toBe(true);
+    expect(meta.audio_codec).toBe("aac");
   });
 
   test("fails for unsupported extension", () => {
