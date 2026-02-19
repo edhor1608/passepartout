@@ -6,6 +6,10 @@
   "scripts": {
     "recommend": "bun run src/cli/recommend.ts",
     "analyze": "bun run src/cli/analyze.ts",
+    "overlay": "bun run src/cli/overlay.ts",
+    "grid-preview": "bun run src/cli/grid_preview.ts",
+    "watch-folder": "bun run src/cli/watch_folder.ts",
+    "validate-matrix": "bun run src/cli/validate_matrix.ts",
     "report": "bun run src/cli/report.ts",
     "report-export": "bun run src/cli/report_export.ts",
     "benchmark": "bun run src/cli/benchmark.ts",
@@ -26,13 +30,17 @@
     "fixtures:e2e:report": "bun run tests/fixtures/e2e/generate-report-snapshots.ts",
     "fixtures:e2e:report-export": "bun run tests/fixtures/e2e/generate-report-export-snapshots.ts",
     "fixtures:e2e:benchmark": "bun run tests/fixtures/e2e/generate-benchmark-snapshots.ts",
+    "fixtures:e2e:overlay": "bun run tests/fixtures/e2e/generate-overlay-snapshots.ts",
+    "fixtures:e2e:grid-preview": "bun run tests/fixtures/e2e/generate-grid-preview-snapshots.ts",
+    "fixtures:e2e:watch-folder": "bun run tests/fixtures/e2e/generate-watch-folder-snapshots.ts",
+    "fixtures:e2e:validate-matrix": "bun run tests/fixtures/e2e/generate-validate-matrix-snapshots.ts",
     "fixtures:e2e:export": "bun run tests/fixtures/e2e/generate-export-snapshots.ts",
     "fixtures:e2e:export-video": "bun run tests/fixtures/e2e/generate-export-video-snapshots.ts",
     "fixtures:visual": "bun run tests/fixtures/visual/generate-snapshots.ts",
     "fixtures:pixel": "bun run tests/fixtures/pixel/generate-snapshots.ts"
   },
   "devDependencies": {
-    "@types/bun": "1.3.9"
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"

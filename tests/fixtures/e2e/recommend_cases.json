@@ -24,8 +24,12 @@
     "args": ["--mode", "reliable", "--surface", "story", "--orientation", "portrait", "--workflow", "unknown", "--json"]
   },
   {
-    "id": "reliable-story-white-ignored",
+    "id": "reliable-story-white-canvas",
     "args": ["--mode", "reliable", "--surface", "story", "--orientation", "portrait", "--workflow", "unknown", "--white-canvas", "--json"]
+  },
+  {
+    "id": "reliable-reel-white-canvas",
+    "args": ["--mode", "reliable", "--surface", "reel", "--orientation", "portrait", "--workflow", "unknown", "--white-canvas", "--json"]
   },
   {
     "id": "experimental-feed-square",

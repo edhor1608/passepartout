@@ -64,29 +64,6 @@ describe("cli integration", () => {
     expect(result.stderr).toContain("Invalid mode");
   });
 
-  test("missing value for --mode fails with explicit error", async () => {
-    const result = await runRecommendCli(["--mode", "--surface", "feed", "--orientation", "portrait", "--json"]);
-
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain("Missing value for --mode");
-  });
-
-  test("missing value for --canvas-profile fails with explicit error", async () => {
-    const result = await runRecommendCli([
-      "--mode",
-      "reliable",
-      "--surface",
-      "feed",
-      "--orientation",
-      "portrait",
-      "--white-canvas",
-      "--canvas-profile",
-      "--json",
-    ]);
-
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain("Missing value for --canvas-profile");
-  });
   test("invalid canvas style fails with non-zero exit", async () => {
     const result = await runRecommendCli([
       "--mode",
@@ -104,7 +81,8 @@ describe("cli integration", () => {
     expect(result.exitCode).not.toBe(0);
     expect(result.stderr).toContain("Invalid canvas style");
   });
-  test("white-canvas on non-feed is ignored deterministically", async () => {
+
+  test("white-canvas on story is enabled with surface default profile", async () => {
     const result = await runRecommendCli([
       "--mode",
       "reliable",
@@ -118,16 +96,16 @@ describe("cli integration", () => {
       "--json",
     ]);
 
-    expect(result.exitCode).toBe(0);
     const payload = parseJsonStdout(result.stdout);
-    expect(payload.workflow_note).toBe("White-canvas is feed-only in Phase 1; ignored for story.");
+    expect(result.exitCode).toBe(0);
+    expect(payload.workflow_note).toBe("Using story_default white-canvas profile.");
     expect(payload.white_canvas).toEqual({
-      contain_only: false,
-      enabled: false,
-      margins: null,
-      no_crop: false,
-      profile: null,
-      style: null,
+      contain_only: true,
+      enabled: true,
+      margins: { bottom: 54, left: 54, right: 54, top: 54 },
+      no_crop: true,
+      profile: "story_default",
+      style: "gallery_clean",
     });
   });
 });

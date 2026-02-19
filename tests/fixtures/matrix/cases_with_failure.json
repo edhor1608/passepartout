@@ -1,0 +1,18 @@
+[
+  {
+    "id": "matrix-fail-reliable-feed-portrait",
+    "file": "../images/portrait_sample_30x40.png",
+    "out": "../exports/matrix_fail_portrait.jpg",
+    "mode": "reliable",
+    "surface": "feed",
+    "workflow": "unknown"
+  },
+  {
+    "id": "matrix-fail-missing-file",
+    "file": "../images/does_not_exist.png",
+    "out": "../exports/matrix_fail_missing.jpg",
+    "mode": "reliable",
+    "surface": "feed",
+    "workflow": "unknown"
+  }
+]

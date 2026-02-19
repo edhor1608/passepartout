@@ -66,12 +66,6 @@ function parseHeader(bytes: Uint8Array): {
 
   while (state.index < bytes.length) {
     const c = bytes[state.index];
-    if (c === 35) {
-      while (state.index < bytes.length && bytes[state.index] !== 10) {
-        state.index += 1;
-      }
-      continue;
-    }
     if (c === 9 || c === 10 || c === 13 || c === 32) {
       state.index += 1;
       continue;
@@ -84,11 +78,11 @@ function parseHeader(bytes: Uint8Array): {
 
 export function readP3Image(path: string): RgbImage {
   const text = readFileSync(path, "utf8");
-  const cleaned = text.replace(/#[^\n]*/g, "");
-  const tokens = cleaned
+  const tokens = text
     .split(/\s+/)
     .map((token) => token.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((token) => !token.startsWith("#"));
 
   if (tokens[0] !== "P3") {
     throw new Error(`Not a P3 image: ${path}`);
@@ -235,6 +229,6 @@ export function diffRgb(a: RgbImage, b: RgbImage): {
   return {
     mismatchPixels,
     maxChannelDelta,
-    meanChannelDelta: sum / (a.pixels.length / 3),
+    meanChannelDelta: sum / a.pixels.length,
   };
 }

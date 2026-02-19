@@ -5,6 +5,7 @@ import type {
   Resolution,
 } from "../types/contracts";
 import { analyze } from "./analyze";
+import { computeObjectiveMetrics } from "./objective_metrics";
 import { exportImage } from "./export_image";
 import { exportVideo } from "./export_video";
 
@@ -16,11 +17,14 @@ function buildComparison(params: {
   inputAnalyze: AnalyzeOutput;
   outputAnalyze: AnalyzeOutput;
   targetResolution: Resolution;
+  inputPath: string;
+  outputPath: string;
 }): ReportExportOutput["comparison"] {
-  const { inputAnalyze, outputAnalyze, targetResolution } = params;
+  const { inputAnalyze, outputAnalyze, targetResolution, inputPath, outputPath } = params;
   const inputResolution = toResolution(inputAnalyze.input.width, inputAnalyze.input.height);
   const outputResolution = toResolution(outputAnalyze.input.width, outputAnalyze.input.height);
   const outputMatchesTarget = outputResolution === targetResolution;
+  const objectiveMetrics = computeObjectiveMetrics(inputPath, outputPath);
 
   const inputBitrate = inputAnalyze.input.bitrate_kbps;
   const outputBitrate = outputAnalyze.input.bitrate_kbps;
@@ -33,6 +37,9 @@ function buildComparison(params: {
   }
   if (bitrateDeltaKbps !== null) {
     notes.push(`Bitrate delta is ${bitrateDeltaKbps} kbps.`);
+  }
+  if (objectiveMetrics.note) {
+    notes.push(objectiveMetrics.note);
   }
 
   return {
@@ -47,6 +54,8 @@ function buildComparison(params: {
     output_colorspace: outputAnalyze.input.colorspace,
     input_has_audio: inputAnalyze.input.has_audio,
     output_has_audio: outputAnalyze.input.has_audio,
+    psnr_db: objectiveMetrics.psnrDb,
+    ssim: objectiveMetrics.ssim,
     notes,
   };
 }
@@ -92,14 +101,14 @@ export function buildReportExport(input: ReportExportInput): ReportExportOutput 
     mode: input.mode,
     surface: input.surface,
     workflow,
-    whiteCanvas: input.whiteCanvas,
-    canvasProfile: input.canvasProfile,
   });
 
   const comparison = buildComparison({
     inputAnalyze,
     outputAnalyze,
     targetResolution: exportResult.target_resolution,
+    inputPath: input.file,
+    outputPath: input.out,
   });
 
   return {

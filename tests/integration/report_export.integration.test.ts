@@ -43,6 +43,10 @@ describe("report-export cli integration", () => {
     const comparison = payload.comparison as Record<string, unknown>;
     expect(comparison.output_matches_target).toBe(true);
     expect(comparison.output_resolution).toBe("1080x1350");
+    expect(typeof comparison.psnr_db).toBe("number");
+    expect((comparison.psnr_db as number) >= 0).toBe(true);
+    expect(typeof comparison.ssim).toBe("number");
+    expect((comparison.ssim as number) >= 0 && (comparison.ssim as number) <= 1).toBe(true);
   });
 
   test("video input includes bitrate delta in comparison", async () => {
@@ -70,5 +74,7 @@ describe("report-export cli integration", () => {
     expect(comparison.output_matches_target).toBe(true);
     expect(comparison.output_resolution).toBe("1080x1920");
     expect(typeof comparison.bitrate_delta_kbps).toBe("number");
+    expect(typeof comparison.psnr_db).toBe("number");
+    expect(typeof comparison.ssim).toBe("number");
   });
 });

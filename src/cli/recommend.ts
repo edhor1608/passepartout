@@ -1,17 +1,11 @@
-import {
-  CANVAS_PROFILES,
-  CANVAS_STYLES,
-  MODES,
-  ORIENTATIONS,
-  SURFACES,
-  WORKFLOWS,
-  type CanvasProfile,
-  type CanvasStyle,
-  type Mode,
-  type Orientation,
-  type RecommendInput,
-  type Surface,
-  type Workflow,
+import type {
+  CanvasProfile,
+  CanvasStyle,
+  Mode,
+  Orientation,
+  RecommendInput,
+  Surface,
+  Workflow,
 } from "../types/contracts";
 import { recommend, toStableJson } from "../domain/recommend";
 
@@ -33,30 +27,18 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     switch (token) {
       case "--mode":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --mode");
-        }
         mode = next as Mode;
         i += 1;
         break;
       case "--surface":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --surface");
-        }
         surface = next as Surface;
         i += 1;
         break;
       case "--orientation":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --orientation");
-        }
         orientation = next as Orientation;
         i += 1;
         break;
       case "--workflow":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --workflow");
-        }
         workflow = next as Workflow;
         i += 1;
         break;
@@ -64,16 +46,10 @@ function parseArgs(argv: string[]): ParsedArgs {
         whiteCanvas = true;
         break;
       case "--canvas-profile":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --canvas-profile");
-        }
         canvasProfile = next as CanvasProfile;
         i += 1;
         break;
       case "--canvas-style":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --canvas-style");
-        }
         canvasStyle = next as CanvasStyle;
         i += 1;
         break;
@@ -89,27 +65,27 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error("Missing required args: --mode --surface --orientation");
   }
 
-  if (!MODES.includes(mode)) {
+  if (!["reliable", "experimental"].includes(mode)) {
     throw new Error(`Invalid mode: ${mode}`);
   }
 
-  if (!SURFACES.includes(surface)) {
+  if (!["feed", "story", "reel"].includes(surface)) {
     throw new Error(`Invalid surface: ${surface}`);
   }
 
-  if (!ORIENTATIONS.includes(orientation)) {
+  if (!["portrait", "square", "landscape"].includes(orientation)) {
     throw new Error(`Invalid orientation: ${orientation}`);
   }
 
-  if (!WORKFLOWS.includes(workflow)) {
+  if (!["app_direct", "api_scheduler", "unknown"].includes(workflow)) {
     throw new Error(`Invalid workflow: ${workflow}`);
   }
 
-  if (canvasProfile && !CANVAS_PROFILES.includes(canvasProfile)) {
+  if (canvasProfile && !["feed_compat", "feed_app_direct"].includes(canvasProfile)) {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
-  if (canvasStyle && !CANVAS_STYLES.includes(canvasStyle)) {
+  if (canvasStyle && !["gallery_clean", "polaroid_classic"].includes(canvasStyle)) {
     throw new Error(`Invalid canvas style: ${canvasStyle}`);
   }
 

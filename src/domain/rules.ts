@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import type {
   Mode,
   Orientation,
@@ -9,26 +9,11 @@ import type {
   Surface,
 } from "../types/contracts";
 
-export const DEFAULT_RULESET_PATH = fileURLToPath(new URL("../../config/ruleset.v1.json", import.meta.url));
+export const DEFAULT_RULESET_PATH = join(process.cwd(), "config", "ruleset.v1.json");
 
 export function loadRuleset(path = DEFAULT_RULESET_PATH): Ruleset {
   const raw = readFileSync(path, "utf8");
-  const parsed = JSON.parse(raw) as unknown;
-
-  if (
-    !parsed ||
-    typeof parsed !== "object" ||
-    !("profiles" in parsed) ||
-    typeof parsed.profiles !== "object" ||
-    parsed.profiles === null ||
-    !("white_canvas" in parsed) ||
-    typeof parsed.white_canvas !== "object" ||
-    parsed.white_canvas === null
-  ) {
-    throw new Error(`Invalid ruleset at ${path}: missing required top-level keys`);
-  }
-
-  return parsed as Ruleset;
+  return JSON.parse(raw) as Ruleset;
 }
 
 export function parseResolution(resolution: Resolution): { width: number; height: number } {

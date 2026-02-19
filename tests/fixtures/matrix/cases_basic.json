@@ -1,0 +1,18 @@
+[
+  {
+    "id": "matrix-basic-reliable-feed-portrait",
+    "file": "../images/portrait_sample_30x40.png",
+    "out": "../exports/matrix_basic_portrait.jpg",
+    "mode": "reliable",
+    "surface": "feed",
+    "workflow": "unknown"
+  },
+  {
+    "id": "matrix-basic-reliable-reel-video",
+    "file": "../images/portrait_video_360x640.mp4",
+    "out": "../exports/matrix_basic_reel.mp4",
+    "mode": "reliable",
+    "surface": "reel",
+    "workflow": "unknown"
+  }
+]

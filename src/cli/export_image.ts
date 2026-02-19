@@ -1,24 +1,15 @@
-import {
-  CANVAS_STYLES,
-  CANVAS_PROFILES,
-  MODES,
-  SURFACES,
-  WORKFLOWS,
-  type CanvasProfile,
-  type CanvasStyle,
-  type ExportImageInput,
-  type Mode,
-  type Surface,
-  type Workflow,
+import type {
+  CanvasProfile,
+  CanvasStyle,
+  ExportImageInput,
+  Mode,
+  Surface,
+  Workflow,
 } from "../types/contracts";
 import { exportImage } from "../domain/export_image";
 import { stableStringify } from "../domain/recommend";
 
 type ParsedArgs = ExportImageInput & { json: boolean };
-
-function isAllowedValue<T extends string>(value: string, allowed: readonly T[]): value is T {
-  return (allowed as readonly string[]).includes(value);
-}
 
 function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0 || argv[0]?.startsWith("--")) {
@@ -42,30 +33,18 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     switch (token) {
       case "--out":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --out");
-        }
         out = next;
         i += 1;
         break;
       case "--mode":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --mode");
-        }
         mode = next as Mode;
         i += 1;
         break;
       case "--surface":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --surface");
-        }
         surface = next as Surface;
         i += 1;
         break;
       case "--workflow":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --workflow");
-        }
         workflow = next as Workflow;
         i += 1;
         break;
@@ -73,24 +52,15 @@ function parseArgs(argv: string[]): ParsedArgs {
         whiteCanvas = true;
         break;
       case "--canvas-profile":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --canvas-profile");
-        }
         canvasProfile = next as CanvasProfile;
         i += 1;
         break;
       case "--canvas-style":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --canvas-style");
-        }
         canvasStyle = next as CanvasStyle;
         i += 1;
         break;
       case "--quality":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --quality");
-        }
-        quality = Number.parseInt(next, 10);
+        quality = Number.parseInt(next ?? "", 10);
         i += 1;
         break;
       case "--json":
@@ -105,23 +75,23 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error("Missing required args: --out --mode --surface");
   }
 
-  if (!isAllowedValue(mode, MODES)) {
+  if (!["reliable", "experimental"].includes(mode)) {
     throw new Error(`Invalid mode: ${mode}`);
   }
 
-  if (!isAllowedValue(surface, SURFACES)) {
+  if (!["feed", "story", "reel"].includes(surface)) {
     throw new Error(`Invalid surface: ${surface}`);
   }
 
-  if (!isAllowedValue(workflow, WORKFLOWS)) {
+  if (!["app_direct", "api_scheduler", "unknown"].includes(workflow)) {
     throw new Error(`Invalid workflow: ${workflow}`);
   }
 
-  if (canvasProfile && !isAllowedValue(canvasProfile, CANVAS_PROFILES)) {
+  if (canvasProfile && !["feed_compat", "feed_app_direct"].includes(canvasProfile)) {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
-  if (canvasStyle && !isAllowedValue(canvasStyle, CANVAS_STYLES)) {
+  if (canvasStyle && !["gallery_clean", "polaroid_classic"].includes(canvasStyle)) {
     throw new Error(`Invalid canvas style: ${canvasStyle}`);
   }
 
@@ -141,21 +111,15 @@ function printHumanOutput(result: ReturnType<typeof exportImage>): void {
 }
 
 function main(): void {
-  try {
-    const parsed = parseArgs(process.argv.slice(2));
-    const result = exportImage(parsed);
+  const parsed = parseArgs(process.argv.slice(2));
+  const result = exportImage(parsed);
 
-    if (parsed.json) {
-      console.log(stableStringify(result));
-      return;
-    }
-
-    printHumanOutput(result);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`Error: ${message}`);
-    process.exit(1);
+  if (parsed.json) {
+    console.log(stableStringify(result));
+    return;
   }
+
+  printHumanOutput(result);
 }
 
 main();

@@ -3,13 +3,28 @@ import { readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { recommend } from "../../src/domain/recommend";
 import { parseResolution } from "../../src/domain/rules";
-import { pixelScenarios } from "../fixtures/pixel/scenarios";
 import { diffRgb, readP3Image, readP6Image, renderContainCanvas } from "../helpers/image";
 import { orientationFromSize } from "../helpers/ppm";
 
 const imageDir = join(import.meta.dir, "..", "fixtures", "images");
 const snapshotDir = join(import.meta.dir, "..", "fixtures", "pixel", "snapshots");
-const imageFiles = readdirSync(imageDir).filter((name) => name.endsWith(".ppm")).sort();
+const imageFiles = readdirSync(imageDir).filter((name) => name.endsWith(".ppm"));
+
+const scenarios = [
+  { suffix: "compat", workflow: "unknown" as const, canvasProfile: "feed_compat" as const },
+  { suffix: "app_direct", workflow: "app_direct" as const, canvasProfile: "feed_app_direct" as const },
+  {
+    suffix: "fallback",
+    workflow: "api_scheduler" as const,
+    canvasProfile: "feed_app_direct" as const,
+  },
+  {
+    suffix: "classic",
+    workflow: "unknown" as const,
+    canvasProfile: "feed_compat" as const,
+    canvasStyle: "polaroid_classic" as const,
+  },
+];
 
 describe("pixel-level visual regression", () => {
   for (const imageFile of imageFiles) {
@@ -17,7 +32,7 @@ describe("pixel-level visual regression", () => {
     const orientation = orientationFromSize(source.width, source.height);
     const base = basename(imageFile, ".ppm");
 
-    for (const scenario of pixelScenarios) {
+    for (const scenario of scenarios) {
       test(`${base}.${scenario.suffix}`, () => {
         const rec = recommend({
           mode: "reliable",
@@ -31,7 +46,10 @@ describe("pixel-level visual regression", () => {
         });
 
         expect(rec.white_canvas.margins).not.toBeNull();
-        const margins = rec.white_canvas.margins!;
+        const margins = rec.white_canvas.margins;
+        if (!margins) {
+          throw new Error("margins missing");
+        }
 
         const { width, height } = parseResolution(rec.target_resolution);
         const actual = renderContainCanvas({

@@ -1,20 +1,10 @@
-export const MODES = ["reliable", "experimental"] as const;
-export type Mode = (typeof MODES)[number];
-
-export const SURFACES = ["feed", "story", "reel"] as const;
-export type Surface = (typeof SURFACES)[number];
-
-export const ORIENTATIONS = ["portrait", "square", "landscape"] as const;
-export type Orientation = (typeof ORIENTATIONS)[number];
-
-export const WORKFLOWS = ["app_direct", "api_scheduler", "unknown"] as const;
-export type Workflow = (typeof WORKFLOWS)[number];
-
-export const CANVAS_PROFILES = ["feed_compat", "feed_app_direct"] as const;
-export type CanvasProfile = (typeof CANVAS_PROFILES)[number];
-
-export const CANVAS_STYLES = ["gallery_clean", "polaroid_classic"] as const;
-export type CanvasStyle = (typeof CANVAS_STYLES)[number];
+export type Mode = "reliable" | "experimental";
+export type Surface = "feed" | "story" | "reel";
+export type Orientation = "portrait" | "square" | "landscape";
+export type Workflow = "app_direct" | "api_scheduler" | "unknown";
+export type CanvasProfile = "feed_compat" | "feed_app_direct";
+export type CanvasStyle = "gallery_clean" | "polaroid_classic";
+export type WhiteCanvasResolvedProfile = CanvasProfile | "story_default" | "reel_default";
 export type RiskLevel = "low" | "medium" | "high";
 export type Resolution = `${number}x${number}`;
 
@@ -62,7 +52,7 @@ export type RecommendInput = {
 
 export type WhiteCanvasOutput = {
   enabled: boolean;
-  profile: CanvasProfile | null;
+  profile: WhiteCanvasResolvedProfile | null;
   style: CanvasStyle | null;
   margins: Margins | null;
   contain_only: boolean;
@@ -149,6 +139,8 @@ export type ExportImageInput = {
 export type ExportImageOutput = {
   input_path: string;
   output_path: string;
+  export_profile_id: string;
+  quality_used: number;
   selected_profile: string;
   target_resolution: Resolution;
   white_canvas_enabled: boolean;
@@ -170,6 +162,8 @@ export type ExportVideoInput = {
 export type ExportVideoOutput = {
   input_path: string;
   output_path: string;
+  export_profile_id: string;
+  crf_used: number;
   selected_profile: string;
   target_resolution: Resolution;
   white_canvas_enabled: boolean;
@@ -228,6 +222,8 @@ export type ReportExportOutput = {
     output_colorspace: string;
     input_has_audio: boolean;
     output_has_audio: boolean;
+    psnr_db: number | null;
+    ssim: number | null;
     notes: string[];
   };
 };
@@ -244,4 +240,137 @@ export type BenchmarkOutput = {
     bitrate_score: number;
     codec_score: number;
   };
+  confidence: {
+    value: number;
+    label: "low" | "medium" | "high";
+  };
+};
+
+export type ValidateMatrixCase = {
+  id: string;
+  file: string;
+  out: string;
+  mode: Mode;
+  surface: Surface;
+  workflow?: Workflow;
+  whiteCanvas?: boolean;
+  canvasProfile?: CanvasProfile;
+  canvasStyle?: CanvasStyle;
+};
+
+export type ValidateMatrixInput = {
+  casesFile: string;
+  onlyIds?: string[];
+  maxCases?: number;
+};
+
+export type ValidateMatrixOutput = {
+  matrix_version: "v1";
+  duration_ms: number;
+  selected_case_ids: string[];
+  cases_total: number;
+  cases_skipped: number;
+  cases_succeeded: number;
+  cases_failed: number;
+  summary: {
+    avg_total_score: number | null;
+    avg_confidence: number | null;
+    grade_counts: {
+      A: number;
+      B: number;
+      C: number;
+      D: number;
+    };
+    confidence_counts: {
+      low: number;
+      medium: number;
+      high: number;
+    };
+  };
+  results: Array<{
+    id: string;
+    status: "ok" | "error";
+    duration_ms: number;
+    benchmark: BenchmarkOutput | null;
+    error: string | null;
+  }>;
+};
+
+export type OverlayRatio = "4:5" | "3:4" | "9:16";
+
+export type OverlayOutput = {
+  ratio: OverlayRatio;
+  canvas_resolution: Resolution;
+  canvas: {
+    width: number;
+    height: number;
+  };
+  safe_zone: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    width: number;
+    height: number;
+  };
+  thirds: {
+    vertical: [number, number];
+    horizontal: [number, number];
+  };
+  output_svg_path?: string;
+};
+
+export type GridPreviewOutput = {
+  ratio: OverlayRatio;
+  canvas_resolution: Resolution;
+  canvas: {
+    width: number;
+    height: number;
+  };
+  grid_crop_square: {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    size: number;
+  };
+  visible_fraction_percent: number;
+  output_svg_path?: string;
+};
+
+export type WatchFolderInput = {
+  inDir: string;
+  outDir: string;
+  mode: Mode;
+  surface: Surface;
+  workflow?: Workflow;
+  whiteCanvas?: boolean;
+  canvasProfile?: CanvasProfile;
+  canvasStyle?: CanvasStyle;
+  once?: boolean;
+  intervalSeconds?: number;
+  maxCycles?: number;
+};
+
+export type WatchFolderOutput = {
+  input_dir: string;
+  output_dir: string;
+  state_path: string;
+  once: boolean;
+  processed_count: number;
+  skipped_count: number;
+  error_count: number;
+  processed: Array<{
+    input_path: string;
+    output_path: string;
+    kind: "image" | "video";
+  }>;
+  skipped: Array<{
+    input_path: string;
+    reason: string;
+  }>;
+  errors: Array<{
+    input_path: string;
+    message: string;
+  }>;
 };

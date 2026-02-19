@@ -18,6 +18,41 @@ function gradeFromScore(total: number): "A" | "B" | "C" | "D" {
   return "D";
 }
 
+function confidenceLabel(value: number): "low" | "medium" | "high" {
+  if (value >= 0.8) {
+    return "high";
+  }
+  if (value >= 0.55) {
+    return "medium";
+  }
+  return "low";
+}
+
+function computeConfidence(reportExport: BenchmarkOutput["report_export"]): BenchmarkOutput["confidence"] {
+  let score = 0;
+  if (reportExport.comparison.output_matches_target) {
+    score += 0.35;
+  }
+  if (reportExport.comparison.bitrate_delta_kbps !== null) {
+    score += 0.2;
+  }
+  if (reportExport.comparison.psnr_db !== null) {
+    score += 0.2;
+  }
+  if (reportExport.comparison.ssim !== null) {
+    score += 0.2;
+  }
+  if (reportExport.output_analyze.input.codec !== null) {
+    score += 0.05;
+  }
+
+  const value = Number.parseFloat(clamp(score, 0, 1).toFixed(3));
+  return {
+    value,
+    label: confidenceLabel(value),
+  };
+}
+
 export function benchmark(input: BenchmarkInput): BenchmarkOutput {
   const reportExport = buildReportExport(input);
 
@@ -45,5 +80,6 @@ export function benchmark(input: BenchmarkInput): BenchmarkOutput {
       bitrate_score: bitrateScore,
       codec_score: codecScore,
     },
+    confidence: computeConfidence(reportExport),
   };
 }

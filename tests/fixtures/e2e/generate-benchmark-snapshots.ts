@@ -1,37 +1,21 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
-import { parseJsonStdout } from "../../helpers/cli";
+import { join } from "node:path";
 
 type Case = { id: string; args: string[] };
 
 const fixturesDir = import.meta.dir;
 const repoRoot = join(fixturesDir, "..", "..", "..");
-const resolvedRepoRoot = resolve(repoRoot);
 const snapshotDir = join(fixturesDir, "snapshots", "benchmark");
 mkdirSync(snapshotDir, { recursive: true });
 
 const cases = JSON.parse(readFileSync(join(fixturesDir, "benchmark_cases.json"), "utf8")) as Case[];
 
-function normalizePath(pathValue: string): string {
-  const normalizedSlashes = pathValue.replaceAll("\\", "/");
-  if (/^[A-Za-z]:\//.test(normalizedSlashes)) {
-    return normalizedSlashes.replace(/^.*tests\/fixtures\//, "tests/fixtures/");
-  }
-  if (isAbsolute(pathValue)) {
-    return relative(repoRoot, pathValue).replaceAll("\\", "/");
-  }
-  return normalizedSlashes;
-}
-
 for (const testCase of cases) {
   const outIndex = testCase.args.findIndex((arg) => arg === "--out");
   if (outIndex >= 0) {
     const outputPath = testCase.args[outIndex + 1];
-    if (outputPath && !isAbsolute(outputPath)) {
-      const resolvedOutput = resolve(repoRoot, outputPath);
-      if (resolvedOutput.startsWith(`${resolvedRepoRoot}${sep}`) || resolvedOutput === resolvedRepoRoot) {
-        rmSync(resolvedOutput, { force: true });
-      }
+    if (outputPath) {
+      rmSync(join(repoRoot, outputPath), { force: true });
     }
   }
 
@@ -46,31 +30,18 @@ for (const testCase of cases) {
     throw new Error(`failed for ${testCase.id}: ${proc.stderr.toString()}`);
   }
 
-  const payload = parseJsonStdout(proc.stdout.toString(), testCase.id) as {
-    report_export?: {
-      input_analyze?: { input?: { path?: string } };
-      output_analyze?: { input?: { path?: string } };
-      export?: { input_path?: string; output_path?: string };
-    };
-  };
-  if (typeof payload.report_export?.input_analyze?.input?.path === "string") {
-    payload.report_export.input_analyze.input.path = normalizePath(
-      payload.report_export.input_analyze.input.path,
-    );
-  }
-  if (typeof payload.report_export?.output_analyze?.input?.path === "string") {
-    payload.report_export.output_analyze.input.path = normalizePath(
-      payload.report_export.output_analyze.input.path,
-    );
-  }
-  if (typeof payload.report_export?.export?.input_path === "string") {
-    payload.report_export.export.input_path = normalizePath(payload.report_export.export.input_path);
-  }
-  if (typeof payload.report_export?.export?.output_path === "string") {
-    payload.report_export.export.output_path = normalizePath(payload.report_export.export.output_path);
+  const lines = proc.stdout
+    .toString()
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const payload = lines[lines.length - 1];
+  if (!payload?.startsWith("{")) {
+    throw new Error(`no json payload for ${testCase.id}`);
   }
 
-  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${JSON.stringify(payload)}\n`, "utf8");
+  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${payload}\n`, "utf8");
 }
 
 console.log(`generated ${cases.length} benchmark snapshots`);

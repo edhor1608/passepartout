@@ -1,15 +1,10 @@
-import {
-  CANVAS_PROFILES,
-  CANVAS_STYLES,
-  MODES,
-  SURFACES,
-  WORKFLOWS,
-  type CanvasProfile,
-  type CanvasStyle,
-  type ExportVideoInput,
-  type Mode,
-  type Surface,
-  type Workflow,
+import type {
+  CanvasProfile,
+  CanvasStyle,
+  ExportVideoInput,
+  Mode,
+  Surface,
+  Workflow,
 } from "../types/contracts";
 import { exportVideo } from "../domain/export_video";
 import { stableStringify } from "../domain/recommend";
@@ -38,30 +33,18 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     switch (token) {
       case "--out":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --out");
-        }
         out = next;
         i += 1;
         break;
       case "--mode":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --mode");
-        }
         mode = next as Mode;
         i += 1;
         break;
       case "--surface":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --surface");
-        }
         surface = next as Surface;
         i += 1;
         break;
       case "--workflow":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --workflow");
-        }
         workflow = next as Workflow;
         i += 1;
         break;
@@ -69,23 +52,14 @@ function parseArgs(argv: string[]): ParsedArgs {
         whiteCanvas = true;
         break;
       case "--canvas-profile":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --canvas-profile");
-        }
         canvasProfile = next as CanvasProfile;
         i += 1;
         break;
       case "--canvas-style":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --canvas-style");
-        }
         canvasStyle = next as CanvasStyle;
         i += 1;
         break;
       case "--crf":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --crf");
-        }
         crf = Number.parseInt(next ?? "", 10);
         i += 1;
         break;
@@ -101,23 +75,23 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error("Missing required args: --out --mode --surface");
   }
 
-  if (!MODES.includes(mode)) {
+  if (!["reliable", "experimental"].includes(mode)) {
     throw new Error(`Invalid mode: ${mode}`);
   }
 
-  if (!SURFACES.includes(surface)) {
+  if (!["feed", "story", "reel"].includes(surface)) {
     throw new Error(`Invalid surface: ${surface}`);
   }
 
-  if (!WORKFLOWS.includes(workflow)) {
+  if (!["app_direct", "api_scheduler", "unknown"].includes(workflow)) {
     throw new Error(`Invalid workflow: ${workflow}`);
   }
 
-  if (canvasProfile && !CANVAS_PROFILES.includes(canvasProfile)) {
+  if (canvasProfile && !["feed_compat", "feed_app_direct"].includes(canvasProfile)) {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
-  if (canvasStyle && !CANVAS_STYLES.includes(canvasStyle)) {
+  if (canvasStyle && !["gallery_clean", "polaroid_classic"].includes(canvasStyle)) {
     throw new Error(`Invalid canvas style: ${canvasStyle}`);
   }
 
@@ -138,21 +112,15 @@ function printHumanOutput(result: ReturnType<typeof exportVideo>): void {
 }
 
 function main(): void {
-  try {
-    const parsed = parseArgs(process.argv.slice(2));
-    const result = exportVideo(parsed);
+  const parsed = parseArgs(process.argv.slice(2));
+  const result = exportVideo(parsed);
 
-    if (parsed.json) {
-      console.log(stableStringify(result));
-      return;
-    }
-
-    printHumanOutput(result);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(`Error: ${message}`);
-    process.exit(1);
+  if (parsed.json) {
+    console.log(stableStringify(result));
+    return;
   }
+
+  printHumanOutput(result);
 }
 
 main();

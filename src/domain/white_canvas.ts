@@ -13,10 +13,6 @@ type MarginInput = {
 };
 
 export function computeMarginsV1({ canvasWidth, canvasHeight, sourceRatio }: MarginInput): Margins {
-  if (canvasWidth <= 0 || canvasHeight <= 0 || sourceRatio <= 0) {
-    throw new Error("Invalid margin input: dimensions and ratio must be positive");
-  }
-
   if (sourceRatio <= 1.0) {
     const base = Math.round(0.05 * Math.min(canvasWidth, canvasHeight));
     return { left: base, top: base, right: base, bottom: base };
@@ -43,10 +39,7 @@ export function computeStyledMargins({
   ruleset,
 }: StyledMarginInput): Margins {
   const base = computeMarginsV1({ canvasWidth, canvasHeight, sourceRatio });
-  const styleConfig = ruleset.white_canvas?.styles?.[style];
-  if (!styleConfig) {
-    throw new Error(`Missing white_canvas style config for '${style}'`);
-  }
+  const styleConfig = ruleset.white_canvas.styles[style];
   const extraBottom = Math.round(styleConfig.extra_bottom_ratio * canvasHeight);
 
   return {

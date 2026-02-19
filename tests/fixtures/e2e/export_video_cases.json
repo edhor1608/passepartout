@@ -14,5 +14,9 @@
   {
     "id": "export-video-experimental-story",
     "args": ["tests/fixtures/images/portrait_video_360x640.mp4", "--out", "tests/fixtures/exports/e2e_export_video_experimental_story.mp4", "--mode", "experimental", "--surface", "story", "--workflow", "unknown", "--json"]
+  },
+  {
+    "id": "export-video-reliable-reel-white-canvas",
+    "args": ["tests/fixtures/images/portrait_video_360x640.mp4", "--out", "tests/fixtures/exports/e2e_export_video_reliable_reel_white_canvas.mp4", "--mode", "reliable", "--surface", "reel", "--workflow", "unknown", "--white-canvas", "--json"]
   }
 ]

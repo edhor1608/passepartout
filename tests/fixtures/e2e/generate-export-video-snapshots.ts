@@ -1,7 +1,10 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
-import { parseJsonStdout } from "../../helpers/cli";
-import type { ExportCase } from "../../helpers/types";
+import { join } from "node:path";
+
+type ExportCase = {
+  id: string;
+  args: string[];
+};
 
 const fixturesDir = import.meta.dir;
 const repoRoot = join(fixturesDir, "..", "..", "..");
@@ -14,10 +17,9 @@ for (const testCase of cases) {
   const outIndex = testCase.args.findIndex((arg) => arg === "--out");
   if (outIndex >= 0) {
     const outputPath = testCase.args[outIndex + 1];
-    if (!outputPath) {
-      throw new Error(`test case ${testCase.id} has --out without a value`);
+    if (outputPath) {
+      rmSync(join(repoRoot, outputPath), { force: true });
     }
-    rmSync(join(repoRoot, outputPath), { force: true });
   }
 
   const proc = Bun.spawnSync({
@@ -25,25 +27,24 @@ for (const testCase of cases) {
     cwd: repoRoot,
     stdout: "pipe",
     stderr: "pipe",
-    timeout: 60_000,
   });
 
   if (proc.exitCode !== 0) {
     throw new Error(`failed for ${testCase.id}: ${proc.stderr.toString()}`);
   }
 
-  const payload = parseJsonStdout(proc.stdout.toString(), testCase.id) as {
-    input_path?: string;
-    output_path?: string;
-  };
-  if (payload.input_path?.startsWith("/")) {
-    payload.input_path = relative(repoRoot, payload.input_path);
-  }
-  if (payload.output_path?.startsWith("/")) {
-    payload.output_path = relative(repoRoot, payload.output_path);
+  const lines = proc.stdout
+    .toString()
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const payload = lines[lines.length - 1];
+  if (!payload?.startsWith("{")) {
+    throw new Error(`no json payload for ${testCase.id}`);
   }
 
-  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${JSON.stringify(payload)}\n`, "utf8");
+  writeFileSync(join(snapshotDir, `${testCase.id}.json`), `${payload}\n`, "utf8");
 }
 
 console.log(`generated ${cases.length} export-video snapshots`);

@@ -1,24 +1,15 @@
-import {
-  CANVAS_STYLES,
-  CANVAS_PROFILES,
-  MODES,
-  SURFACES,
-  WORKFLOWS,
-  type CanvasProfile,
-  type CanvasStyle,
-  type Mode,
-  type ReportInput,
-  type Surface,
-  type Workflow,
+import type {
+  CanvasProfile,
+  CanvasStyle,
+  Mode,
+  ReportInput,
+  Surface,
+  Workflow,
 } from "../types/contracts";
 import { stableStringify } from "../domain/recommend";
 import { buildReport } from "../domain/report";
 
 type ParsedArgs = ReportInput & { json: boolean };
-
-function isAllowedValue<T extends string>(value: string, allowed: readonly T[]): value is T {
-  return (allowed as readonly string[]).includes(value);
-}
 
 function parseArgs(argv: string[]): ParsedArgs {
   if (argv.length === 0 || argv[0]?.startsWith("--")) {
@@ -40,23 +31,14 @@ function parseArgs(argv: string[]): ParsedArgs {
 
     switch (token) {
       case "--mode":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --mode");
-        }
         mode = next as Mode;
         i += 1;
         break;
       case "--surface":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --surface");
-        }
         surface = next as Surface;
         i += 1;
         break;
       case "--workflow":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --workflow");
-        }
         workflow = next as Workflow;
         i += 1;
         break;
@@ -64,16 +46,10 @@ function parseArgs(argv: string[]): ParsedArgs {
         whiteCanvas = true;
         break;
       case "--canvas-profile":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --canvas-profile");
-        }
         canvasProfile = next as CanvasProfile;
         i += 1;
         break;
       case "--canvas-style":
-        if (!next || next.startsWith("--")) {
-          throw new Error("Missing value for --canvas-style");
-        }
         canvasStyle = next as CanvasStyle;
         i += 1;
         break;
@@ -89,23 +65,23 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error("Missing required args: --mode --surface");
   }
 
-  if (!isAllowedValue(mode, MODES)) {
+  if (!["reliable", "experimental"].includes(mode)) {
     throw new Error(`Invalid mode: ${mode}`);
   }
 
-  if (!isAllowedValue(surface, SURFACES)) {
+  if (!["feed", "story", "reel"].includes(surface)) {
     throw new Error(`Invalid surface: ${surface}`);
   }
 
-  if (!isAllowedValue(workflow, WORKFLOWS)) {
+  if (!["app_direct", "api_scheduler", "unknown"].includes(workflow)) {
     throw new Error(`Invalid workflow: ${workflow}`);
   }
 
-  if (canvasProfile && !isAllowedValue(canvasProfile, CANVAS_PROFILES)) {
+  if (canvasProfile && !["feed_compat", "feed_app_direct"].includes(canvasProfile)) {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
-  if (canvasStyle && !isAllowedValue(canvasStyle, CANVAS_STYLES)) {
+  if (canvasStyle && !["gallery_clean", "polaroid_classic"].includes(canvasStyle)) {
     throw new Error(`Invalid canvas style: ${canvasStyle}`);
   }
 

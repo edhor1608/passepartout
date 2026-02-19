@@ -1,0 +1,123 @@
+{
+  "version": "1.0.0",
+  "image": {
+    "reliable": {
+      "feed": {
+        "portrait": { "profile_id": "img_reliable_feed_portrait_v1", "quality_default": 2 },
+        "square": { "profile_id": "img_reliable_feed_square_v1", "quality_default": 2 },
+        "landscape": { "profile_id": "img_reliable_feed_landscape_v1", "quality_default": 2 }
+      },
+      "story": { "profile_id": "img_reliable_story_v1", "quality_default": 2 },
+      "reel": { "profile_id": "img_reliable_reel_v1", "quality_default": 2 }
+    },
+    "experimental": {
+      "feed": {
+        "portrait": { "profile_id": "img_experimental_feed_portrait_v1", "quality_default": 2 },
+        "square": { "profile_id": "img_experimental_feed_square_v1", "quality_default": 2 },
+        "landscape": { "profile_id": "img_experimental_feed_landscape_v1", "quality_default": 2 }
+      },
+      "story": { "profile_id": "img_experimental_story_v1", "quality_default": 2 },
+      "reel": { "profile_id": "img_experimental_reel_v1", "quality_default": 2 }
+    }
+  },
+  "video": {
+    "reliable": {
+      "feed": {
+        "portrait": {
+          "profile_id": "vid_reliable_feed_portrait_v1",
+          "ffmpeg_video_codec": "libx264",
+          "output_codec": "h264",
+          "pix_fmt": "yuv420p",
+          "movflags": "+faststart",
+          "crf_default": 23,
+          "strip_audio": true
+        },
+        "square": {
+          "profile_id": "vid_reliable_feed_square_v1",
+          "ffmpeg_video_codec": "libx264",
+          "output_codec": "h264",
+          "pix_fmt": "yuv420p",
+          "movflags": "+faststart",
+          "crf_default": 23,
+          "strip_audio": true
+        },
+        "landscape": {
+          "profile_id": "vid_reliable_feed_landscape_v1",
+          "ffmpeg_video_codec": "libx264",
+          "output_codec": "h264",
+          "pix_fmt": "yuv420p",
+          "movflags": "+faststart",
+          "crf_default": 23,
+          "strip_audio": true
+        }
+      },
+      "story": {
+        "profile_id": "vid_reliable_story_v1",
+        "ffmpeg_video_codec": "libx264",
+        "output_codec": "h264",
+        "pix_fmt": "yuv420p",
+        "movflags": "+faststart",
+        "crf_default": 23,
+        "strip_audio": true
+      },
+      "reel": {
+        "profile_id": "vid_reliable_reel_v1",
+        "ffmpeg_video_codec": "libx264",
+        "output_codec": "h264",
+        "pix_fmt": "yuv420p",
+        "movflags": "+faststart",
+        "crf_default": 23,
+        "strip_audio": true
+      }
+    },
+    "experimental": {
+      "feed": {
+        "portrait": {
+          "profile_id": "vid_experimental_feed_portrait_v1",
+          "ffmpeg_video_codec": "libx264",
+          "output_codec": "h264",
+          "pix_fmt": "yuv420p",
+          "movflags": "+faststart",
+          "crf_default": 23,
+          "strip_audio": true
+        },
+        "square": {
+          "profile_id": "vid_experimental_feed_square_v1",
+          "ffmpeg_video_codec": "libx264",
+          "output_codec": "h264",
+          "pix_fmt": "yuv420p",
+          "movflags": "+faststart",
+          "crf_default": 23,
+          "strip_audio": true
+        },
+        "landscape": {
+          "profile_id": "vid_experimental_feed_landscape_v1",
+          "ffmpeg_video_codec": "libx264",
+          "output_codec": "h264",
+          "pix_fmt": "yuv420p",
+          "movflags": "+faststart",
+          "crf_default": 23,
+          "strip_audio": true
+        }
+      },
+      "story": {
+        "profile_id": "vid_experimental_story_v1",
+        "ffmpeg_video_codec": "libx264",
+        "output_codec": "h264",
+        "pix_fmt": "yuv420p",
+        "movflags": "+faststart",
+        "crf_default": 23,
+        "strip_audio": true
+      },
+      "reel": {
+        "profile_id": "vid_experimental_reel_v1",
+        "ffmpeg_video_codec": "libx264",
+        "output_codec": "h264",
+        "pix_fmt": "yuv420p",
+        "movflags": "+faststart",
+        "crf_default": 23,
+        "strip_audio": true
+      }
+    }
+  }
+}

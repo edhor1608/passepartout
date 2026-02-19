@@ -1,15 +1,10 @@
-import {
-  CANVAS_STYLES,
-  CANVAS_PROFILES,
-  MODES,
-  SURFACES,
-  WORKFLOWS,
-  type BenchmarkInput,
-  type CanvasProfile,
-  type CanvasStyle,
-  type Mode,
-  type Surface,
-  type Workflow,
+import type {
+  BenchmarkInput,
+  CanvasProfile,
+  CanvasStyle,
+  Mode,
+  Surface,
+  Workflow,
 } from "../types/contracts";
 import { stableStringify } from "../domain/recommend";
 import { benchmark } from "../domain/benchmark";
@@ -31,46 +26,36 @@ function parseArgs(argv: string[]): ParsedArgs {
   let canvasStyle: CanvasStyle | undefined;
   let json = false;
 
-  const requireValue = (flag: string, value: string | undefined): string => {
-    if (value === undefined) {
-      throw new Error(`Missing value for ${flag}`);
-    }
-    if (value.startsWith("--")) {
-      throw new Error(`Invalid value for ${flag}: expected argument but got flag ${value}`);
-    }
-    return value;
-  };
-
   for (let i = 1; i < argv.length; i += 1) {
     const token = argv[i];
     const next = argv[i + 1];
 
     switch (token) {
       case "--out":
-        out = requireValue("--out", next);
+        out = next;
         i += 1;
         break;
       case "--mode":
-        mode = requireValue("--mode", next) as Mode;
+        mode = next as Mode;
         i += 1;
         break;
       case "--surface":
-        surface = requireValue("--surface", next) as Surface;
+        surface = next as Surface;
         i += 1;
         break;
       case "--workflow":
-        workflow = requireValue("--workflow", next) as Workflow;
+        workflow = next as Workflow;
         i += 1;
         break;
       case "--white-canvas":
         whiteCanvas = true;
         break;
       case "--canvas-profile":
-        canvasProfile = requireValue("--canvas-profile", next) as CanvasProfile;
+        canvasProfile = next as CanvasProfile;
         i += 1;
         break;
       case "--canvas-style":
-        canvasStyle = requireValue("--canvas-style", next) as CanvasStyle;
+        canvasStyle = next as CanvasStyle;
         i += 1;
         break;
       case "--json":
@@ -85,23 +70,23 @@ function parseArgs(argv: string[]): ParsedArgs {
     throw new Error("Missing required args: --out --mode --surface");
   }
 
-  if (!MODES.includes(mode)) {
+  if (!["reliable", "experimental"].includes(mode)) {
     throw new Error(`Invalid mode: ${mode}`);
   }
 
-  if (!SURFACES.includes(surface)) {
+  if (!["feed", "story", "reel"].includes(surface)) {
     throw new Error(`Invalid surface: ${surface}`);
   }
 
-  if (!WORKFLOWS.includes(workflow)) {
+  if (!["app_direct", "api_scheduler", "unknown"].includes(workflow)) {
     throw new Error(`Invalid workflow: ${workflow}`);
   }
 
-  if (canvasProfile && !CANVAS_PROFILES.includes(canvasProfile)) {
+  if (canvasProfile && !["feed_compat", "feed_app_direct"].includes(canvasProfile)) {
     throw new Error(`Invalid canvas profile: ${canvasProfile}`);
   }
 
-  if (canvasStyle && !CANVAS_STYLES.includes(canvasStyle)) {
+  if (canvasStyle && !["gallery_clean", "polaroid_classic"].includes(canvasStyle)) {
     throw new Error(`Invalid canvas style: ${canvasStyle}`);
   }
 
@@ -116,6 +101,7 @@ function printHumanOutput(result: ReturnType<typeof benchmark>): void {
   console.log(
     `Breakdown: resolution=${result.score.resolution_score} bitrate=${result.score.bitrate_score} codec=${result.score.codec_score}`,
   );
+  console.log(`Confidence: ${result.confidence.value} (${result.confidence.label})`);
   console.log("Next action: rerun with --json for machine-readable output.");
 }
 

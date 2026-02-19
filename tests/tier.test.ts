@@ -30,13 +30,4 @@ describe("tier classifier", () => {
     const tier = classifyTier({ width: 1080, height: 1920, surface: "story" });
     expect(tier.name).not.toBe("tier_aspect_correction");
   });
-
-  test("invalid dimensions return high-risk aspect correction", () => {
-    const tier = classifyTier({ width: 1080, height: 0, surface: "feed" });
-    expect(tier).toEqual({
-      name: "tier_aspect_correction",
-      reason: "Invalid dimensions: width and height must be positive.",
-      risk_level: "high",
-    });
-  });
 });

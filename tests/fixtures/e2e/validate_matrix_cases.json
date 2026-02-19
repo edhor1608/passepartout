@@ -1,0 +1,65 @@
+[
+  {
+    "id": "validate-matrix-basic",
+    "args": [
+      "--cases",
+      "tests/fixtures/matrix/cases_basic.json",
+      "--json"
+    ],
+    "expected_exit_code": 0
+  },
+  {
+    "id": "validate-matrix-with-failure-fail-on-error",
+    "args": [
+      "--cases",
+      "tests/fixtures/matrix/cases_with_failure.json",
+      "--fail-on-error",
+      "--json"
+    ],
+    "expected_exit_code": 1
+  },
+  {
+    "id": "validate-matrix-max-cases-1",
+    "args": [
+      "--cases",
+      "tests/fixtures/matrix/cases_basic.json",
+      "--max-cases",
+      "1",
+      "--json"
+    ],
+    "expected_exit_code": 0
+  },
+  {
+    "id": "validate-matrix-only-portrait",
+    "args": [
+      "--cases",
+      "tests/fixtures/matrix/cases_basic.json",
+      "--only",
+      "matrix-basic-reliable-feed-portrait",
+      "--json"
+    ],
+    "expected_exit_code": 0
+  },
+  {
+    "id": "validate-matrix-only-file-portrait",
+    "args": [
+      "--cases",
+      "tests/fixtures/matrix/cases_basic.json",
+      "--only-file",
+      "tests/fixtures/matrix/only_portrait.txt",
+      "--json"
+    ],
+    "expected_exit_code": 0
+  },
+  {
+    "id": "validate-matrix-only-unknown-id",
+    "args": [
+      "--cases",
+      "tests/fixtures/matrix/cases_basic.json",
+      "--only",
+      "missing-case-id",
+      "--json"
+    ],
+    "expected_exit_code": 1
+  }
+]

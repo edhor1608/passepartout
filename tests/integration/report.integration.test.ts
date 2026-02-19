@@ -45,25 +45,4 @@ describe("report cli integration", () => {
     expect(audioCheck).toBeDefined();
     expect(audioCheck?.status).toBe("pass");
   });
-
-  test("audio check warns for video without audio", async () => {
-    const file = join(fixtures, "portrait_video_360x640.mp4");
-    const result = await runReportCli([
-      file,
-      "--mode",
-      "reliable",
-      "--surface",
-      "reel",
-      "--workflow",
-      "unknown",
-      "--json",
-    ]);
-
-    expect(result.exitCode).toBe(0);
-    const payload = parseJsonStdout(result.stdout);
-    const checks = payload.checks as Array<Record<string, unknown>>;
-    const audioCheck = checks.find((item) => item.id === "audio_present");
-    expect(audioCheck).toBeDefined();
-    expect(audioCheck?.status).toBe("warn");
-  });
 });

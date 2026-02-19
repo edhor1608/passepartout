@@ -4,7 +4,7 @@ Phase 1 implements a deterministic `recommend` vertical slice for Instagram prof
 
 Example fixture image used in tests:
 
-- `tests/fixtures/images/portrait_sample_30x40.ppm`
+- `/Users/jonas/repos/passepartout/tests/fixtures/images/portrait_sample_30x40.ppm`
 
 ## Install
 
@@ -30,10 +30,28 @@ Analyze from file:
 bun run analyze tests/fixtures/images/portrait_sample_30x40.ppm --mode reliable --surface feed --json
 ```
 
+Generate crop-safe overlay guide geometry:
+
+```bash
+bun run overlay --ratio 4:5 --json
+```
+
+Simulate profile-grid square crop visibility:
+
+```bash
+bun run grid-preview --ratio 4:5 --json
+```
+
 Export image using deterministic preset:
 
 ```bash
 bun run export-image tests/fixtures/images/portrait_sample_30x40.png --out tests/fixtures/exports/demo.jpg --mode reliable --surface feed --json
+```
+
+Inspect deterministic export profile fields in JSON (`export_profile_id`, `quality_used`, `crf_used`):
+
+```bash
+bun run export-video tests/fixtures/images/portrait_video_360x640.mp4 --out tests/fixtures/exports/demo.mp4 --mode reliable --surface reel --json
 ```
 
 Export image with white-canvas `polaroid_classic` style:
@@ -73,6 +91,8 @@ bun run fixtures:images
 bun run fixtures:images:raster
 bun run fixtures:e2e
 bun run fixtures:e2e:analyze
+bun run fixtures:e2e:overlay
+bun run fixtures:e2e:grid-preview
 bun run fixtures:e2e:export
 bun run fixtures:visual
 bun run fixtures:pixel

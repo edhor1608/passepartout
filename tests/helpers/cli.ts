@@ -12,6 +12,10 @@ async function runCli(
   command:
     | "recommend"
     | "analyze"
+    | "overlay"
+    | "grid-preview"
+    | "watch-folder"
+    | "validate-matrix"
     | "export-image"
     | "export-video"
     | "report"
@@ -43,6 +47,22 @@ export async function runAnalyzeCli(args: string[]): Promise<CliRunResult> {
   return runCli("analyze", args);
 }
 
+export async function runOverlayCli(args: string[]): Promise<CliRunResult> {
+  return runCli("overlay", args);
+}
+
+export async function runGridPreviewCli(args: string[]): Promise<CliRunResult> {
+  return runCli("grid-preview", args);
+}
+
+export async function runWatchFolderCli(args: string[]): Promise<CliRunResult> {
+  return runCli("watch-folder", args);
+}
+
+export async function runValidateMatrixCli(args: string[]): Promise<CliRunResult> {
+  return runCli("validate-matrix", args);
+}
+
 export async function runExportImageCli(args: string[]): Promise<CliRunResult> {
   return runCli("export-image", args);
 }
@@ -63,10 +83,7 @@ export async function runBenchmarkCli(args: string[]): Promise<CliRunResult> {
   return runCli("benchmark", args);
 }
 
-export function parseJsonStdout(
-  stdout: string,
-  context = "stdout",
-): Record<string, unknown> {
+export function parseJsonStdout(stdout: string): Record<string, unknown> {
   const lines = stdout
     .split("\n")
     .map((line) => line.trim())
@@ -74,13 +91,8 @@ export function parseJsonStdout(
 
   const last = lines[lines.length - 1];
   if (!last || !last.startsWith("{")) {
-    throw new Error(`No JSON payload in ${context}: ${stdout}`);
+    throw new Error(`No JSON payload in stdout: ${stdout}`);
   }
 
-  try {
-    return JSON.parse(last) as Record<string, unknown>;
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Invalid JSON payload in ${context}: ${message}`);
-  }
+  return JSON.parse(last) as Record<string, unknown>;
 }

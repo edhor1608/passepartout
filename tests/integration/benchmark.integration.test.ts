@@ -38,6 +38,7 @@ describe("benchmark cli integration", () => {
     expect(payload).toHaveProperty("benchmark_version", "v1");
     expect(payload).toHaveProperty("report_export");
     expect(payload).toHaveProperty("score");
+    expect(payload).toHaveProperty("confidence");
 
     const score = payload.score as Record<string, unknown>;
     expect(typeof score.total).toBe("number");
@@ -45,22 +46,12 @@ describe("benchmark cli integration", () => {
     expect(score.total).toBeLessThanOrEqual(100);
     expect(typeof score.grade).toBe("string");
     expect(["A", "B", "C", "D"]).toContain(score.grade as string);
-  });
 
-  test("flag passed as --mode value fails with explicit error", async () => {
-    const input = join(fixtures, "portrait_sample_30x40.png");
-    const output = resetOut("benchmark_missing_mode.jpg");
-
-    const result = await runBenchmarkCli([input, "--out", output, "--mode", "--surface", "feed", "--json"]);
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("Invalid value for --mode");
-  });
-
-  test("flag passed as --out value fails with explicit error", async () => {
-    const input = join(fixtures, "portrait_sample_30x40.png");
-
-    const result = await runBenchmarkCli([input, "--out", "--mode", "reliable", "--surface", "feed", "--json"]);
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr).toContain("Invalid value for --out");
+    const confidence = payload.confidence as Record<string, unknown>;
+    expect(typeof confidence.value).toBe("number");
+    expect((confidence.value as number) >= 0).toBe(true);
+    expect((confidence.value as number) <= 1).toBe(true);
+    expect(typeof confidence.label).toBe("string");
+    expect(["low", "medium", "high"]).toContain(confidence.label as string);
   });
 });

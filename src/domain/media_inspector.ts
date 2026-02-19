@@ -1,5 +1,5 @@
-import { closeSync, openSync, readSync } from "node:fs";
 import { resolve } from "node:path";
+import { readFileSync } from "node:fs";
 import type { MediaInspection, Orientation } from "../types/contracts";
 
 function nextToken(source: Uint8Array, state: { index: number }): string | null {
@@ -35,41 +35,11 @@ function nextToken(source: Uint8Array, state: { index: number }): string | null 
 }
 
 function readPpmSize(path: string): { width: number; height: number } {
-  const fd = openSync(path, "r");
-  const chunkSize = 16 * 1024;
-  let bytes = new Uint8Array(0);
-  let fileOffset = 0;
-  let magic: string | null = null;
-  let widthToken: string | null = null;
-  let heightToken: string | null = null;
-  try {
-    while (true) {
-      const chunk = Buffer.alloc(chunkSize);
-      const bytesRead = readSync(fd, chunk, 0, chunk.length, fileOffset);
-      if (bytesRead <= 0) {
-        break;
-      }
-      fileOffset += bytesRead;
-      const nextBytes = new Uint8Array(bytes.length + bytesRead);
-      nextBytes.set(bytes, 0);
-      nextBytes.set(chunk.subarray(0, bytesRead), bytes.length);
-      bytes = nextBytes;
-
-      const state = { index: 0 };
-      magic = nextToken(bytes, state);
-      widthToken = nextToken(bytes, state);
-      heightToken = nextToken(bytes, state);
-      if (magic && widthToken && heightToken) {
-        break;
-      }
-
-      if (bytesRead < chunkSize) {
-        break;
-      }
-    }
-  } finally {
-    closeSync(fd);
-  }
+  const bytes = new Uint8Array(readFileSync(path));
+  const state = { index: 0 };
+  const magic = nextToken(bytes, state);
+  const widthToken = nextToken(bytes, state);
+  const heightToken = nextToken(bytes, state);
 
   if (magic !== "P3" && magic !== "P6") {
     throw new Error(`Unsupported PPM magic in ${path}: ${magic ?? "<missing>"}`);
@@ -77,7 +47,7 @@ function readPpmSize(path: string): { width: number; height: number } {
 
   const width = Number.parseInt(widthToken ?? "", 10);
   const height = Number.parseInt(heightToken ?? "", 10);
-  if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
+  if (!Number.isFinite(width) || !Number.isFinite(height)) {
     throw new Error(`Invalid PPM dimensions in ${path}`);
   }
 
@@ -105,20 +75,7 @@ function readBe32(bytes: Uint8Array, offset: number): number {
 }
 
 function readPngSize(path: string): { width: number; height: number } {
-  const fd = openSync(path, "r");
-  const header = Buffer.alloc(24);
-  let bytesRead = 0;
-  try {
-    bytesRead = readSync(fd, header, 0, header.length, 0);
-  } finally {
-    closeSync(fd);
-  }
-
-  if (bytesRead < header.length) {
-    throw new Error(`Invalid PNG signature in ${path}`);
-  }
-
-  const bytes = new Uint8Array(header);
+  const bytes = new Uint8Array(readFileSync(path));
   const pngSig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
   for (let i = 0; i < pngSig.length; i += 1) {
     if (bytes[i] !== pngSig[i]) {
@@ -159,68 +116,44 @@ function isSofMarker(marker: number): boolean {
 }
 
 function readJpegSize(path: string): { width: number; height: number } {
-  const fd = openSync(path, "r");
-  let position = 0;
-  try {
-    const soi = Buffer.alloc(2);
-    const soiRead = readSync(fd, soi, 0, soi.length, position);
-    position += soiRead;
-    if (soiRead !== 2 || soi[0] !== 0xff || soi[1] !== 0xd8) {
-      throw new Error(`Invalid JPEG SOI in ${path}`);
+  const bytes = new Uint8Array(readFileSync(path));
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) {
+    throw new Error(`Invalid JPEG SOI in ${path}`);
+  }
+
+  let i = 2;
+  while (i < bytes.length) {
+    while (bytes[i] === 0xff) {
+      i += 1;
+    }
+    const marker = bytes[i];
+    if (marker === undefined) {
+      break;
+    }
+    i += 1;
+
+    if (marker === 0xd8 || marker === 0xd9) {
+      continue;
+    }
+    if (marker === 0xda) {
+      break;
     }
 
-    while (true) {
-      const markerBuf = Buffer.alloc(1);
-      let markerRead = 0;
-      do {
-        markerRead = readSync(fd, markerBuf, 0, markerBuf.length, position);
-        if (markerRead !== 1) {
-          throw new Error(`JPEG SOF segment not found in ${path}`);
-        }
-        position += 1;
-      } while (markerBuf[0] === 0xff);
-
-      const marker = markerBuf[0]!;
-      if (marker === 0xd8 || marker === 0xd9) {
-        continue;
-      }
-      if (marker === 0xda) {
-        break;
-      }
-
-      const segmentLenBytes = Buffer.alloc(2);
-      const segmentLenRead = readSync(fd, segmentLenBytes, 0, segmentLenBytes.length, position);
-      if (segmentLenRead !== 2) {
-        throw new Error(`JPEG SOF segment not found in ${path}`);
-      }
-      position += 2;
-      const segmentLen = readBe16(new Uint8Array(segmentLenBytes), 0);
-      if (segmentLen < 2) {
-        throw new Error(`Invalid JPEG segment length in ${path}`);
-      }
-
-      if (isSofMarker(marker)) {
-        if (segmentLen < 7) {
-          throw new Error(`Invalid JPEG segment length in ${path}`);
-        }
-        const sofHeader = Buffer.alloc(5);
-        const sofRead = readSync(fd, sofHeader, 0, sofHeader.length, position);
-        if (sofRead !== 5) {
-          throw new Error(`JPEG SOF segment not found in ${path}`);
-        }
-        const sofBytes = new Uint8Array(sofHeader);
-        const height = readBe16(sofBytes, 1);
-        const width = readBe16(sofBytes, 3);
-        if (width <= 0 || height <= 0) {
-          throw new Error(`Invalid JPEG dimensions in ${path}`);
-        }
-        return { width, height };
-      }
-
-      position += segmentLen - 2;
+    const segmentLen = readBe16(bytes, i);
+    if (segmentLen < 2) {
+      throw new Error(`Invalid JPEG segment length in ${path}`);
     }
-  } finally {
-    closeSync(fd);
+
+    if (isSofMarker(marker)) {
+      const height = readBe16(bytes, i + 3);
+      const width = readBe16(bytes, i + 5);
+      if (width <= 0 || height <= 0) {
+        throw new Error(`Invalid JPEG dimensions in ${path}`);
+      }
+      return { width, height };
+    }
+
+    i += segmentLen;
   }
 
   throw new Error(`JPEG SOF segment not found in ${path}`);
@@ -234,9 +167,6 @@ function detectOrientation(width: number, height: number): Orientation {
 }
 
 function formatAspect(width: number, height: number): string {
-  if (height <= 0) {
-    throw new Error("Cannot compute aspect ratio with non-positive height");
-  }
   return (width / height).toFixed(4);
 }
 
@@ -287,52 +217,6 @@ function parseBitrateKbps(raw: string | undefined): number | null {
   return Math.round(value / 1000);
 }
 
-function parseRotationValue(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
-  }
-  if (typeof value === "string") {
-    const parsed = Number.parseFloat(value);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
-  }
-  return null;
-}
-
-function readRotation(stream: Record<string, unknown>): number {
-  let rotation: number | null = null;
-
-  const tags = stream.tags;
-  if (tags && typeof tags === "object") {
-    rotation = parseRotationValue((tags as Record<string, unknown>).rotate);
-  }
-
-  const sideData = stream.side_data_list;
-  if (Array.isArray(sideData)) {
-    for (const entry of sideData) {
-      if (!entry || typeof entry !== "object") {
-        continue;
-      }
-      const candidate = parseRotationValue((entry as Record<string, unknown>).rotation);
-      if (candidate !== null) {
-        rotation = candidate;
-        break;
-      }
-    }
-  }
-
-  if (rotation === null) {
-    return 0;
-  }
-
-  const normalized = ((Math.round(rotation) % 360) + 360) % 360;
-  if (normalized === 90 || normalized === 180 || normalized === 270) {
-    return normalized;
-  }
-  return 0;
-}
-
 function parseChannels(raw: unknown): number | null {
   const value = typeof raw === "number" ? raw : Number.parseInt(String(raw ?? ""), 10);
   if (!Number.isFinite(value) || value <= 0) {
@@ -359,6 +243,7 @@ function parseNullableString(raw: unknown): string | null {
   }
   return value;
 }
+
 function readVideoMetadata(path: string): {
   width: number;
   height: number;
@@ -374,25 +259,20 @@ function readVideoMetadata(path: string): {
   audioSampleFormat: string | null;
   audioBitrateKbps: number | null;
 } {
-  let proc: ReturnType<typeof Bun.spawnSync>;
-  try {
-    proc = Bun.spawnSync({
-      cmd: [
-        "ffprobe",
-        "-v",
-        "error",
-        "-show_entries",
-        "stream=codec_type,codec_name,width,height,avg_frame_rate,r_frame_rate,channels,channel_layout,sample_fmt,sample_rate,bit_rate:stream_tags=rotate:stream_side_data=rotation:format=duration,bit_rate",
-        "-of",
-        "json",
-        path,
-      ],
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-  } catch {
-    throw new Error("ffprobe is required for video analyze but was not found in PATH");
-  }
+  const proc = Bun.spawnSync({
+    cmd: [
+      "ffprobe",
+      "-v",
+      "error",
+      "-show_entries",
+      "stream=codec_type,codec_name,width,height,avg_frame_rate,r_frame_rate,channels,channel_layout,sample_fmt,sample_rate,bit_rate:format=duration,bit_rate",
+      "-of",
+      "json",
+      path,
+    ],
+    stdout: "pipe",
+    stderr: "pipe",
+  });
 
   if (proc.exitCode !== 0) {
     throw new Error(`ffprobe failed for ${path}: ${proc.stderr.toString().trim()}`);
@@ -409,14 +289,12 @@ function readVideoMetadata(path: string): {
   if (!streams || streams.length === 0) {
     throw new Error(`ffprobe returned no video stream for ${path}`);
   }
-
   const videoStream =
     streams.find((item) => item.codec_type === "video") ??
     streams.find((item) => Number(item.width) > 0 && Number(item.height) > 0);
   if (!videoStream) {
     throw new Error(`ffprobe returned no video stream for ${path}`);
   }
-
   const audioStream = streams.find((item) => item.codec_type === "audio");
   const format = (parsed as { format?: Record<string, unknown> }).format;
 
@@ -426,11 +304,6 @@ function readVideoMetadata(path: string): {
     throw new Error(`Invalid video dimensions in ${path}`);
   }
 
-  const rotation = readRotation(videoStream);
-  const isQuarterTurn = rotation === 90 || rotation === 270;
-  const displayWidth = isQuarterTurn ? height : width;
-  const displayHeight = isQuarterTurn ? width : height;
-
   const codecToken = videoStream.codec_name;
   const codec = typeof codecToken === "string" && codecToken.length > 0 ? codecToken : null;
   const avgFrameRate =
@@ -438,29 +311,25 @@ function readVideoMetadata(path: string): {
   const realFrameRate =
     typeof videoStream.r_frame_rate === "string" ? videoStream.r_frame_rate : undefined;
   const fps = parseFps(avgFrameRate) || parseFps(realFrameRate);
-
   const durationRaw = typeof format?.duration === "string" ? format.duration : undefined;
   const bitrateRaw = typeof format?.bit_rate === "string" ? format.bit_rate : undefined;
   const durationSeconds = parseDurationSeconds(durationRaw);
   const bitrateKbps = parseBitrateKbps(bitrateRaw);
-
-  const hasAudio = Boolean(audioStream);
   const audioCodecToken = audioStream?.codec_name;
   const audioCodec =
-    hasAudio && typeof audioCodecToken === "string" && audioCodecToken.length > 0
-      ? audioCodecToken
-      : null;
-  const audioChannels = hasAudio ? parseChannels(audioStream?.channels) : null;
-  const audioChannelLayout = hasAudio ? parseNullableString(audioStream?.channel_layout) : null;
-  const audioSampleRateHz = hasAudio ? parseSampleRate(audioStream?.sample_rate) : null;
-  const audioSampleFormat = hasAudio ? parseNullableString(audioStream?.sample_fmt) : null;
+    typeof audioCodecToken === "string" && audioCodecToken.length > 0 ? audioCodecToken : null;
+  const hasAudio = audioCodec !== null;
+  const audioChannels = parseChannels(audioStream?.channels);
+  const audioChannelLayout = parseNullableString(audioStream?.channel_layout);
+  const audioSampleRateHz = parseSampleRate(audioStream?.sample_rate);
+  const audioSampleFormat = parseNullableString(audioStream?.sample_fmt);
   const audioBitrateRaw =
-    hasAudio && typeof audioStream?.bit_rate === "string" ? audioStream.bit_rate : undefined;
-  const audioBitrateKbps = hasAudio ? parseBitrateKbps(audioBitrateRaw) : null;
+    typeof audioStream?.bit_rate === "string" ? audioStream.bit_rate : undefined;
+  const audioBitrateKbps = parseBitrateKbps(audioBitrateRaw);
 
   return {
-    width: displayWidth,
-    height: displayHeight,
+    width,
+    height,
     codec,
     fps,
     durationSeconds,
@@ -477,7 +346,7 @@ function readVideoMetadata(path: string): {
 
 export function inspectMedia(filePath: string): MediaInspection {
   const resolvedPath = resolve(filePath);
-  const lower = filePath.toLowerCase();
+  const lower = resolvedPath.toLowerCase();
   let width = 0;
   let height = 0;
   let colorspace = "unknown";
@@ -521,7 +390,7 @@ export function inspectMedia(filePath: string): MediaInspection {
   }
 
   return {
-    path: filePath,
+    path: resolvedPath,
     width,
     height,
     aspect_ratio: formatAspect(width, height),

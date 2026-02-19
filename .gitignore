@@ -12,7 +12,7 @@ coverage
 
 # logs
 logs
-*.log
+_.log
 report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # dotenv environment variable files
@@ -36,3 +36,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # generated export test outputs
 tests/fixtures/exports/*
 !tests/fixtures/exports/.gitkeep
+
+# generated watch-folder test outputs
+tests/fixtures/watch/*
+tests/fixtures/watch_e2e/*

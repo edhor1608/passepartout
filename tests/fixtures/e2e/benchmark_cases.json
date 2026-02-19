@@ -10,5 +10,9 @@
   {
     "id": "benchmark-reliable-feed-landscape-white-classic",
     "args": ["tests/fixtures/images/landscape_sample_48x32.jpg", "--out", "tests/fixtures/exports/e2e_benchmark_reliable_feed_landscape_white_classic.jpg", "--mode", "reliable", "--surface", "feed", "--workflow", "unknown", "--white-canvas", "--canvas-profile", "feed_compat", "--canvas-style", "polaroid_classic", "--json"]
+  },
+  {
+    "id": "benchmark-reliable-reel-white-canvas",
+    "args": ["tests/fixtures/images/portrait_video_360x640.mp4", "--out", "tests/fixtures/exports/e2e_benchmark_reliable_reel_white_canvas.mp4", "--mode", "reliable", "--surface", "reel", "--workflow", "unknown", "--white-canvas", "--json"]
   }
 ]

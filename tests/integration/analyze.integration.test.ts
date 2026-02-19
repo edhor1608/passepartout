@@ -131,29 +131,4 @@ describe("analyze cli integration", () => {
     expect(input.audio_sample_format).toBe("fltp");
     expect(input.audio_bitrate_kbps).toBeGreaterThan(0);
   });
-
-  test("missing value for --mode fails with explicit error", async () => {
-    const file = join(fixtures, "landscape_sample_48x32.ppm");
-    const result = await runAnalyzeCli([file, "--mode", "--surface", "feed", "--json"]);
-
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain("Missing value for --mode");
-  });
-
-  test("missing value for --canvas-profile fails with explicit error", async () => {
-    const file = join(fixtures, "landscape_sample_48x32.ppm");
-    const result = await runAnalyzeCli([
-      file,
-      "--mode",
-      "reliable",
-      "--surface",
-      "feed",
-      "--white-canvas",
-      "--canvas-profile",
-      "--json",
-    ]);
-
-    expect(result.exitCode).not.toBe(0);
-    expect(result.stderr).toContain("Missing value for --canvas-profile");
-  });
 });

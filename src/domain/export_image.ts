@@ -1,9 +1,12 @@
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { ExportImageInput, ExportImageOutput } from "../types/contracts";
+import { loadExportProfiles, selectImageExportProfile } from "./export_profiles";
 import { inspectMedia } from "./media_inspector";
 import { recommend } from "./recommend";
 import { parseResolution } from "./rules";
+
+const EXPORT_PROFILES = loadExportProfiles();
 
 function buildFilter(params: {
   targetWidth: number;
@@ -36,9 +39,15 @@ function buildFilter(params: {
 
 export function exportImage(input: ExportImageInput): ExportImageOutput {
   const workflow = input.workflow ?? "unknown";
-  const quality = input.quality ?? 2;
 
   const media = inspectMedia(input.file);
+  const exportProfile = selectImageExportProfile(EXPORT_PROFILES, {
+    mode: input.mode,
+    surface: input.surface,
+    orientation: media.orientation,
+  });
+  const quality = input.quality ?? exportProfile.quality_default;
+
   const recommendation = recommend({
     mode: input.mode,
     surface: input.surface,
@@ -58,9 +67,9 @@ export function exportImage(input: ExportImageInput): ExportImageOutput {
     margins: recommendation.white_canvas.margins,
   });
 
-  const resolvedInputPath = resolve(input.file);
-  const resolvedOutputPath = resolve(input.out);
-  mkdirSync(dirname(resolvedOutputPath), { recursive: true });
+  const inputPath = resolve(input.file);
+  const outputPath = resolve(input.out);
+  mkdirSync(dirname(outputPath), { recursive: true });
 
   const proc = Bun.spawnSync({
     cmd: [
@@ -70,18 +79,17 @@ export function exportImage(input: ExportImageInput): ExportImageOutput {
       "-loglevel",
       "error",
       "-i",
-      resolvedInputPath,
+      inputPath,
       "-vf",
       filter,
       "-frames:v",
       "1",
       "-q:v",
       String(quality),
-      resolvedOutputPath,
+      outputPath,
     ],
     stdout: "pipe",
     stderr: "pipe",
-    timeout: 60_000,
   });
 
   if (proc.exitCode !== 0) {
@@ -89,8 +97,10 @@ export function exportImage(input: ExportImageInput): ExportImageOutput {
   }
 
   return {
-    input_path: input.file,
-    output_path: input.out,
+    input_path: inputPath,
+    output_path: outputPath,
+    export_profile_id: exportProfile.profile_id,
+    quality_used: quality,
     selected_profile: recommendation.selected_profile,
     target_resolution: recommendation.target_resolution,
     white_canvas_enabled: recommendation.white_canvas.enabled,
