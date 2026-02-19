@@ -1,0 +1,86 @@
+{
+  "version": "1.0.0",
+  "profiles": {
+    "reliable": {
+      "feed": {
+        "portrait": {
+          "resolution": "1080x1350",
+          "profile": "reliable_feed_portrait_safe",
+          "reason": "Reliable feed portrait target is fixed at 1080x1350 (4:5).",
+          "risk_level": "low"
+        },
+        "square": {
+          "resolution": "1080x1080",
+          "profile": "reliable_feed_square_safe",
+          "reason": "Reliable feed square target is fixed at 1080x1080 (1:1).",
+          "risk_level": "low"
+        },
+        "landscape": {
+          "resolution": "1080x566",
+          "profile": "reliable_feed_landscape_safe",
+          "reason": "Reliable feed landscape target is fixed at 1080x566 (1.91:1).",
+          "risk_level": "low"
+        }
+      },
+      "story": {
+        "resolution": "1080x1920",
+        "profile": "reliable_story_safe",
+        "reason": "Reliable story target is fixed at 1080x1920 (9:16).",
+        "risk_level": "low"
+      },
+      "reel": {
+        "resolution": "1080x1920",
+        "profile": "reliable_reel_safe",
+        "reason": "Reliable reel target is fixed at 1080x1920 (9:16).",
+        "risk_level": "low"
+      }
+    },
+    "experimental": {
+      "feed": {
+        "portrait": {
+          "resolution": "1440x1800",
+          "profile": "experimental_feed_portrait_1440",
+          "reason": "Experimental feed portrait uses 1440-wide research profile.",
+          "risk_level": "medium"
+        },
+        "square": {
+          "resolution": "1440x1440",
+          "profile": "experimental_feed_square_1440",
+          "reason": "Experimental feed square uses 1440-wide research profile.",
+          "risk_level": "medium"
+        },
+        "landscape": {
+          "resolution": "1440x754",
+          "profile": "experimental_feed_landscape_1440",
+          "reason": "Experimental feed landscape uses 1440-wide research profile.",
+          "risk_level": "medium"
+        }
+      },
+      "story": {
+        "resolution": "2160x3840",
+        "profile": "experimental_story_2160",
+        "reason": "Experimental story uses 2160-wide research profile.",
+        "risk_level": "high"
+      },
+      "reel": {
+        "resolution": "2160x3840",
+        "profile": "experimental_reel_2160",
+        "reason": "Experimental reel uses 2160-wide research profile.",
+        "risk_level": "high"
+      }
+    }
+  },
+  "white_canvas": {
+    "profiles": {
+      "feed_compat": {
+        "resolution": "1080x1350"
+      },
+      "feed_app_direct": {
+        "resolution": "1080x1440"
+      }
+    },
+    "app_direct_only_profiles": [
+      "feed_app_direct"
+    ]
+  }
+}

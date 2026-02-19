@@ -1,49 +1,52 @@
-# Passepartout
+# instagram-upload-quality-lab
 
-*Pronounced: **PASS-par-too** (`/ˈpæs.pɑːr.tuː/`)*
+Phase 1 implements a deterministic `recommend` vertical slice for Instagram profile selection.
 
-A photography-first export tool that frames any image with adaptive white canvas and outputs Instagram-optimized formats with reliable and experimental quality modes.
+Example fixture image used in tests:
 
-## Why
+- `tests/fixtures/images/portrait_sample_30x40.ppm`
 
-Instagram quality and framing are inconsistent when source photos come in mixed ratios and resolutions.  
-Passepartout creates a consistent visual language (clean white/polaroid framing) while keeping exports aligned with practical Instagram constraints.
+## Install
 
-## Core Modes
+```bash
+bun install
+```
 
-| Mode | Purpose | Output Strategy |
-|---|---|---|
-| `reliable` | Compatibility-first publishing | Uses safe, orientation-based defaults |
-| `experimental` | Research / A-B testing | Tries higher-dimension profiles with explicit risk labels |
+## Run CLI
 
-## Default Output Targets (Reliable)
+```bash
+bun run recommend --mode reliable --surface feed --orientation portrait
+```
 
-| Surface | Target | Ratio |
-|---|---|---|
-| Feed portrait | `1080x1350` | `4:5` |
-| Feed square | `1080x1080` | `1:1` |
-| Feed landscape | `1080x566` | `1.91:1` |
-| Story / Reel | `1080x1920` | `9:16` |
+JSON output:
 
-## White Canvas (Polaroid Feature)
+```bash
+bun run recommend --mode reliable --surface feed --orientation portrait --json
+```
 
-- Preserves the full source image (`contain`, no crop in v1).
-- Uses one consistent feed canvas ratio by default (`4:5`).
-- Supports optional app-direct profile (`3:4`, `1080x1440`).
-- Uses adaptive whitespace by source orientation:
-- Portrait/square: balanced margins.
-- Landscape: smaller left/right, larger top/bottom margins.
+## Test
 
-## Planned CLI
+```bash
+bun test
+```
 
-- `analyze <file> --mode reliable|experimental --surface feed|story|reel`
-- `recommend --mode reliable|experimental --surface ... --orientation ... --white-canvas`
+Layered test commands:
 
-## Status
+```bash
+bun run test:unit
+bun run test:integration
+bun run test:e2e
+bun run test:visual
+bun run test:visual-pixel
+bun run test:property
+bun run test:all
+```
 
-Planning phase.  
-Specs and decision logs are defined before implementation.
+Regenerate snapshots/fixtures when needed:
 
-## License
-
-Apache License 2.0
+```bash
+bun run fixtures:images
+bun run fixtures:e2e
+bun run fixtures:visual
+bun run fixtures:pixel
+```
