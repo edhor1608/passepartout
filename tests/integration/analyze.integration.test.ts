@@ -93,6 +93,9 @@ describe("analyze cli integration", () => {
     expect(input.bitrate_kbps).toBeGreaterThan(0);
     expect(input.has_audio).toBe(false);
     expect(input.audio_codec).toBeNull();
+    expect(input.audio_channels).toBeNull();
+    expect(input.audio_sample_rate_hz).toBeNull();
+    expect(input.audio_bitrate_kbps).toBeNull();
   });
 
   test("analyze exposes audio metadata for MP4 with audio track", async () => {
@@ -120,6 +123,9 @@ describe("analyze cli integration", () => {
     expect(input.bitrate_kbps).toBeGreaterThan(0);
     expect(input.has_audio).toBe(true);
     expect(input.audio_codec).toBe("aac");
+    expect(input.audio_channels).toBe(1);
+    expect(input.audio_sample_rate_hz).toBe(48000);
+    expect(input.audio_bitrate_kbps).toBeGreaterThan(0);
   });
 
   test("missing value for --mode fails with explicit error", async () => {
