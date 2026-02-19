@@ -5,8 +5,10 @@
   "private": true,
   "scripts": {
     "recommend": "bun run src/cli/recommend.ts",
+    "analyze": "bun run src/cli/analyze.ts",
+    "export-image": "bun run src/cli/export_image.ts",
     "test": "bun test",
-    "test:unit": "bun test tests/recommend.test.ts tests/white_canvas.test.ts",
+    "test:unit": "bun test tests/recommend.test.ts tests/white_canvas.test.ts tests/media_inspector.test.ts tests/tier.test.ts",
     "test:integration": "bun test tests/integration",
     "test:e2e": "bun test tests/e2e",
     "test:visual": "bun test tests/visual",
@@ -14,7 +16,10 @@
     "test:property": "bun test tests/property",
     "test:all": "bun test",
     "fixtures:images": "bun run tests/fixtures/images/generate-fixtures.ts",
+    "fixtures:images:raster": "bun run tests/fixtures/images/generate-raster-fixtures.ts",
     "fixtures:e2e": "bun run tests/fixtures/e2e/generate-snapshots.ts",
+    "fixtures:e2e:analyze": "bun run tests/fixtures/e2e/generate-analyze-snapshots.ts",
+    "fixtures:e2e:export": "bun run tests/fixtures/e2e/generate-export-snapshots.ts",
     "fixtures:visual": "bun run tests/fixtures/visual/generate-snapshots.ts",
     "fixtures:pixel": "bun run tests/fixtures/pixel/generate-snapshots.ts"
   },
