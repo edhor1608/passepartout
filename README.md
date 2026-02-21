@@ -97,3 +97,14 @@ bun run fixtures:e2e:export
 bun run fixtures:visual
 bun run fixtures:pixel
 ```
+
+<!-- status:start -->
+## Status
+- State: active
+- Summary: Define current milestone.
+- Next: Define next concrete step.
+- Updated: 2026-02-21
+- Branch: `main`
+- Working Tree: dirty (2 files)
+- Last Commit: bc7cf65 (2026-02-19) feat(validate-matrix): add capture-run-id tagging (#40)
+<!-- status:end -->
