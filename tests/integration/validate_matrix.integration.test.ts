@@ -1,13 +1,30 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, dirname, isAbsolute, join, resolve } from "node:path";
 import { parseJsonStdout, runValidateMatrixCli } from "../helpers/cli";
+import type { ValidateMatrixCase } from "../../src/types/contracts";
 
 const fixturesDir = join(import.meta.dir, "..", "fixtures");
-const casesFile = join(fixturesDir, "matrix", "cases_basic.json");
-const failureCasesFile = join(fixturesDir, "matrix", "cases_with_failure.json");
 const onlyPortraitFile = join(fixturesDir, "matrix", "only_portrait.txt");
-const exportsDir = join(fixturesDir, "exports");
+const exportsDir = mkdtempSync(join(tmpdir(), "passepartout-validate-matrix-"));
+
+function writeTempCases(sourcePath: string, name: string): string {
+  const sourceDir = dirname(sourcePath);
+  const rawCases = JSON.parse(readFileSync(sourcePath, "utf8")) as ValidateMatrixCase[];
+  const cases = rawCases.map((testCase) => ({
+    ...testCase,
+    file: isAbsolute(testCase.file) ? testCase.file : resolve(sourceDir, testCase.file),
+    out: join(exportsDir, basename(testCase.out)),
+  }));
+  const outputPath = join(exportsDir, name);
+  mkdirSync(exportsDir, { recursive: true });
+  writeFileSync(outputPath, JSON.stringify(cases), "utf8");
+  return outputPath;
+}
+
+const casesFile = writeTempCases(join(fixturesDir, "matrix", "cases_basic.json"), "cases_basic.json");
+const failureCasesFile = writeTempCases(join(fixturesDir, "matrix", "cases_with_failure.json"), "cases_with_failure.json");
 
 describe("validate-matrix cli integration", () => {
   test("runs all matrix cases and returns deterministic summary", async () => {

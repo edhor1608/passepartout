@@ -174,6 +174,16 @@ Rationale: Config files are part of the product contract. Loader-time validation
 
 Consequence: Validation remains hand-written to avoid adding a schema dependency for two small local JSON files.
 
+### 2026-05-01: integration test output isolation
+
+Context: The audit identified tests writing shared fixture output names under `tests/fixtures/exports`.
+
+Decision: Move integration-test generated image, video, SVG, report, benchmark, and validate-matrix outputs to per-run temp directories.
+
+Rationale: Source fixtures should be stable inputs. Test outputs should be isolated so retries and parallel runs do not depend on cleanup of shared repo paths.
+
+Consequence: Fixture-generation scripts and committed e2e snapshots still own the checked-in fixture directories intentionally.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)

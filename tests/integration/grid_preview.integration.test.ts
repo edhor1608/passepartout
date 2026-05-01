@@ -1,9 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseJsonStdout, runGridPreviewCli } from "../helpers/cli";
 
-const outDir = join(import.meta.dir, "..", "fixtures", "exports");
+const outDir = mkdtempSync(join(tmpdir(), "passepartout-grid-preview-"));
 
 function resetOut(name: string): string {
   mkdirSync(outDir, { recursive: true });
