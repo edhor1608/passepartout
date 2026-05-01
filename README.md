@@ -57,6 +57,12 @@ Run a validation matrix:
 bun run validate-matrix tests/fixtures/matrix/cases_basic.json --json
 ```
 
+## Upload Workflows
+
+Use `--workflow api_scheduler` for conservative API-compatible feed exports. This keeps feed white-canvas output on the `feed_compat` profile at `1080x1350` and report checks include the 8 MiB image baseline.
+
+Use `--workflow app_direct --white-canvas --canvas-profile feed_app_direct` when testing app-only 3:4 feed uploads. This selects the `1080x1440` white-canvas profile and reports a reminder to enable high-quality uploads before posting.
+
 ## Quality Gates
 
 ```bash
