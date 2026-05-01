@@ -124,6 +124,16 @@ Rationale: This keeps the first refresh branch focused on making the existing re
 
 Consequence: CI now depends on `@biomejs/biome` and Ubuntu `ffmpeg`. Future cleanup branches can tighten lint scope or add slow scheduled jobs once existing code is normalized.
 
+### 2026-05-01: export profile loading consistency
+
+Context: The audit identified that `rules.ts` was moving toward module-relative config loading while `export_profiles.ts` still depended on `process.cwd()` and trusted parsed JSON.
+
+Decision: Load the default export profile config relative to the module and reject missing top-level `image`/`video` keys with a clear error.
+
+Rationale: CLI behavior should not depend on the caller's current directory, and malformed config should fail at load time instead of surfacing later as undefined profile lookups.
+
+Consequence: Validation is still intentionally shallow. Full profile schema validation remains part of the broader config cleanup item.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)
