@@ -190,9 +190,9 @@ export function renderContainCanvas(params: {
 
       const srcI = (sy * source.width + sx) * 3;
       const dstI = (dstY * canvasWidth + dstX) * 3;
-      pixels[dstI] = source.pixels[srcI]!;
-      pixels[dstI + 1] = source.pixels[srcI + 1]!;
-      pixels[dstI + 2] = source.pixels[srcI + 2]!;
+      pixels[dstI] = source.pixels[srcI] ?? 0;
+      pixels[dstI + 1] = source.pixels[srcI + 1] ?? 0;
+      pixels[dstI + 2] = source.pixels[srcI + 2] ?? 0;
     }
   }
 
@@ -213,9 +213,9 @@ export function diffRgb(a: RgbImage, b: RgbImage): {
   let sum = 0;
 
   for (let i = 0; i < a.pixels.length; i += 3) {
-    const dr = Math.abs(a.pixels[i]! - b.pixels[i]!);
-    const dg = Math.abs(a.pixels[i + 1]! - b.pixels[i + 1]!);
-    const db = Math.abs(a.pixels[i + 2]! - b.pixels[i + 2]!);
+    const dr = Math.abs((a.pixels[i] ?? 0) - (b.pixels[i] ?? 0));
+    const dg = Math.abs((a.pixels[i + 1] ?? 0) - (b.pixels[i + 1] ?? 0));
+    const db = Math.abs((a.pixels[i + 2] ?? 0) - (b.pixels[i + 2] ?? 0));
     const pixelDelta = Math.max(dr, dg, db);
     if (pixelDelta > 0) {
       mismatchPixels += 1;

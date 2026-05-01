@@ -90,7 +90,7 @@ export function parseJsonStdout(stdout: string): Record<string, unknown> {
     .filter(Boolean);
 
   const last = lines[lines.length - 1];
-  if (!last || !last.startsWith("{")) {
+  if (!last?.startsWith("{")) {
     throw new Error(`No JSON payload in stdout: ${stdout}`);
   }
 
