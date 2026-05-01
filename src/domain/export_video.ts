@@ -2,6 +2,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { ExportVideoInput, ExportVideoOutput } from "../types/contracts";
 import { loadExportProfiles, selectVideoExportProfile } from "./export_profiles";
+import { runFfmpeg } from "./media_process";
 import { inspectMedia } from "./media_inspector";
 import { recommend } from "./recommend";
 import { parseResolution } from "./rules";
@@ -72,36 +73,31 @@ export function exportVideo(input: ExportVideoInput): ExportVideoOutput {
   mkdirSync(dirname(outputPath), { recursive: true });
 
   const fps = media.fps > 0 ? media.fps : 30;
-  const proc = Bun.spawnSync({
-    cmd: [
-      "ffmpeg",
-      "-y",
-      "-hide_banner",
-      "-loglevel",
-      "error",
-      "-i",
-      inputPath,
-      "-vf",
-      filter,
-      "-r",
-      String(fps),
-      "-c:v",
-      exportProfile.ffmpeg_video_codec,
-      "-crf",
-      String(crf),
-      "-pix_fmt",
-      exportProfile.pix_fmt,
-      "-movflags",
-      exportProfile.movflags,
-      ...(exportProfile.strip_audio ? ["-an"] : []),
-      outputPath,
-    ],
-    stdout: "pipe",
-    stderr: "pipe",
-  });
+  const proc = runFfmpeg([
+    "-y",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-i",
+    inputPath,
+    "-vf",
+    filter,
+    "-r",
+    String(fps),
+    "-c:v",
+    exportProfile.ffmpeg_video_codec,
+    "-crf",
+    String(crf),
+    "-pix_fmt",
+    exportProfile.pix_fmt,
+    "-movflags",
+    exportProfile.movflags,
+    ...(exportProfile.strip_audio ? ["-an"] : []),
+    outputPath,
+  ]);
 
   if (proc.exitCode !== 0) {
-    throw new Error(`ffmpeg video export failed: ${proc.stderr.toString().trim()}`);
+    throw new Error(`ffmpeg video export failed: ${proc.stderr.trim()}`);
   }
   const outputMeta = inspectMedia(outputPath);
 
