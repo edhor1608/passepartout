@@ -13,12 +13,15 @@ import {
   parseMode,
   parseSurface,
   parseWorkflow,
+  printHelpIfRequested,
   positional,
 } from "./args";
 import { stableStringify } from "../domain/recommend";
 import { buildReport } from "../domain/report";
 
 type ParsedArgs = ReportInput & { json: boolean };
+const USAGE =
+  "Usage: bun run report <file> --mode <reliable|experimental> --surface <feed|story|reel> [--workflow <app_direct|api_scheduler|unknown>] [--white-canvas] [--canvas-profile <feed_compat|feed_app_direct>] [--canvas-style <gallery_clean|polaroid_classic>] [--json]";
 
 function parseArgs(argv: string[]): ParsedArgs {
   const file = positional(argv, "file");
@@ -87,7 +90,11 @@ function printHumanOutput(result: ReturnType<typeof buildReport>): void {
 }
 
 function main(): void {
-  const parsed = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  if (printHelpIfRequested(argv, USAGE)) {
+    return;
+  }
+  const parsed = parseArgs(argv);
   const result = buildReport(parsed);
 
   if (parsed.json) {

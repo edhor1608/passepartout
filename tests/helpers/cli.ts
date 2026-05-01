@@ -8,23 +8,41 @@ export type CliRunResult = {
 
 const REPO_ROOT = resolve(import.meta.dir, "..", "..");
 
-async function runCli(
-  command:
-    | "recommend"
-    | "analyze"
-    | "overlay"
-    | "grid-preview"
-    | "watch-folder"
-    | "validate-matrix"
-    | "export-image"
-    | "export-video"
-    | "report"
-    | "report-export"
-    | "benchmark",
+export type CliCommand =
+  | "recommend"
+  | "analyze"
+  | "overlay"
+  | "grid-preview"
+  | "watch-folder"
+  | "validate-matrix"
+  | "export-image"
+  | "export-video"
+  | "report"
+  | "report-export"
+  | "benchmark"
+  | "doctor";
+
+const CLI_ENTRYPOINTS = {
+  recommend: "src/cli/recommend.ts",
+  analyze: "src/cli/analyze.ts",
+  overlay: "src/cli/overlay.ts",
+  "grid-preview": "src/cli/grid_preview.ts",
+  "watch-folder": "src/cli/watch_folder.ts",
+  "validate-matrix": "src/cli/validate_matrix.ts",
+  "export-image": "src/cli/export_image.ts",
+  "export-video": "src/cli/export_video.ts",
+  report: "src/cli/report.ts",
+  "report-export": "src/cli/report_export.ts",
+  benchmark: "src/cli/benchmark.ts",
+  doctor: "src/cli/doctor.ts",
+} as const satisfies Record<CliCommand, string>;
+
+export async function runCli(
+  command: CliCommand,
   args: string[],
 ): Promise<CliRunResult> {
   const proc = Bun.spawn({
-    cmd: ["bun", "run", command, ...args],
+    cmd: ["bun", CLI_ENTRYPOINTS[command], ...args],
     cwd: REPO_ROOT,
     stdout: "pipe",
     stderr: "pipe",
@@ -81,6 +99,10 @@ export async function runReportExportCli(args: string[]): Promise<CliRunResult> 
 
 export async function runBenchmarkCli(args: string[]): Promise<CliRunResult> {
   return runCli("benchmark", args);
+}
+
+export async function runDoctorCli(args: string[]): Promise<CliRunResult> {
+  return runCli("doctor", args);
 }
 
 export function parseJsonStdout(stdout: string): Record<string, unknown> {

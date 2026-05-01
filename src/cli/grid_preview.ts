@@ -1,9 +1,11 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { GridPreviewOutput, OverlayRatio } from "../types/contracts";
-import { flagValue, parseOverlayRatio } from "./args";
+import { flagValue, parseOverlayRatio, printHelpIfRequested } from "./args";
 import { stableStringify } from "../domain/recommend";
 import { buildGridPreviewSvg, createGridPreview } from "../domain/grid_preview";
+
+const USAGE = "Usage: bun run grid-preview --ratio <4:5|3:4|9:16> [--out <path>] [--json]";
 
 type ParsedArgs = {
   ratio: OverlayRatio;
@@ -55,7 +57,11 @@ function printHumanOutput(result: GridPreviewOutput): void {
 }
 
 function main(): void {
-  const parsed = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  if (printHelpIfRequested(argv, USAGE)) {
+    return;
+  }
+  const parsed = parseArgs(argv);
   const preview = createGridPreview(parsed.ratio);
   const result: GridPreviewOutput = { ...preview };
 

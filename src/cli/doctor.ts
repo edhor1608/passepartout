@@ -1,6 +1,7 @@
 import { accessSync, constants, existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { printHelpIfRequested } from "./args";
 
 type Check = {
   name: string;
@@ -14,6 +15,7 @@ const fixturePaths = [
   "tests/fixtures/images/landscape_sample_48x32.jpg",
   "tests/fixtures/images/portrait_video_360x640.mp4",
 ] as const;
+const USAGE = "Usage: bun run doctor [--help]";
 
 function commandCheck(command: string): Check {
   const path = Bun.which(command);
@@ -62,6 +64,10 @@ function runChecks(): Check[] {
     tempWriteCheck(),
     ...fixturePaths.map(fixtureCheck),
   ];
+}
+
+if (printHelpIfRequested(process.argv.slice(2), USAGE)) {
+  process.exit(0);
 }
 
 const checks = runChecks();

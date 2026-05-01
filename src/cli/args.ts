@@ -43,6 +43,14 @@ export function integerFlagValue(argv: string[], index: number, flag: string): n
   return Number.parseInt(value, 10);
 }
 
+export function printHelpIfRequested(argv: string[], usage: string): boolean {
+  if (!argv.includes("--help") && !argv.includes("-h")) {
+    return false;
+  }
+  console.log(usage);
+  return true;
+}
+
 export function parseMode(value: string): Mode {
   return parseOneOf(value, MODES, "mode");
 }

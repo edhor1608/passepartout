@@ -15,10 +15,13 @@ import {
   parseOrientation,
   parseSurface,
   parseWorkflow,
+  printHelpIfRequested,
 } from "./args";
 import { recommend, toStableJson } from "../domain/recommend";
 
 type ParsedArgs = RecommendInput & { json: boolean };
+const USAGE =
+  "Usage: bun run recommend --mode <reliable|experimental> --surface <feed|story|reel> --orientation <portrait|square|landscape> [--workflow <app_direct|api_scheduler|unknown>] [--white-canvas] [--canvas-profile <feed_compat|feed_app_direct>] [--canvas-style <gallery_clean|polaroid_classic>] [--json]";
 
 function parseArgs(argv: string[]): ParsedArgs {
   let mode: Mode | undefined;
@@ -98,7 +101,11 @@ function printHumanOutput(result: ReturnType<typeof recommend>, surface: Surface
 }
 
 function main(): void {
-  const parsed = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  if (printHelpIfRequested(argv, USAGE)) {
+    return;
+  }
+  const parsed = parseArgs(argv);
   const result = recommend(parsed);
 
   if (parsed.json) {

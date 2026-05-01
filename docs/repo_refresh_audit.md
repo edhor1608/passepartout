@@ -234,6 +234,16 @@ Rationale: This separates local binary image parsing from subprocess-backed vide
 
 Consequence: Future format support can land in the relevant parser module instead of expanding the public inspector facade.
 
+### 2026-05-01: CLI help consistency
+
+Context: The audit identified missing `--help`/usage consistency across CLI commands.
+
+Decision: Add a shared `printHelpIfRequested` helper and one usage line per command, including `doctor`.
+
+Rationale: This gives fresh operators a predictable zero-exit discovery path without changing command-specific parsers or normal argument behavior.
+
+Consequence: CLI integration coverage now checks every package command responds to `--help`.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)
