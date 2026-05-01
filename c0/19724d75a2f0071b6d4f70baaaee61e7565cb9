@@ -1,7 +1,7 @@
-src/domain/rules.ts
-  a7b4a99e5ed78a99 2,12,16-29
 tests/helpers/image.ts
   a7b4a99e5ed78a99 69-74,86-88,91,95-96,99-103,109-111,113,232
+src/domain/rules.ts
+  a7b4a99e5ed78a99 2,12,16-29
 ---
 {
   "schema_version": "authorship/3.0.0",
