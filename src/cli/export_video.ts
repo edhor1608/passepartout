@@ -6,17 +6,23 @@ import type {
   Surface,
   Workflow,
 } from "../types/contracts";
+import {
+  flagValue,
+  integerFlagValue,
+  parseCanvasProfile,
+  parseCanvasStyle,
+  parseMode,
+  parseSurface,
+  parseWorkflow,
+  positional,
+} from "./args";
 import { exportVideo } from "../domain/export_video";
 import { stableStringify } from "../domain/recommend";
 
 type ParsedArgs = ExportVideoInput & { json: boolean };
 
 function parseArgs(argv: string[]): ParsedArgs {
-  if (argv.length === 0 || argv[0]?.startsWith("--")) {
-    throw new Error("Missing required positional arg: <file>");
-  }
-
-  const file = argv[0]!;
+  const file = positional(argv, "file");
   let out: string | undefined;
   let mode: Mode | undefined;
   let surface: Surface | undefined;
@@ -29,38 +35,36 @@ function parseArgs(argv: string[]): ParsedArgs {
 
   for (let i = 1; i < argv.length; i += 1) {
     const token = argv[i];
-    const next = argv[i + 1];
-
     switch (token) {
       case "--out":
-        out = next;
+        out = flagValue(argv, i, "--out");
         i += 1;
         break;
       case "--mode":
-        mode = next as Mode;
+        mode = parseMode(flagValue(argv, i, "--mode"));
         i += 1;
         break;
       case "--surface":
-        surface = next as Surface;
+        surface = parseSurface(flagValue(argv, i, "--surface"));
         i += 1;
         break;
       case "--workflow":
-        workflow = next as Workflow;
+        workflow = parseWorkflow(flagValue(argv, i, "--workflow"));
         i += 1;
         break;
       case "--white-canvas":
         whiteCanvas = true;
         break;
       case "--canvas-profile":
-        canvasProfile = next as CanvasProfile;
+        canvasProfile = parseCanvasProfile(flagValue(argv, i, "--canvas-profile"));
         i += 1;
         break;
       case "--canvas-style":
-        canvasStyle = next as CanvasStyle;
+        canvasStyle = parseCanvasStyle(flagValue(argv, i, "--canvas-style"));
         i += 1;
         break;
       case "--crf":
-        crf = Number.parseInt(next ?? "", 10);
+        crf = integerFlagValue(argv, i, "--crf");
         i += 1;
         break;
       case "--json":
@@ -73,26 +77,6 @@ function parseArgs(argv: string[]): ParsedArgs {
 
   if (!out || !mode || !surface) {
     throw new Error("Missing required args: --out --mode --surface");
-  }
-
-  if (!["reliable", "experimental"].includes(mode)) {
-    throw new Error(`Invalid mode: ${mode}`);
-  }
-
-  if (!["feed", "story", "reel"].includes(surface)) {
-    throw new Error(`Invalid surface: ${surface}`);
-  }
-
-  if (!["app_direct", "api_scheduler", "unknown"].includes(workflow)) {
-    throw new Error(`Invalid workflow: ${workflow}`);
-  }
-
-  if (canvasProfile && !["feed_compat", "feed_app_direct"].includes(canvasProfile)) {
-    throw new Error(`Invalid canvas profile: ${canvasProfile}`);
-  }
-
-  if (canvasStyle && !["gallery_clean", "polaroid_classic"].includes(canvasStyle)) {
-    throw new Error(`Invalid canvas style: ${canvasStyle}`);
   }
 
   if (crf !== undefined && (!Number.isFinite(crf) || crf < 0 || crf > 51)) {

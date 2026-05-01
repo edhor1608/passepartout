@@ -1,6 +1,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { ValidateMatrixInput } from "../types/contracts";
+import { flagValue, integerFlagValue } from "./args";
 import { stableStringify } from "../domain/recommend";
 import { validateMatrix } from "../domain/validate_matrix";
 
@@ -29,48 +30,43 @@ function parseArgs(argv: string[]): ParsedArgs {
 
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
-    const next = argv[i + 1];
-
     switch (token) {
       case "--cases":
-        casesFile = next;
+        casesFile = flagValue(argv, i, "--cases");
         i += 1;
         break;
       case "--out-json":
-        outJson = next;
+        outJson = flagValue(argv, i, "--out-json");
         i += 1;
         break;
       case "--out-md":
-        outMd = next;
+        outMd = flagValue(argv, i, "--out-md");
         i += 1;
         break;
       case "--out-capture-csv":
-        outCaptureCsv = next;
+        outCaptureCsv = flagValue(argv, i, "--out-capture-csv");
         i += 1;
         break;
       case "--append-capture-csv":
         appendCaptureCsv = true;
         break;
       case "--capture-run-id":
-        captureRunId = next;
+        captureRunId = flagValue(argv, i, "--capture-run-id");
         i += 1;
         break;
       case "--only":
-        onlyIds = (next ?? "")
+        onlyIds = flagValue(argv, i, "--only")
           .split(",")
           .map((token) => token.trim())
           .filter((token) => token.length > 0);
         i += 1;
         break;
       case "--only-file":
-        onlyFile = next;
+        onlyFile = flagValue(argv, i, "--only-file");
         i += 1;
         break;
       case "--max-cases":
-        if (!next || !/^[0-9]+$/.test(next)) {
-          throw new Error("Invalid --max-cases value");
-        }
-        maxCases = Number.parseInt(next, 10);
+        maxCases = integerFlagValue(argv, i, "--max-cases");
         i += 1;
         break;
       case "--fail-on-error":
