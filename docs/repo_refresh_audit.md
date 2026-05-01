@@ -204,6 +204,16 @@ Rationale: The existing report already checked width, aspect, audio, and codec. 
 
 Consequence: `app_direct` reports now include a high-quality-upload next action; unknown workflow reports warn until the user chooses an upload path.
 
+### 2026-05-01: benchmark confidence cap
+
+Context: The audit noted that benchmark confidence was self-referential because it rewarded output shape and codec fields rather than empirical evidence.
+
+Decision: Recompute confidence only from objective metrics, bitrate comparison, and known output color metadata, and cap automated confidence at `0.75`/`medium`.
+
+Rationale: Local automated exports can provide measured evidence, but they are not Instagram upload/download evidence. High confidence should be reserved for future manual capture rows or a real empirical loop.
+
+Consequence: Existing benchmark scores and grades remain unchanged; only the confidence value/label semantics are narrowed.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)
