@@ -134,6 +134,16 @@ Rationale: CLI behavior should not depend on the caller's current directory, and
 
 Consequence: Validation is still intentionally shallow. Full profile schema validation remains part of the broader config cleanup item.
 
+### 2026-05-01: agent guide replacement
+
+Context: The audit called out `CLAUDE.md` as a generic tool guide that did not document this project.
+
+Decision: Remove `CLAUDE.md` after adding the project-specific root `AGENTS.md`.
+
+Rationale: Keeping both files invites agents to follow stale generic Bun notes instead of the repo's actual setup, test split, and fixture workflow.
+
+Consequence: Agent onboarding now has one canonical root guide.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)
