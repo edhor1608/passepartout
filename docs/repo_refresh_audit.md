@@ -214,6 +214,16 @@ Rationale: Local automated exports can provide measured evidence, but they are n
 
 Consequence: Existing benchmark scores and grades remain unchanged; only the confidence value/label semantics are narrowed.
 
+### 2026-05-01: pixel snapshot replacement
+
+Context: The audit identified 102 MB of tracked PPM pixel snapshots that mostly re-tested the in-repo renderer against its own golden files.
+
+Decision: Replace full-image pixel snapshots with generated-on-demand invariant checks over the real target canvas dimensions, white background corners, and rendered non-white content.
+
+Rationale: This keeps a focused pixel-level guard for contain-canvas rendering while removing bulky generated artifacts from source control.
+
+Consequence: `fixtures:pixel` is now a compatibility no-op; pixel visual coverage lives in `tests/visual/pixel_diff.visual.test.ts`.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)
