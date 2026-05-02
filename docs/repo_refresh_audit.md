@@ -224,6 +224,16 @@ Rationale: This keeps a focused pixel-level guard for contain-canvas rendering w
 
 Consequence: `fixtures:pixel` is now a compatibility no-op; pixel visual coverage lives in `tests/visual/pixel_diff.visual.test.ts`.
 
+### 2026-05-01: media inspector split
+
+Context: The audit called out `media_inspector.ts` as doing too much in one 400+ line file.
+
+Decision: Keep `inspectMedia` as the public entry point, and move image parsing to `media_image_inspector.ts` and ffprobe video parsing to `media_video_inspector.ts`.
+
+Rationale: This separates local binary image parsing from subprocess-backed video metadata without changing callers or output contracts.
+
+Consequence: Future format support can land in the relevant parser module instead of expanding the public inspector facade.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)
