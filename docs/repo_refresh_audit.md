@@ -154,6 +154,16 @@ Rationale: The smallest useful fix is to centralize value extraction and validat
 
 Consequence: Commands still own their own required-argument checks and range checks. A deeper parser abstraction can wait until there is a stronger reason to collapse command-specific parsing further.
 
+### 2026-05-01: media subprocess adapter
+
+Context: The audit identified direct `Bun.spawnSync` calls for ffmpeg/ffprobe in production domain modules.
+
+Decision: Add `src/domain/media_process.ts` with `runFfmpeg` and `runFfprobe`, then route export, inspection, and objective-metric subprocess calls through it.
+
+Rationale: This isolates process execution without changing ffmpeg argument construction or domain behavior. It is the smallest useful boundary for future missing-binary handling and subprocess tests.
+
+Consequence: Fixture-generation scripts still call `Bun.spawnSync` directly because they are test tooling, not product domain behavior.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)

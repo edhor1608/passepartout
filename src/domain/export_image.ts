@@ -2,6 +2,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { ExportImageInput, ExportImageOutput } from "../types/contracts";
 import { loadExportProfiles, selectImageExportProfile } from "./export_profiles";
+import { runFfmpeg } from "./media_process";
 import { inspectMedia } from "./media_inspector";
 import { recommend } from "./recommend";
 import { parseResolution } from "./rules";
@@ -71,29 +72,24 @@ export function exportImage(input: ExportImageInput): ExportImageOutput {
   const outputPath = resolve(input.out);
   mkdirSync(dirname(outputPath), { recursive: true });
 
-  const proc = Bun.spawnSync({
-    cmd: [
-      "ffmpeg",
-      "-y",
-      "-hide_banner",
-      "-loglevel",
-      "error",
-      "-i",
-      inputPath,
-      "-vf",
-      filter,
-      "-frames:v",
-      "1",
-      "-q:v",
-      String(quality),
-      outputPath,
-    ],
-    stdout: "pipe",
-    stderr: "pipe",
-  });
+  const proc = runFfmpeg([
+    "-y",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-i",
+    inputPath,
+    "-vf",
+    filter,
+    "-frames:v",
+    "1",
+    "-q:v",
+    String(quality),
+    outputPath,
+  ]);
 
   if (proc.exitCode !== 0) {
-    throw new Error(`ffmpeg export failed: ${proc.stderr.toString().trim()}`);
+    throw new Error(`ffmpeg export failed: ${proc.stderr.trim()}`);
   }
 
   return {

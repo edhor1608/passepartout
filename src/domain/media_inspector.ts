@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { readFileSync } from "node:fs";
 import type { MediaInspection, Orientation } from "../types/contracts";
+import { runFfprobe } from "./media_process";
 
 function nextToken(source: Uint8Array, state: { index: number }): string | null {
   while (state.index < source.length) {
@@ -259,28 +260,23 @@ function readVideoMetadata(path: string): {
   audioSampleFormat: string | null;
   audioBitrateKbps: number | null;
 } {
-  const proc = Bun.spawnSync({
-    cmd: [
-      "ffprobe",
-      "-v",
-      "error",
-      "-show_entries",
-      "stream=codec_type,codec_name,width,height,avg_frame_rate,r_frame_rate,channels,channel_layout,sample_fmt,sample_rate,bit_rate:format=duration,bit_rate",
-      "-of",
-      "json",
-      path,
-    ],
-    stdout: "pipe",
-    stderr: "pipe",
-  });
+  const proc = runFfprobe([
+    "-v",
+    "error",
+    "-show_entries",
+    "stream=codec_type,codec_name,width,height,avg_frame_rate,r_frame_rate,channels,channel_layout,sample_fmt,sample_rate,bit_rate:format=duration,bit_rate",
+    "-of",
+    "json",
+    path,
+  ]);
 
   if (proc.exitCode !== 0) {
-    throw new Error(`ffprobe failed for ${path}: ${proc.stderr.toString().trim()}`);
+    throw new Error(`ffprobe failed for ${path}: ${proc.stderr.trim()}`);
   }
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(proc.stdout.toString());
+    parsed = JSON.parse(proc.stdout);
   } catch {
     throw new Error(`ffprobe returned invalid JSON for ${path}`);
   }
