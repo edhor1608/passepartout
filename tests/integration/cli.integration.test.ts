@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { parseJsonStdout, runExportImageCli, runOverlayCli, runRecommendCli } from "../helpers/cli";
+
+const outDir = mkdtempSync(join(tmpdir(), "passepartout-cli-"));
 
 describe("cli integration", () => {
   test("json output includes required contract fields", async () => {
@@ -83,7 +88,7 @@ describe("cli integration", () => {
     const result = await runExportImageCli([
       "tests/fixtures/images/portrait_sample_30x40.png",
       "--out",
-      "tests/fixtures/exports/bad-quality.jpg",
+      join(outDir, "bad-quality.jpg"),
       "--mode",
       "reliable",
       "--surface",

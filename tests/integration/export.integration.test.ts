@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseJsonStdout, runAnalyzeCli, runExportImageCli } from "../helpers/cli";
 
 const fixtures = join(import.meta.dir, "..", "fixtures", "images");
-const outDir = join(import.meta.dir, "..", "fixtures", "exports");
+const outDir = mkdtempSync(join(tmpdir(), "passepartout-export-image-"));
 
 function resetOut(name: string): string {
   mkdirSync(outDir, { recursive: true });
