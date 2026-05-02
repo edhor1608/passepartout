@@ -18,4 +18,16 @@ describe("ruleset loading", () => {
 
     expect(() => loadRuleset(file)).toThrow(`Invalid ruleset at ${file}: missing required top-level keys`);
   });
+
+  test("throws clear error for invalid nested ruleset profile", () => {
+    const dir = mkdtempSync(join(tmpdir(), "passepartout-rules-"));
+    const file = join(dir, "broken-nested.json");
+    const ruleset = loadRuleset();
+    ruleset.profiles.reliable.feed.portrait.resolution = "bad" as never;
+    writeFileSync(file, JSON.stringify(ruleset), "utf8");
+
+    expect(() => loadRuleset(file)).toThrow(
+      `Invalid ruleset at ${file}: profiles.reliable.feed.portrait.resolution must be NxN`,
+    );
+  });
 });

@@ -27,6 +27,18 @@ describe("export profiles", () => {
     );
   });
 
+  test("throws clear error for invalid nested export profile", () => {
+    const dir = mkdtempSync(join(tmpdir(), "passepartout-export-profiles-"));
+    const file = join(dir, "broken-nested.json");
+    const broken = loadExportProfiles();
+    broken.video.reliable.reel.crf_default = 99;
+    writeFileSync(file, JSON.stringify(broken), "utf8");
+
+    expect(() => loadExportProfiles(file)).toThrow(
+      `Invalid export profiles at ${file}: video.reliable.reel.crf_default must be an integer from 0 to 51`,
+    );
+  });
+
   test("selects reliable feed landscape image profile", () => {
     const profile = selectImageExportProfile(profiles, {
       mode: "reliable",

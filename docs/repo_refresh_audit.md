@@ -164,6 +164,16 @@ Rationale: This isolates process execution without changing ffmpeg argument cons
 
 Consequence: Fixture-generation scripts still call `Bun.spawnSync` directly because they are test tooling, not product domain behavior.
 
+### 2026-05-01: full config shape validation
+
+Context: The audit identified shallow config validation: malformed nested rules or export profile fields could load successfully and fail later as undefined lookups or bad ffmpeg settings.
+
+Decision: Validate all required ruleset and export-profile branches, required mode/surface/orientation entries, profile string fields, resolutions, risk levels, quality, CRF, and boolean fields during config load.
+
+Rationale: Config files are part of the product contract. Loader-time validation gives deterministic, actionable errors and prevents partial configs from reaching recommendation/export logic.
+
+Consequence: Validation remains hand-written to avoid adding a schema dependency for two small local JSON files.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)
