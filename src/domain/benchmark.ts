@@ -19,7 +19,7 @@ function gradeFromScore(total: number): "A" | "B" | "C" | "D" {
 }
 
 function confidenceLabel(value: number): "low" | "medium" | "high" {
-  if (value >= 0.8) {
+  if (value >= 0.9) {
     return "high";
   }
   if (value >= 0.55) {
@@ -30,23 +30,20 @@ function confidenceLabel(value: number): "low" | "medium" | "high" {
 
 function computeConfidence(reportExport: BenchmarkOutput["report_export"]): BenchmarkOutput["confidence"] {
   let score = 0;
-  if (reportExport.comparison.output_matches_target) {
+  if (reportExport.comparison.psnr_db !== null) {
+    score += 0.35;
+  }
+  if (reportExport.comparison.ssim !== null) {
     score += 0.35;
   }
   if (reportExport.comparison.bitrate_delta_kbps !== null) {
     score += 0.2;
   }
-  if (reportExport.comparison.psnr_db !== null) {
-    score += 0.2;
-  }
-  if (reportExport.comparison.ssim !== null) {
-    score += 0.2;
-  }
-  if (reportExport.output_analyze.input.codec !== null) {
-    score += 0.05;
+  if (reportExport.comparison.output_colorspace !== "unknown") {
+    score += 0.1;
   }
 
-  const value = Number.parseFloat(clamp(score, 0, 1).toFixed(3));
+  const value = Number.parseFloat(clamp(score, 0, 0.75).toFixed(3));
   return {
     value,
     label: confidenceLabel(value),
