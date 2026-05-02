@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Mode, Orientation, Surface } from "../types/contracts";
 
 type ExportImageProfile = {
@@ -35,11 +35,24 @@ export type ExportProfiles = {
   video: Record<Mode, ExportVideoModeRules>;
 };
 
-export const DEFAULT_EXPORT_PROFILES_PATH = join(process.cwd(), "config", "export_profiles.v1.json");
+export const DEFAULT_EXPORT_PROFILES_PATH = fileURLToPath(new URL("../../config/export_profiles.v1.json", import.meta.url));
 
 export function loadExportProfiles(path = DEFAULT_EXPORT_PROFILES_PATH): ExportProfiles {
   const raw = readFileSync(path, "utf8");
-  return JSON.parse(raw) as ExportProfiles;
+  const parsed = JSON.parse(raw) as unknown;
+  if (
+    !parsed ||
+    typeof parsed !== "object" ||
+    !("image" in parsed) ||
+    typeof parsed.image !== "object" ||
+    parsed.image === null ||
+    !("video" in parsed) ||
+    typeof parsed.video !== "object" ||
+    parsed.video === null
+  ) {
+    throw new Error(`Invalid export profiles at ${path}: missing required top-level keys`);
+  }
+  return parsed as ExportProfiles;
 }
 
 export function selectImageExportProfile(
