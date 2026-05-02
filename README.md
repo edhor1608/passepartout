@@ -1,99 +1,113 @@
 # instagram-upload-quality-lab
 
-Phase 1 implements a deterministic `recommend` vertical slice for Instagram profile selection.
+Deterministic Bun CLIs for experimenting with Instagram-oriented media recommendations, exports, reports, and validation matrices.
 
-Example fixture image used in tests:
+The project currently supports profile recommendations, media inspection, image/video export through ffmpeg, white-canvas variants, crop-safe overlays, profile-grid previews, watch-folder scans, report-export comparisons, and benchmark summaries.
 
-- `/Users/jonas/repos/passepartout/tests/fixtures/images/portrait_sample_30x40.ppm`
+## Prerequisites
+
+- Bun 1.3 or newer.
+- TypeScript through `bunx tsc`.
+- `ffmpeg` and `ffprobe` on `PATH`.
+- macOS `sips` only if you regenerate raster image fixtures.
 
 ## Install
 
 ```bash
-bun install
+bun install --frozen-lockfile
+bun run doctor
 ```
 
-## Run CLI
+## Run
 
-```bash
-bun run recommend --mode reliable --surface feed --orientation portrait
-```
-
-JSON output:
+Recommend an upload profile:
 
 ```bash
 bun run recommend --mode reliable --surface feed --orientation portrait --json
 ```
 
-Analyze from file:
+Analyze fixture media:
 
 ```bash
-bun run analyze tests/fixtures/images/portrait_sample_30x40.ppm --mode reliable --surface feed --json
+bun run analyze tests/fixtures/images/portrait_sample_30x40.png --mode reliable --surface feed --json
 ```
 
-Generate crop-safe overlay guide geometry:
-
-```bash
-bun run overlay --ratio 4:5 --json
-```
-
-Simulate profile-grid square crop visibility:
-
-```bash
-bun run grid-preview --ratio 4:5 --json
-```
-
-Export image using deterministic preset:
+Export an image:
 
 ```bash
 bun run export-image tests/fixtures/images/portrait_sample_30x40.png --out tests/fixtures/exports/demo.jpg --mode reliable --surface feed --json
 ```
 
-Inspect deterministic export profile fields in JSON (`export_profile_id`, `quality_used`, `crf_used`):
+Export a video:
 
 ```bash
 bun run export-video tests/fixtures/images/portrait_video_360x640.mp4 --out tests/fixtures/exports/demo.mp4 --mode reliable --surface reel --json
 ```
 
-Export image with white-canvas `polaroid_classic` style:
+Generate overlay and grid-preview geometry:
 
 ```bash
-bun run export-image tests/fixtures/images/landscape_sample_48x32.jpg --out tests/fixtures/exports/demo_white_classic.jpg --mode reliable --surface feed --white-canvas --canvas-profile feed_compat --canvas-style polaroid_classic --json
+bun run overlay --ratio 4:5 --json
+bun run grid-preview --ratio 4:5 --json
 ```
 
-Analyze supports this slice's image fixtures:
-
-- `PPM` (`.ppm`)
-- `PNG` (`.png`)
-- `JPEG` (`.jpg`, `.jpeg`)
-
-## Test
+Run a validation matrix:
 
 ```bash
-bun test
+bun run validate-matrix tests/fixtures/matrix/cases_basic.json --json
 ```
 
-Layered test commands:
+## Quality Gates
+
+```bash
+bun run typecheck
+bun run lint
+bun run check
+```
+
+`bun run check` is the normal pre-PR gate: typecheck, lint, and fast tests.
+
+Test layers:
 
 ```bash
 bun run test:unit
-bun run test:integration
-bun run test:e2e
-bun run test:visual
-bun run test:visual-pixel
-bun run test:property
+bun run test:fast
+bun run test:ci
+bun run test:slow
 bun run test:all
 ```
 
-Regenerate snapshots/fixtures when needed:
+`test:slow` and `test:all` use an explicit 30 second per-test timeout for ffmpeg-heavy cases.
+
+## Fixtures
+
+Source fixtures live under `tests/fixtures/images`. Generated export outputs go to `tests/fixtures/exports`.
+
+Regenerate fixtures only when behavior intentionally changes:
 
 ```bash
 bun run fixtures:images
 bun run fixtures:images:raster
 bun run fixtures:e2e
-bun run fixtures:e2e:analyze
-bun run fixtures:e2e:overlay
-bun run fixtures:e2e:grid-preview
-bun run fixtures:e2e:export
 bun run fixtures:visual
 bun run fixtures:pixel
 ```
+
+`fixtures:images:raster` depends on macOS `sips`. Video fixture generation depends on `ffmpeg`.
+
+## Docs
+
+- `AGENTS.md`: fresh-clone setup, quality gates, architecture map, and agent workflow notes.
+- `docs/repo_refresh_audit.md`: refresh audit findings, decisions, and follow-up order.
+- `docs/phase1_knowledge.md`: previous milestone implementation notes.
+
+<!-- status:start -->
+## Status
+- State: active
+- Summary: Repo refresh stack in progress.
+- Next: Submit Graphite stack after checks pass.
+- Updated: 2026-05-01
+- Branch: `repo-refresh-onboarding-ci`
+- Working Tree: clean
+- Last Commit: chore: add repo refresh onboarding and CI
+<!-- status:end -->
