@@ -1,0 +1,9 @@
+src/domain/rules.ts
+  a7b4a99e5ed78a99 2,15,88,91,96,110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "6163454d763ce6adabb12d0dc016fbee8fabedc5",
+  "prompts": {}
+}
