@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseJsonStdout, runRecommendCli } from "../helpers/cli";
+import { parseJsonStdout, runExportImageCli, runOverlayCli, runRecommendCli } from "../helpers/cli";
 
 describe("cli integration", () => {
   test("json output includes required contract fields", async () => {
@@ -62,6 +62,39 @@ describe("cli integration", () => {
 
     expect(result.exitCode).not.toBe(0);
     expect(result.stderr).toContain("Invalid mode");
+    expect(result.stderr).toContain("Allowed values: reliable, experimental");
+  });
+
+  test("missing flag value fails before parsing the next flag as a value", async () => {
+    const result = await runRecommendCli(["--mode", "--surface", "feed", "--orientation", "portrait", "--json"]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("Missing value for --mode");
+  });
+
+  test("missing overlay value fails with a clear flag error", async () => {
+    const result = await runOverlayCli(["--ratio", "--json"]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("Missing value for --ratio");
+  });
+
+  test("numeric flag rejects non-integer values", async () => {
+    const result = await runExportImageCli([
+      "tests/fixtures/images/portrait_sample_30x40.png",
+      "--out",
+      "tests/fixtures/exports/bad-quality.jpg",
+      "--mode",
+      "reliable",
+      "--surface",
+      "feed",
+      "--quality",
+      "bad",
+      "--json",
+    ]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stderr).toContain("Invalid --quality value");
   });
 
   test("invalid canvas style fails with non-zero exit", async () => {

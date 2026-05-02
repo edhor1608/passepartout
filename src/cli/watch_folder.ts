@@ -1,4 +1,13 @@
 import type { CanvasProfile, CanvasStyle, Mode, Surface, WatchFolderInput, Workflow } from "../types/contracts";
+import {
+  flagValue,
+  integerFlagValue,
+  parseCanvasProfile,
+  parseCanvasStyle,
+  parseMode,
+  parseSurface,
+  parseWorkflow,
+} from "./args";
 import { stableStringify } from "../domain/recommend";
 import { runWatchCycle } from "../domain/watch_folder";
 
@@ -20,49 +29,47 @@ function parseArgs(argv: string[]): ParsedArgs {
 
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
-    const next = argv[i + 1];
-
     switch (token) {
       case "--in":
-        inDir = next;
+        inDir = flagValue(argv, i, "--in");
         i += 1;
         break;
       case "--out":
-        outDir = next;
+        outDir = flagValue(argv, i, "--out");
         i += 1;
         break;
       case "--mode":
-        mode = next as Mode;
+        mode = parseMode(flagValue(argv, i, "--mode"));
         i += 1;
         break;
       case "--surface":
-        surface = next as Surface;
+        surface = parseSurface(flagValue(argv, i, "--surface"));
         i += 1;
         break;
       case "--workflow":
-        workflow = next as Workflow;
+        workflow = parseWorkflow(flagValue(argv, i, "--workflow"));
         i += 1;
         break;
       case "--white-canvas":
         whiteCanvas = true;
         break;
       case "--canvas-profile":
-        canvasProfile = next as CanvasProfile;
+        canvasProfile = parseCanvasProfile(flagValue(argv, i, "--canvas-profile"));
         i += 1;
         break;
       case "--canvas-style":
-        canvasStyle = next as CanvasStyle;
+        canvasStyle = parseCanvasStyle(flagValue(argv, i, "--canvas-style"));
         i += 1;
         break;
       case "--once":
         once = true;
         break;
       case "--interval-sec":
-        intervalSeconds = Number.parseInt(next ?? "", 10);
+        intervalSeconds = integerFlagValue(argv, i, "--interval-sec");
         i += 1;
         break;
       case "--max-cycles":
-        maxCycles = Number.parseInt(next ?? "", 10);
+        maxCycles = integerFlagValue(argv, i, "--max-cycles");
         i += 1;
         break;
       case "--json":
@@ -75,21 +82,6 @@ function parseArgs(argv: string[]): ParsedArgs {
 
   if (!inDir || !outDir || !mode || !surface) {
     throw new Error("Missing required args: --in --out --mode --surface");
-  }
-  if (!["reliable", "experimental"].includes(mode)) {
-    throw new Error(`Invalid mode: ${mode}`);
-  }
-  if (!["feed", "story", "reel"].includes(surface)) {
-    throw new Error(`Invalid surface: ${surface}`);
-  }
-  if (!["app_direct", "api_scheduler", "unknown"].includes(workflow)) {
-    throw new Error(`Invalid workflow: ${workflow}`);
-  }
-  if (canvasProfile && !["feed_compat", "feed_app_direct"].includes(canvasProfile)) {
-    throw new Error(`Invalid canvas profile: ${canvasProfile}`);
-  }
-  if (canvasStyle && !["gallery_clean", "polaroid_classic"].includes(canvasStyle)) {
-    throw new Error(`Invalid canvas style: ${canvasStyle}`);
   }
   if (!Number.isFinite(intervalSeconds) || intervalSeconds < 1 || intervalSeconds > 3600) {
     throw new Error(`Invalid interval-sec: ${intervalSeconds}`);

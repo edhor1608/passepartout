@@ -144,6 +144,16 @@ Rationale: Keeping both files invites agents to follow stale generic Bun notes i
 
 Consequence: Agent onboarding now has one canonical root guide.
 
+### 2026-05-01: shared CLI argument parsing
+
+Context: The audit identified repeated CLI parsing, unsafe enum casts, and missing-value parsing bugs as a major cleanup target.
+
+Decision: Add `src/cli/args.ts` with shared flag value, integer, positional, and literal-union parsers, then migrate all CLI entry points to use it instead of `next as Mode`-style casts.
+
+Rationale: The smallest useful fix is to centralize value extraction and validation while leaving command-specific option shapes in each existing CLI file. This removes the bug class where `--mode --surface feed` treats `--surface` as a mode value.
+
+Consequence: Commands still own their own required-argument checks and range checks. A deeper parser abstraction can wait until there is a stronger reason to collapse command-specific parsing further.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)

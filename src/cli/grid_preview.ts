@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { GridPreviewOutput, OverlayRatio } from "../types/contracts";
+import { flagValue, parseOverlayRatio } from "./args";
 import { stableStringify } from "../domain/recommend";
 import { buildGridPreviewSvg, createGridPreview } from "../domain/grid_preview";
 
@@ -17,15 +18,13 @@ function parseArgs(argv: string[]): ParsedArgs {
 
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
-    const next = argv[i + 1];
-
     switch (token) {
       case "--ratio":
-        ratio = next as OverlayRatio;
+        ratio = parseOverlayRatio(flagValue(argv, i, "--ratio"));
         i += 1;
         break;
       case "--out":
-        out = next;
+        out = flagValue(argv, i, "--out");
         i += 1;
         break;
       case "--json":
@@ -38,9 +37,6 @@ function parseArgs(argv: string[]): ParsedArgs {
 
   if (!ratio) {
     throw new Error("Missing required args: --ratio");
-  }
-  if (!["4:5", "3:4", "9:16"].includes(ratio)) {
-    throw new Error(`Invalid ratio: ${ratio}`);
   }
 
   return { ratio, out, json };
