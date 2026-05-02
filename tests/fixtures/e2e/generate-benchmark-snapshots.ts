@@ -11,7 +11,7 @@ mkdirSync(snapshotDir, { recursive: true });
 const cases = JSON.parse(readFileSync(join(fixturesDir, "benchmark_cases.json"), "utf8")) as Case[];
 
 for (const testCase of cases) {
-  const outIndex = testCase.args.findIndex((arg) => arg === "--out");
+  const outIndex = testCase.args.indexOf("--out");
   if (outIndex >= 0) {
     const outputPath = testCase.args[outIndex + 1];
     if (outputPath) {

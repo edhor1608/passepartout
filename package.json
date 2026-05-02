@@ -17,7 +17,7 @@
     "export-video": "bun run src/cli/export_video.ts",
     "doctor": "bun run src/cli/doctor.ts",
     "typecheck": "bunx tsc --noEmit",
-    "lint": "biome lint .",
+    "lint": "biome lint src tests config package.json tsconfig.json",
     "format": "biome format --write .",
     "check": "bun run typecheck && bun run lint && bun run test:fast",
     "test": "bun test --timeout 30000",

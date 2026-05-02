@@ -184,6 +184,16 @@ Rationale: Source fixtures should be stable inputs. Test outputs should be isola
 
 Consequence: Fixture-generation scripts and committed e2e snapshots still own the checked-in fixture directories intentionally.
 
+### 2026-05-01: lint gate cleanup
+
+Context: The new lint gate was executable but noisy because it scanned local editor metadata and surfaced simple existing warnings.
+
+Decision: Scope `bun run lint` to repo source, tests, config, and package metadata, then remove the simple Biome warnings for `findIndex`, optional chaining, and non-null assertions in test helpers.
+
+Rationale: A quality gate should produce actionable output. Warnings that are known and easy to fix should not become normal background noise.
+
+Consequence: Local editor folders such as `.cursor` are no longer lint inputs.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)
