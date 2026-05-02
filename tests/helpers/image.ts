@@ -66,6 +66,12 @@ function parseHeader(bytes: Uint8Array): {
 
   while (state.index < bytes.length) {
     const c = bytes[state.index];
+    if (c === 35) {
+      while (state.index < bytes.length && bytes[state.index] !== 10) {
+        state.index += 1;
+      }
+      continue;
+    }
     if (c === 9 || c === 10 || c === 13 || c === 32) {
       state.index += 1;
       continue;
@@ -77,40 +83,34 @@ function parseHeader(bytes: Uint8Array): {
 }
 
 export function readP3Image(path: string): RgbImage {
-  const text = readFileSync(path, "utf8");
-  const tokens = text
-    .split(/\s+/)
-    .map((token) => token.trim())
-    .filter(Boolean)
-    .filter((token) => !token.startsWith("#"));
-
-  if (tokens[0] !== "P3") {
+  const bytes = new Uint8Array(readFileSync(path));
+  const header = parseHeader(bytes);
+  if (header.magic !== "P3") {
     throw new Error(`Not a P3 image: ${path}`);
   }
-
-  const width = Number.parseInt(tokens[1] ?? "", 10);
-  const height = Number.parseInt(tokens[2] ?? "", 10);
-  const max = Number.parseInt(tokens[3] ?? "", 10);
-  if (!Number.isFinite(width) || !Number.isFinite(height) || max !== 255) {
+  if (header.max !== 255) {
     throw new Error(`Invalid P3 image header: ${path}`);
   }
 
-  const pixelTokens = tokens.slice(4);
-  const expected = width * height * 3;
-  if (pixelTokens.length !== expected) {
-    throw new Error(`Invalid P3 pixel count for ${path}. expected ${expected}, got ${pixelTokens.length}`);
-  }
-
+  const expected = header.width * header.height * 3;
+  const state = { index: header.dataOffset };
   const pixels = new Uint8Array(expected);
   for (let i = 0; i < expected; i += 1) {
-    const value = Number.parseInt(pixelTokens[i] ?? "", 10);
+    const token = nextToken(bytes, state);
+    if (token === null) {
+      throw new Error(`Invalid P3 pixel count for ${path}. expected ${expected}, got ${i}`);
+    }
+    const value = Number.parseInt(token, 10);
     if (!Number.isFinite(value) || value < 0 || value > 255) {
       throw new Error(`Invalid P3 channel value at ${i} in ${path}`);
     }
     pixels[i] = value;
   }
+  if (nextToken(bytes, state) !== null) {
+    throw new Error(`Invalid P3 pixel count for ${path}. expected ${expected}, got >${expected}`);
+  }
 
-  return { width, height, pixels };
+  return { width: header.width, height: header.height, pixels };
 }
 
 export function readP6Image(path: string): RgbImage {
@@ -229,6 +229,6 @@ export function diffRgb(a: RgbImage, b: RgbImage): {
   return {
     mismatchPixels,
     maxChannelDelta,
-    meanChannelDelta: sum / a.pixels.length,
+    meanChannelDelta: sum / (a.width * a.height),
   };
 }
