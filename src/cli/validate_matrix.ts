@@ -1,9 +1,12 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { ValidateMatrixInput } from "../types/contracts";
-import { flagValue, integerFlagValue } from "./args";
+import { flagValue, integerFlagValue, printHelpIfRequested } from "./args";
 import { stableStringify } from "../domain/recommend";
 import { validateMatrix } from "../domain/validate_matrix";
+
+const USAGE =
+  "Usage: bun run validate-matrix --cases <path> [--out-json <path>] [--out-md <path>] [--out-capture-csv <path>] [--append-capture-csv] [--capture-run-id <id>] [--only <ids>] [--only-file <path>] [--max-cases <count>] [--fail-on-error] [--json]";
 
 type ParsedArgs = ValidateMatrixInput & {
   json: boolean;
@@ -268,7 +271,11 @@ function buildCaptureCsv(result: ReturnType<typeof validateMatrix>, captureRunId
 }
 
 function main(): void {
-  const parsed = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  if (printHelpIfRequested(argv, USAGE)) {
+    return;
+  }
+  const parsed = parseArgs(argv);
   const result = validateMatrix(parsed);
   const payload = stableStringify(result);
 

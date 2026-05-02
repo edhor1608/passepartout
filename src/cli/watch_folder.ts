@@ -7,11 +7,14 @@ import {
   parseMode,
   parseSurface,
   parseWorkflow,
+  printHelpIfRequested,
 } from "./args";
 import { stableStringify } from "../domain/recommend";
 import { runWatchCycle } from "../domain/watch_folder";
 
 type ParsedArgs = WatchFolderInput & { json: boolean };
+const USAGE =
+  "Usage: bun run watch-folder --in <dir> --out <dir> --mode <reliable|experimental> --surface <feed|story|reel> [--workflow <app_direct|api_scheduler|unknown>] [--white-canvas] [--canvas-profile <feed_compat|feed_app_direct>] [--canvas-style <gallery_clean|polaroid_classic>] [--once] [--interval-sec <seconds>] [--max-cycles <count>] [--json]";
 
 function parseArgs(argv: string[]): ParsedArgs {
   let inDir: string | undefined;
@@ -119,7 +122,11 @@ function delay(ms: number): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const parsed = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  if (printHelpIfRequested(argv, USAGE)) {
+    return;
+  }
+  const parsed = parseArgs(argv);
   let cycles = 0;
 
   while (true) {

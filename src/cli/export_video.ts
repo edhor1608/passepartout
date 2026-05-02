@@ -14,12 +14,15 @@ import {
   parseMode,
   parseSurface,
   parseWorkflow,
+  printHelpIfRequested,
   positional,
 } from "./args";
 import { exportVideo } from "../domain/export_video";
 import { stableStringify } from "../domain/recommend";
 
 type ParsedArgs = ExportVideoInput & { json: boolean };
+const USAGE =
+  "Usage: bun run export-video <file> --out <path> --mode <reliable|experimental> --surface <feed|story|reel> [--workflow <app_direct|api_scheduler|unknown>] [--white-canvas] [--canvas-profile <feed_compat|feed_app_direct>] [--canvas-style <gallery_clean|polaroid_classic>] [--crf <0..51>] [--json]";
 
 function parseArgs(argv: string[]): ParsedArgs {
   const file = positional(argv, "file");
@@ -96,7 +99,11 @@ function printHumanOutput(result: ReturnType<typeof exportVideo>): void {
 }
 
 function main(): void {
-  const parsed = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  if (printHelpIfRequested(argv, USAGE)) {
+    return;
+  }
+  const parsed = parseArgs(argv);
   const result = exportVideo(parsed);
 
   if (parsed.json) {

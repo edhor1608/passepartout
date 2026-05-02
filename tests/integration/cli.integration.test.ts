@@ -2,11 +2,42 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { parseJsonStdout, runExportImageCli, runOverlayCli, runRecommendCli } from "../helpers/cli";
+import {
+  type CliCommand,
+  parseJsonStdout,
+  runCli,
+  runExportImageCli,
+  runOverlayCli,
+  runRecommendCli,
+} from "../helpers/cli";
 
 const outDir = mkdtempSync(join(tmpdir(), "passepartout-cli-"));
+const cliCommands = [
+  "recommend",
+  "analyze",
+  "overlay",
+  "grid-preview",
+  "watch-folder",
+  "validate-matrix",
+  "export-image",
+  "export-video",
+  "report",
+  "report-export",
+  "benchmark",
+  "doctor",
+] as const satisfies readonly CliCommand[];
 
 describe("cli integration", () => {
+  for (const command of cliCommands) {
+    test(`${command} prints usage with --help`, async () => {
+      const result = await runCli(command, ["--help"]);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain(`Usage: bun run ${command}`);
+      expect(result.stderr).toBe("");
+    });
+  }
+
   test("json output includes required contract fields", async () => {
     const result = await runRecommendCli([
       "--mode",

@@ -1,9 +1,11 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { OverlayOutput, OverlayRatio } from "../types/contracts";
-import { flagValue, parseOverlayRatio } from "./args";
+import { flagValue, parseOverlayRatio, printHelpIfRequested } from "./args";
 import { buildOverlaySvg, createOverlay } from "../domain/overlay";
 import { stableStringify } from "../domain/recommend";
+
+const USAGE = "Usage: bun run overlay --ratio <4:5|3:4|9:16> [--out <path>] [--json]";
 
 type ParsedArgs = {
   ratio: OverlayRatio;
@@ -57,7 +59,11 @@ function printHumanOutput(result: OverlayOutput): void {
 }
 
 function main(): void {
-  const parsed = parseArgs(process.argv.slice(2));
+  const argv = process.argv.slice(2);
+  if (printHelpIfRequested(argv, USAGE)) {
+    return;
+  }
+  const parsed = parseArgs(argv);
   const overlay = createOverlay(parsed.ratio);
   const result: OverlayOutput = { ...overlay };
 
