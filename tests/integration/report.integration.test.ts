@@ -45,4 +45,46 @@ describe("report cli integration", () => {
     expect(audioCheck).toBeDefined();
     expect(audioCheck?.status).toBe("pass");
   });
+
+  test("api scheduler report includes image file size compatibility check", async () => {
+    const file = join(fixtures, "portrait_sample_30x40.png");
+    const result = await runReportCli([
+      file,
+      "--mode",
+      "reliable",
+      "--surface",
+      "feed",
+      "--workflow",
+      "api_scheduler",
+      "--json",
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    const payload = parseJsonStdout(result.stdout);
+    const checks = payload.checks as Array<Record<string, unknown>>;
+    const sizeCheck = checks.find((item) => item.id === "api_image_file_size");
+    const workflowCheck = checks.find((item) => item.id === "upload_workflow");
+    expect(sizeCheck?.status).toBe("pass");
+    expect(sizeCheck?.message).toContain("8 MiB API scheduler baseline");
+    expect(workflowCheck?.status).toBe("pass");
+  });
+
+  test("app direct report recommends high-quality upload workflow", async () => {
+    const file = join(fixtures, "portrait_sample_30x40.png");
+    const result = await runReportCli([
+      file,
+      "--mode",
+      "reliable",
+      "--surface",
+      "feed",
+      "--workflow",
+      "app_direct",
+      "--json",
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    const payload = parseJsonStdout(result.stdout);
+    const actions = payload.next_actions as string[];
+    expect(actions).toContain("Enable Instagram high-quality uploads and avoid in-app edits before posting.");
+  });
 });

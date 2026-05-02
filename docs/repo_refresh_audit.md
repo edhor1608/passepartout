@@ -194,6 +194,16 @@ Rationale: A quality gate should produce actionable output. Warnings that are kn
 
 Consequence: Local editor folders such as `.cursor` are no longer lint inputs.
 
+### 2026-05-01: upload workflow report checks
+
+Context: The audit called for app-direct vs API policy to be encoded as product behavior, not just notes, and for reports to warn about size, color metadata, codec/audio, and upload path.
+
+Decision: Extend `report` checks with upload workflow, API image file size, and color metadata checks, and document the `api_scheduler` vs `app_direct` command choices in the README.
+
+Rationale: The existing report already checked width, aspect, audio, and codec. Adding workflow, API file-size baseline, and color metadata closes the remaining concrete report-warning gaps without changing export behavior.
+
+Consequence: `app_direct` reports now include a high-quality-upload next action; unknown workflow reports warn until the user chooses an upload path.
+
 ## Sources
 
 - [Instagram Help Center](https://www.facebook.com/help/1631821640426723/)

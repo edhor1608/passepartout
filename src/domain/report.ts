@@ -1,8 +1,13 @@
+import { statSync } from "node:fs";
 import type { ReportInput, ReportOutput } from "../types/contracts";
 import { analyze } from "./analyze";
 
+const API_IMAGE_FILE_LIMIT_BYTES = 8 * 1024 * 1024;
+
 export function buildReport(input: ReportInput): ReportOutput {
   const analyzed = analyze(input);
+  const workflow = input.workflow ?? "unknown";
+  const fileSizeBytes = statSync(input.file).size;
 
   const checks = [
     analyzed.input.width >= 320
@@ -67,6 +72,51 @@ export function buildReport(input: ReportInput): ReportOutput {
           status: "warn" as const,
           message: `Input codec ${analyzed.input.codec} differs from h264 baseline preference.`,
         },
+    workflow === "unknown"
+      ? {
+          id: "upload_workflow",
+          label: "Upload workflow",
+          status: "warn" as const,
+          message: "Upload workflow is unknown; choose app_direct or api_scheduler before final export.",
+        }
+      : {
+          id: "upload_workflow",
+          label: "Upload workflow",
+          status: "pass" as const,
+          message:
+            workflow === "api_scheduler"
+              ? "API scheduler workflow selected; use conservative feed compatibility rules."
+              : "App-direct workflow selected; enable high-quality uploads in Instagram before posting.",
+        },
+    workflow === "api_scheduler" && analyzed.input.codec === null && fileSizeBytes > API_IMAGE_FILE_LIMIT_BYTES
+      ? {
+          id: "api_image_file_size",
+          label: "API image file size",
+          status: "warn" as const,
+          message: `Input image is ${fileSizeBytes} bytes, above the 8 MiB API scheduler baseline.`,
+        }
+      : {
+          id: "api_image_file_size",
+          label: "API image file size",
+          status: "pass" as const,
+          message:
+            workflow === "api_scheduler" && analyzed.input.codec === null
+              ? `Input image is ${fileSizeBytes} bytes, within the 8 MiB API scheduler baseline.`
+              : "API image file size check is not applicable for this input/workflow.",
+        },
+    analyzed.input.colorspace === "unknown"
+      ? {
+          id: "color_metadata",
+          label: "Color metadata",
+          status: "warn" as const,
+          message: "Input color metadata is unknown; inspect color profile before final upload.",
+        }
+      : {
+          id: "color_metadata",
+          label: "Color metadata",
+          status: "pass" as const,
+          message: `Input color metadata detected as ${analyzed.input.colorspace}.`,
+        },
   ];
 
   const nextActions = [
@@ -81,6 +131,10 @@ export function buildReport(input: ReportInput): ReportOutput {
 
   if (analyzed.white_canvas.enabled) {
     nextActions.push("Confirm white-canvas margins visually before posting.");
+  }
+
+  if (workflow === "app_direct") {
+    nextActions.push("Enable Instagram high-quality uploads and avoid in-app edits before posting.");
   }
 
   return {
