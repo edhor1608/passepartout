@@ -1,0 +1,9 @@
+tests/helpers/image.ts
+  a7b4a99e5ed78a99 69-74,86-88,91,95-96,99-103,109-111,113,232
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "81e73399059fe4432e7c2c030700da3e032584ac",
+  "prompts": {}
+}
