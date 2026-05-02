@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { inspectMedia } from "../src/domain/media_inspector";
+import { writeP6Image } from "./helpers/image";
 
 const fixtures = join(import.meta.dir, "fixtures", "images");
-const pixelSnapshots = join(import.meta.dir, "fixtures", "pixel", "snapshots");
 
 describe("media inspector", () => {
   test("reads P3 portrait fixture metadata", () => {
@@ -29,7 +31,13 @@ describe("media inspector", () => {
   });
 
   test("reads P6 snapshot metadata", () => {
-    const path = join(pixelSnapshots, "portrait_sample_30x40.compat.ppm");
+    const dir = mkdtempSync(join(tmpdir(), "passepartout-media-inspector-"));
+    const path = join(dir, "portrait_sample_30x40.compat.ppm");
+    writeP6Image(path, {
+      width: 1080,
+      height: 1350,
+      pixels: new Uint8Array(1080 * 1350 * 3),
+    });
     const meta = inspectMedia(path);
 
     expect(meta.width).toBe(1080);
