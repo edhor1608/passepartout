@@ -1,0 +1,24 @@
+docs/repo_refresh_feature_set.md
+  s_59616ded4d4c1c::t_91ee3c072f438c 1-316
+docs/plans/decisions-log.md
+  s_59616ded4d4c1c::t_f88aa9d981fcc0 1-139
+  s_59616ded4d4c1c::t_91ee3c072f438c 141-160
+CONTEXT.md
+  s_59616ded4d4c1c::t_91ee3c072f438c 1-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b7c5e58092d775a843f9cbc7c01c1bea505de4a6",
+  "prompts": {},
+  "sessions": {
+    "s_59616ded4d4c1c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e255d-f221-7921-b156-fdece18b3e68",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Jonas Rohde <edhor.jonas@gmail.com>"
+    }
+  }
+}
