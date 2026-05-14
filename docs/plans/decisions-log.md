@@ -221,15 +221,35 @@ The output pipeline needs integer pixel dimensions and offsets. `165px` preserve
 
 The fit algorithm should reserve at least `165px` on all four sides by default before scaling the source image into the remaining area.
 
+Superseded by the later real-image comparison decision below.
+
+## 2026-05-14: Use 57px as the default final export border
+
+### Context
+
+Testing `prepare-image` with `/Users/jonas/FotoDump101/DSCF7862.JPG` showed that `165px` on the final `2160x1440` export was visually too large. The intended `165px` value was closer to a source-scale reference on a `6240x4160` file.
+
+### Decision
+
+Use `57px` as the v1 default border.
+
+### Rationale
+
+`165 * 2160 / 6240 = 57.1`, so `57px` matches the intended visual border on the final landscape export while keeping `--border-px` semantics simple: one integer pixel value on the final full-size target.
+
+### Consequences
+
+The CLI default changes to `57px`. Explicit `--border-px` values still work the same way, including `0`.
+
 ## 2026-05-14: Landscape outputs prioritize equal outer border
 
 ### Context
 
-The v1 default border is `165px` on all sides, but simply adding an equal border around a same-ratio image changes the final aspect ratio. For example, a landscape source around `6494x4330` and a final `2160x1440` export both have about the same `3:2` shape. If the export must remain `2160x1440`, an equal `165px` border creates an inner image frame of `1830x1110`, which is a wider ratio than the source. A pure no-crop contain fit would create uneven white borders.
+The earlier v1 default-border candidate was `165px` on all sides, but simply adding an equal border around a same-ratio image changes the final aspect ratio. For example, a landscape source around `6494x4330` and a final `2160x1440` export both have about the same `3:2` shape. If the export must remain `2160x1440`, an equal `165px` border creates an inner image frame of `1830x1110`, which is a wider ratio than the source. A pure no-crop contain fit would create uneven white borders.
 
 ### Decision
 
-For landscape v1 outputs, keep the final canvas at `2160x1440` and use an equal `165px` outer border on all four sides by default. The source image should fill the inner frame; if needed, crop slightly inside the image rather than making the outer border uneven.
+For landscape v1 outputs, keep the final canvas at `2160x1440` and use an equal configured outer border on all four sides by default. The source image should fill the inner frame; if needed, crop slightly inside the image rather than making the outer border uneven.
 
 For portrait v1 outputs, keep no-crop fitting with at least the minimum border. Uneven side padding is acceptable because portrait compositions do not visually compare the side and top/bottom borders in the same way.
 
@@ -244,7 +264,9 @@ The v1 layout function needs separate fit modes:
 - landscape: cover the equal-border inner frame and crop if required,
 - portrait: contain within the fixed canvas while respecting the minimum border.
 
-Tests should include a `6494x4330`-style landscape input and assert final `2160x1440`, equal `165px` outer border, and centered crop.
+Tests should include a `6494x4330`-style landscape input and assert final `2160x1440`, equal configured outer border, and centered crop.
+
+Superseded detail: the active default border is now `57px`; `165px` was the earlier source-scale reference.
 
 ## 2026-05-14: Use centered crop for landscape equal-border fitting
 
@@ -672,7 +694,7 @@ The white-canvas look is the v1 default, but users may still need an exact targe
 
 ### Decision
 
-`--border-px 0` is valid. Border values are non-negative integers, with `165px` as the default.
+`--border-px 0` is valid. Border values are non-negative integers, with `57px` as the default.
 
 ### Rationale
 

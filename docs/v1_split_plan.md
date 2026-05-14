@@ -1,5 +1,16 @@
 # V1 Split Plan
 
+## Completion Note
+
+The v1 split is implemented in the Graphite stack:
+
+- `codex/v1-image-scope-docs`
+- `codex/v1-prepare-image-layout`
+- `codex/v1-prepare-image-cli`
+- `codex/v1-product-split-cleanup`
+
+The broader lab state is preserved on `origin/codex/saved-instagram-lab-work`.
+
 ## Goal
 
 Cut the current repo down to a production v1 that does one thing:
@@ -26,7 +37,7 @@ The current broader lab work should be preserved on a follow-up branch, but remo
 - White canvas: always render source onto white.
 - Border:
   - one non-negative integer value.
-  - default `165px`.
+  - default `57px`.
   - `0px` is valid.
   - landscape uses the effective border as exact equal outer border.
   - portrait uses the effective border as minimum border.
