@@ -1,9 +1,10 @@
+import { closeSync, openSync, readSync } from "node:fs";
 import { resolve } from "node:path";
 import { computePrepareImageLayout, type PrepareImageLayout } from "./prepare_image_layout";
 import { runFfmpeg, runFfprobe } from "./media_process";
 import { resolvePrepareImageOutputPath } from "./output_path";
 
-export const DEFAULT_PREPARE_IMAGE_BORDER_PX = 165;
+export const DEFAULT_PREPARE_IMAGE_BORDER_PX = 57;
 
 type PrepareImageInput = {
   inputPath: string;
@@ -32,7 +33,7 @@ export function prepareImage(input: PrepareImageInput): PrepareImageOutput {
   });
 
   const proc = runFfmpeg([
-    "-y",
+    "-n",
     "-hide_banner",
     "-loglevel",
     "error",
@@ -83,11 +84,106 @@ function inspectSourceDimensions(path: string): SourceDimensions {
   const height = getNumber(stream, "height");
   const rotation = getRotation(stream);
 
-  if (rotation === 90 || rotation === 270) {
+  if (rotation === 90 || rotation === 270 || isExifOrientationSwapped(readExifOrientation(path))) {
     return { height: width, width: height };
   }
 
   return { height, width };
+}
+
+function readExifOrientation(path: string): number | null {
+  const lower = path.toLowerCase();
+  if (!lower.endsWith(".jpg") && !lower.endsWith(".jpeg")) {
+    return null;
+  }
+
+  const bytes = readFileHeader(path);
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) {
+    return null;
+  }
+
+  let offset = 2;
+  while (offset + 4 < bytes.length) {
+    if (bytes[offset] !== 0xff) {
+      return null;
+    }
+
+    const marker = bytes[offset + 1];
+    const length = bytes.readUInt16BE(offset + 2);
+    if (length < 2) {
+      return null;
+    }
+    const payloadStart = offset + 4;
+    const payloadEnd = offset + 2 + length;
+    if (payloadEnd > bytes.length) {
+      return null;
+    }
+    if (marker === 0xe1 && bytes.subarray(payloadStart, payloadStart + 6).toString("ascii") === "Exif\0\0") {
+      return readTiffOrientation(bytes.subarray(payloadStart + 6, payloadEnd));
+    }
+
+    offset = payloadEnd;
+  }
+
+  return null;
+}
+
+function readFileHeader(path: string): Buffer {
+  const fd = openSync(path, "r");
+  try {
+    const buffer = Buffer.alloc(64 * 1024);
+    const bytesRead = readSync(fd, buffer, 0, buffer.length, 0);
+    return buffer.subarray(0, bytesRead);
+  } finally {
+    closeSync(fd);
+  }
+}
+
+function readTiffOrientation(bytes: Buffer): number | null {
+  if (bytes.length < 8) {
+    return null;
+  }
+
+  const littleEndian = bytes.subarray(0, 2).toString("ascii") === "II";
+  const bigEndian = bytes.subarray(0, 2).toString("ascii") === "MM";
+  if (!littleEndian && !bigEndian) {
+    return null;
+  }
+
+  const readUInt16 = littleEndian ? Buffer.prototype.readUInt16LE : Buffer.prototype.readUInt16BE;
+  const readUInt32 = littleEndian ? Buffer.prototype.readUInt32LE : Buffer.prototype.readUInt32BE;
+  if (readUInt16.call(bytes, 2) !== 42) {
+    return null;
+  }
+  const ifdOffset = readUInt32.call(bytes, 4);
+  if (ifdOffset + 2 > bytes.length) {
+    return null;
+  }
+  const entryCount = readUInt16.call(bytes, ifdOffset);
+  if (ifdOffset + 2 + entryCount * 12 > bytes.length) {
+    return null;
+  }
+
+  for (let index = 0; index < entryCount; index += 1) {
+    const entryOffset = ifdOffset + 2 + index * 12;
+    if (readUInt16.call(bytes, entryOffset) !== 0x0112) {
+      continue;
+    }
+
+    const type = readUInt16.call(bytes, entryOffset + 2);
+    const count = readUInt32.call(bytes, entryOffset + 4);
+    if (type !== 3 || count !== 1) {
+      return null;
+    }
+
+    return readUInt16.call(bytes, entryOffset + 8);
+  }
+
+  return null;
+}
+
+function isExifOrientationSwapped(orientation: number | null): boolean {
+  return orientation === 5 || orientation === 6 || orientation === 7 || orientation === 8;
 }
 
 function buildPrepareImageFilter(layout: PrepareImageLayout): string {

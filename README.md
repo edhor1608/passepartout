@@ -1,121 +1,53 @@
-# instagram-upload-quality-lab
+# Passepartout
 
-Deterministic Bun CLIs for experimenting with Instagram-oriented media recommendations, exports, reports, and validation matrices.
+One-command image prep for manual Instagram app uploads.
 
-The project currently supports profile recommendations, media inspection, image/video export through ffmpeg, white-canvas variants, crop-safe overlays, profile-grid previews, watch-folder scans, report-export comparisons, and benchmark summaries.
+`prepare-image` puts a PNG, JPEG, or TIFF source image on a white canvas and writes a high-quality baseline sRGB JPEG.
 
 ## Prerequisites
 
 - Bun 1.3 or newer.
 - TypeScript through `bunx tsc`.
 - `ffmpeg` and `ffprobe` on `PATH`.
-- macOS `sips` only if you regenerate raster image fixtures.
 
 ## Install
 
 ```bash
 bun install --frozen-lockfile
-bun run doctor
 ```
 
-## Run
-
-Recommend an upload profile:
+## Usage
 
 ```bash
-bun run recommend --mode reliable --surface feed --orientation portrait --json
+bun run prepare-image /full/path/input.png --out /full/path/exports/photo
 ```
 
-Analyze fixture media:
+Options:
+
+- `--out <file-path>`: required output path. The extension is normalized to `.jpg`.
+- `--border-px <integer>`: optional non-negative border size. Default is `57`. `0` is valid.
+
+Rules:
+
+- Landscape inputs (`width > height`) export as `3:2`, up to `2160x1440`.
+- Portrait and square inputs export as `3:4`, up to `1440x1920`.
+- Small inputs are not upscaled; output shrinks while preserving the selected ratio.
+- Existing outputs are never overwritten. Collisions use `photo-1.jpg`, `photo-2.jpg`, and so on.
+- Success prints only the actual output path.
+- EXIF orientation is applied visually before choosing the export ratio.
+- EXIF/XMP metadata is stripped from the output.
+
+## Quality Gate
 
 ```bash
-bun run analyze tests/fixtures/images/portrait_sample_30x40.png --mode reliable --surface feed --json
-```
-
-Export an image:
-
-```bash
-bun run export-image tests/fixtures/images/portrait_sample_30x40.png --out tests/fixtures/exports/demo.jpg --mode reliable --surface feed --json
-```
-
-Export a video:
-
-```bash
-bun run export-video tests/fixtures/images/portrait_video_360x640.mp4 --out tests/fixtures/exports/demo.mp4 --mode reliable --surface reel --json
-```
-
-Generate overlay and grid-preview geometry:
-
-```bash
-bun run overlay --ratio 4:5 --json
-bun run grid-preview --ratio 4:5 --json
-```
-
-Run a validation matrix:
-
-```bash
-bun run validate-matrix tests/fixtures/matrix/cases_basic.json --json
-```
-
-## Upload Workflows
-
-Use `--workflow api_scheduler` for conservative API-compatible feed exports. This keeps feed white-canvas output on the `feed_compat` profile at `1080x1350` and report checks include the 8 MiB image baseline.
-
-Use `--workflow app_direct --white-canvas --canvas-profile feed_app_direct` when testing app-only 3:4 feed uploads. This selects the `1080x1440` white-canvas profile and reports a reminder to enable high-quality uploads before posting.
-
-## Quality Gates
-
-```bash
-bun run typecheck
-bun run lint
 bun run check
 ```
 
-`bun run check` is the normal pre-PR gate: typecheck, lint, and fast tests.
-
-Test layers:
-
-```bash
-bun run test:unit
-bun run test:fast
-bun run test:ci
-bun run test:slow
-bun run test:all
-```
-
-`test:slow` and `test:all` use an explicit 30 second per-test timeout for ffmpeg-heavy cases.
-
-## Fixtures
-
-Source fixtures live under `tests/fixtures/images`. Generated export outputs go to `tests/fixtures/exports`.
-
-Regenerate fixtures only when behavior intentionally changes:
-
-```bash
-bun run fixtures:images
-bun run fixtures:images:raster
-bun run fixtures:e2e
-bun run fixtures:visual
-bun run fixtures:pixel
-```
-
-`fixtures:images:raster` depends on macOS `sips`. Video fixture generation depends on `ffmpeg`.
+This runs typecheck, Biome lint, unit tests, and the v1 integration test.
 
 ## Docs
 
-- `AGENTS.md`: fresh-clone setup, quality gates, architecture map, and agent workflow notes.
-- `docs/repo_refresh_audit.md`: refresh audit findings, decisions, and follow-up order.
-- `docs/repo_refresh_feature_set.md`: current feature inventory for v1 scope splitting.
-- `docs/v1_split_plan.md`: actionable plan for cutting the repo down to v1.
-- `docs/phase1_knowledge.md`: previous milestone implementation notes.
-
-<!-- status:start -->
-## Status
-- State: active
-- Summary: Repo refresh stack in progress.
-- Next: Submit Graphite stack after checks pass.
-- Updated: 2026-05-01
-- Branch: `repo-refresh-onboarding-ci`
-- Working Tree: clean
-- Last Commit: chore: add repo refresh onboarding and CI
-<!-- status:end -->
+- `docs/v1_split_plan.md`: product contract and split plan.
+- `docs/plans/decisions-log.md`: decision log.
+- `docs/plans/v1-prepare-image-layout.md`: layout slice notes.
+- `docs/plans/v1-prepare-image-cli.md`: CLI slice notes.
