@@ -25,6 +25,7 @@ const cliCommands = [
   "report-export",
   "benchmark",
   "doctor",
+  "prepare-image",
 ] as const satisfies readonly CliCommand[];
 
 describe("cli integration", () => {
