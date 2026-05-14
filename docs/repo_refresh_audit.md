@@ -102,6 +102,10 @@ The project should become an "Instagram media export lab," not just a preset pic
 - `export`: deterministic artifacts plus a manifest explaining why each setting was chosen.
 - `empirical lab`: manual upload/download capture, not fake "confidence."
 
+## Feature Set Inventory
+
+The post-refresh feature inventory lives in `docs/repo_refresh_feature_set.md`. It separates current capabilities into likely v1 core, product-decision items, and likely saved-for-later lab work so the next split pass can cut by feature boundary instead of only by file boundary.
+
 ## Recommended Order
 
 1. Add `AGENTS.md`, prerequisite docs, scripts, CI, and test split.
