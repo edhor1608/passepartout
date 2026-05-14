@@ -105,6 +105,8 @@ bun run fixtures:pixel
 
 - `AGENTS.md`: fresh-clone setup, quality gates, architecture map, and agent workflow notes.
 - `docs/repo_refresh_audit.md`: refresh audit findings, decisions, and follow-up order.
+- `docs/repo_refresh_feature_set.md`: current feature inventory for v1 scope splitting.
+- `docs/v1_split_plan.md`: actionable plan for cutting the repo down to v1.
 - `docs/phase1_knowledge.md`: previous milestone implementation notes.
 
 <!-- status:start -->
