@@ -20,7 +20,8 @@ export type CliCommand =
   | "report"
   | "report-export"
   | "benchmark"
-  | "doctor";
+  | "doctor"
+  | "prepare-image";
 
 const CLI_ENTRYPOINTS = {
   recommend: "src/cli/recommend.ts",
@@ -35,6 +36,7 @@ const CLI_ENTRYPOINTS = {
   "report-export": "src/cli/report_export.ts",
   benchmark: "src/cli/benchmark.ts",
   doctor: "src/cli/doctor.ts",
+  "prepare-image": "src/cli/prepare_image.ts",
 } as const satisfies Record<CliCommand, string>;
 
 export async function runCli(
@@ -103,6 +105,10 @@ export async function runBenchmarkCli(args: string[]): Promise<CliRunResult> {
 
 export async function runDoctorCli(args: string[]): Promise<CliRunResult> {
   return runCli("doctor", args);
+}
+
+export async function runPrepareImageCli(args: string[]): Promise<CliRunResult> {
+  return runCli("prepare-image", args);
 }
 
 export function parseJsonStdout(stdout: string): Record<string, unknown> {
