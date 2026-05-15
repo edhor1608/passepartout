@@ -1,5 +1,5 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runPrepareImageCli } from "../helpers/cli";
@@ -158,7 +158,9 @@ describe("prepare-image cli", () => {
     const result = await runPrepareImageCli(["--help"]);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toBe("Usage: bun run prepare-image <input> --out <file-path> [--border-px <integer>]\n");
+    expect(result.stdout).toBe(
+      "Usage: bun run prepare-image <input> --out <file-path-or-directory> [--border-px <integer>]\n",
+    );
     expect(result.stderr).toBe("");
   });
 
@@ -174,6 +176,27 @@ describe("prepare-image cli", () => {
     expect(result.stderr).toBe("");
     expect(existsSync(actualOut)).toBe(true);
     expect(probeImage(actualOut)).toMatchObject({ codec_name: "mjpeg", height: 32, width: 48 });
+  });
+
+  test("exports supported images from a directory into an output directory", async () => {
+    const batchInputDir = mkdtempSync(join(inputDir, "batch-"));
+    const batchOutDir = join(outDir, "batch-output");
+    const firstInput = join(batchInputDir, "b-landscape.png");
+    const secondInput = join(batchInputDir, "a-portrait.jpg");
+    mkdirSync(join(batchInputDir, "nested"));
+    createFixture(firstInput, "48x32", "red");
+    createFixture(secondInput, "30x40", "blue");
+    writeFileSync(join(batchInputDir, "notes.txt"), "skip");
+
+    const result = await runPrepareImageCli([batchInputDir, "--out", batchOutDir, "--border-px", "0"]);
+
+    const firstOut = join(batchOutDir, "a-portrait.jpg");
+    const secondOut = join(batchOutDir, "b-landscape.jpg");
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe(`${firstOut}\n${secondOut}\n`);
+    expect(result.stderr).toBe("");
+    expect(probeImage(firstOut)).toMatchObject({ codec_name: "mjpeg", height: 40, width: 30 });
+    expect(probeImage(secondOut)).toMatchObject({ codec_name: "mjpeg", height: 32, width: 48 });
   });
 
   test("uses 57px as the default border on full-size landscape exports", async () => {

@@ -1,6 +1,9 @@
+import { mkdirSync, readdirSync, statSync } from "node:fs";
+import { join, parse, resolve } from "node:path";
 import { DEFAULT_PREPARE_IMAGE_BORDER_PX, prepareImage } from "../domain/prepare_image";
 
-const USAGE = "Usage: bun run prepare-image <input> --out <file-path> [--border-px <integer>]";
+const USAGE = "Usage: bun run prepare-image <input> --out <file-path-or-directory> [--border-px <integer>]";
+const SUPPORTED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".tif", ".tiff"]);
 
 type ParsedArgs = {
   inputPath: string;
@@ -72,9 +75,52 @@ try {
     process.exit(0);
   }
 
-  const result = prepareImage(parsed);
-  console.log(result.outputPath);
+  const outputPaths = prepareInput(parsed);
+  for (const outputPath of outputPaths) {
+    console.log(outputPath);
+  }
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
+}
+
+function prepareInput(parsed: ParsedArgs): string[] {
+  const inputPath = resolve(parsed.inputPath);
+  const inputStat = statSync(inputPath);
+
+  if (!inputStat.isDirectory()) {
+    return [prepareImage(parsed).outputPath];
+  }
+
+  const outputPath = resolve(parsed.outputPath);
+  if (statSyncIfExists(outputPath)?.isFile()) {
+    throw new Error("--out must be a directory for directory input");
+  }
+
+  mkdirSync(outputPath, { recursive: true });
+  const inputPaths = readdirSync(inputPath)
+    .filter((entry) => SUPPORTED_EXTENSIONS.has(parse(entry).ext.toLowerCase()))
+    .sort()
+    .map((entry) => join(inputPath, entry))
+    .filter((entryPath) => statSync(entryPath).isFile());
+
+  if (inputPaths.length === 0) {
+    throw new Error("No supported images found in directory");
+  }
+
+  return inputPaths.map((sourcePath) => {
+    const outputBase = join(outputPath, parse(sourcePath).name);
+    return prepareImage({ borderPx: parsed.borderPx, inputPath: sourcePath, outputPath: outputBase }).outputPath;
+  });
+}
+
+function statSyncIfExists(path: string): ReturnType<typeof statSync> | null {
+  try {
+    return statSync(path);
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      return null;
+    }
+    throw error;
+  }
 }

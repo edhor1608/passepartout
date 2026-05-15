@@ -5,10 +5,10 @@
 This repo is a v1 Instagram image-prep tool. The production surface is one command:
 
 ```bash
-bun run prepare-image <input> --out <file-path> [--border-px <integer>]
+bun run prepare-image <input> --out <file-path-or-directory> [--border-px <integer>]
 ```
 
-The command accepts PNG, JPEG, and TIFF images, places them on a white canvas, and exports a high-quality baseline sRGB JPEG for manual Instagram app upload.
+The command accepts PNG, JPEG, and TIFF images or a directory of those images, places each image on a white canvas, and exports high-quality baseline sRGB JPEGs for manual Instagram app upload.
 
 ## Prerequisites
 
@@ -30,6 +30,7 @@ Use `bun run check` before PRs. It runs typecheck, Biome lint, unit tests, and t
 
 ```bash
 bun run prepare-image /full/path/input.png --out /full/path/exports/photo
+bun run prepare-image /full/path/input-directory --out /full/path/exports
 bun run prepare-image /full/path/input.tiff --out /full/path/exports/photo.png --border-px 0
 bun run prepare-image --help
 ```
