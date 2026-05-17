@@ -20,17 +20,19 @@ bun install --frozen-lockfile
 
 ```bash
 bun run prepare-image /full/path/input.png --out /full/path/exports/photo
+bun run prepare-image /full/path/input-directory --out /full/path/exports
 ```
 
 Options:
 
-- `--out <file-path>`: required output path. The extension is normalized to `.jpg`.
+- `--out <file-path-or-directory>`: required output path. For file input, the extension is normalized to `.jpg`. For directory input, this is the output directory.
 - `--border-px <integer>`: optional non-negative border size. Default is `57`. `0` is valid.
 
 Rules:
 
 - Landscape inputs (`width > height`) export as `3:2`, up to `2160x1440`.
 - Portrait and square inputs export as `3:4`, up to `1440x1920`.
+- Directory inputs process top-level PNG, JPEG, and TIFF files in name order.
 - Small inputs are not upscaled; output shrinks while preserving the selected ratio.
 - Existing outputs are never overwritten. Collisions use `photo-1.jpg`, `photo-2.jpg`, and so on.
 - Success prints only the actual output path.
