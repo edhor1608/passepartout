@@ -1,0 +1,31 @@
+README.md
+  s_59616ded4d4c1c::t_d90fb392caa26e 22
+docs/plans/bundle-ffmpeg-binaries.md
+  s_59616ded4d4c1c::t_d90fb392caa26e 9-21
+src/domain/media_process.ts
+  s_59616ded4d4c1c::t_d90fb392caa26e 10-22
+src/domain/prepare_image.ts
+  ai_agent 70
+AGENTS.md
+  s_59616ded4d4c1c::t_d90fb392caa26e 17
+bun.lock
+  ai_agent 7-10,39-40,45-48,51-82,86-89
+package.json
+  ai_agent 25-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "9583e55764d58aeda22f2fba8cffa5f7c53b7b73",
+  "prompts": {},
+  "sessions": {
+    "s_59616ded4d4c1c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e255d-f221-7921-b156-fdece18b3e68",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Jonas Rohde <edhor.jonas@gmail.com>"
+    }
+  }
+}
