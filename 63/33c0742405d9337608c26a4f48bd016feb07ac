@@ -1,0 +1,25 @@
+AGENTS.md
+  s_fa8db7b0a45f4e::t_c1464c410d7075 56-69
+docs/agents/domain.md
+  s_fa8db7b0a45f4e::t_c1464c410d7075 1-38
+docs/agents/issue-tracker.md
+  s_fa8db7b0a45f4e::t_c1464c410d7075 1-33
+docs/agents/triage-labels.md
+  s_fa8db7b0a45f4e::t_c1464c410d7075 1-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "6333c0742405d9337608c26a4f48bd016feb07ac",
+  "prompts": {},
+  "sessions": {
+    "s_fa8db7b0a45f4e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e45ba-690b-7321-b05d-d4f8c0ee06a8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Jonas Rohde <edhor.jonas@gmail.com>"
+    }
+  }
+}
