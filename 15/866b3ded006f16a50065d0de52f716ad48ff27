@@ -1,0 +1,26 @@
+docs/agents/issue-tracker.md
+  s_fa8db7b0a45f4e::t_a8dc7ed8315dd1 16-25
+  s_fa8db7b0a45f4e::t_c1464c410d7075 1-15,26-43
+AGENTS.md
+  s_fa8db7b0a45f4e::t_c1464c410d7075 56-69
+docs/agents/triage-labels.md
+  s_fa8db7b0a45f4e::t_c1464c410d7075 1-15
+docs/agents/domain.md
+  s_fa8db7b0a45f4e::t_c1464c410d7075 1-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "15866b3ded006f16a50065d0de52f716ad48ff27",
+  "prompts": {},
+  "sessions": {
+    "s_fa8db7b0a45f4e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e45ba-690b-7321-b05d-d4f8c0ee06a8",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
