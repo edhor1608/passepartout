@@ -53,3 +53,17 @@ bun run prepare-image --help
 ## Branch Knowledge
 
 For feature branches, update the relevant markdown in `docs/plans/` with the problem, decisions, commands run, and lessons learned.
+
+## Agent skills
+
+### Issue tracker
+
+Executable work is tracked in Linear Issues/Subissues; durable planning knowledge lives in Linear Documents. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the repo triage mapping with Linear `AFK` for agent-ready work and `HITL` for human-led work. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo: read root `CONTEXT.md` and root decision docs before domain-sensitive work. See `docs/agents/domain.md`.
