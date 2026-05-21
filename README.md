@@ -19,7 +19,7 @@ The v1 product surface is one command: `prepare-image`. It accepts a single PNG,
 
 - Bun 1.3 or newer.
 - TypeScript through `bunx tsc`.
-- `ffmpeg` and `ffprobe` on `PATH`.
+- `ffmpeg` and `ffprobe` on `PATH` are preferred. Bundled fallback binaries are installed through `bun install`.
 
 ## Install
 
@@ -68,6 +68,7 @@ bun run check
 ```
 
 This runs typecheck, Biome lint, unit tests, and the v1 integration test.
+The integration test fixture helpers call system `ffmpeg` and `ffprobe`, so local checks still need both tools on `PATH`.
 
 ## Project Structure
 

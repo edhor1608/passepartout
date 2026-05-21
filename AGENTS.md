@@ -14,7 +14,7 @@ The command accepts PNG, JPEG, and TIFF images or a directory of those images, p
 
 - Bun 1.3 or newer.
 - TypeScript through `bunx tsc`.
-- `ffmpeg` and `ffprobe` on `PATH`.
+- `ffmpeg` and `ffprobe` on `PATH` are preferred. Bundled fallback binaries are installed through `bun install`.
 
 ## Install
 
@@ -25,6 +25,7 @@ bun install --frozen-lockfile
 ## Quality Gates
 
 Use `bun run check` before PRs. It runs typecheck, Biome lint, unit tests, and the v1 integration test.
+The integration test fixture helpers call system `ffmpeg` and `ffprobe`, so local checks still need both tools on `PATH`.
 
 ## Common Commands
 
@@ -48,7 +49,7 @@ bun run prepare-image --help
 - `src/domain/prepare_image.ts`: source probing, layout selection, and FFmpeg export.
 - `src/domain/prepare_image_layout.ts`: pure target, border, crop, and contain math.
 - `src/domain/output_path.ts`: `.jpg` normalization, parent directory creation, and suffixing.
-- `src/domain/media_process.ts`: FFmpeg/ffprobe process boundary.
+- `src/domain/media_process.ts`: packaged FFmpeg/ffprobe process boundary.
 
 ## Branch Knowledge
 
