@@ -1,0 +1,28 @@
+src/domain/media_process.ts
+  s_59616ded4d4c1c::t_d90fb392caa26e 10-22
+AGENTS.md
+  s_59616ded4d4c1c::t_25904e341e331b 28
+  s_59616ded4d4c1c::t_d90fb392caa26e 17
+README.md
+  s_59616ded4d4c1c::t_d90fb392caa26e 22
+  s_59616ded4d4c1c::t_25904e341e331b 71
+docs/plans/bundle-ffmpeg-binaries.md
+  s_59616ded4d4c1c::t_25904e341e331b 23
+  s_59616ded4d4c1c::t_d90fb392caa26e 9-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "f0447e7790efb13ccbbf4848bfbe79b12da6d1e6",
+  "prompts": {},
+  "sessions": {
+    "s_59616ded4d4c1c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e255d-f221-7921-b156-fdece18b3e68",
+        "model": "gpt-5.5"
+      },
+      "human_author": null
+    }
+  }
+}
