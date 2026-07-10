@@ -847,3 +847,21 @@ The format is simple, readable, and common.
 ### Consequences
 
 After normalizing the requested output path to `.jpg`, check whether it exists. If it does, increment the numeric suffix until an available path is found.
+
+## 2026-07-10: Adopt TypeScript 7 as the project compiler
+
+### Context
+
+TypeScript 7.0.2 is the stable native TypeScript release. The project currently resolves TypeScript 5.9.3 through a `^5` peer dependency even though TypeScript is a private development tool here. TypeScript 7 also defaults `types` to an empty list, so Bun's ambient declarations must be selected explicitly.
+
+### Decision
+
+Install `typescript` `^7.0.2` as a dev dependency and add `types: ["bun"]` to `tsconfig.json`. Do not install the TypeScript 6 compatibility package.
+
+### Rationale
+
+The repository only invokes the `tsc` CLI and does not consume the compiler API. A disposable TypeScript 7.0.2 check passed for the complete project after selecting Bun's types, so the compatibility package would add an unused toolchain path.
+
+### Consequences
+
+`bun install --frozen-lockfile` now installs a reproducible TypeScript 7 compiler. Any future tool that imports the TypeScript compiler API must be evaluated separately because TypeScript 7.0 does not expose that API.
