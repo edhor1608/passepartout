@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "7971cc5ebc45",
+  "strategy": "manual-commit",
+  "branch": "chore/typescript-7-adoption",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "bun.lock",
+    "docs/plans/decisions-log.md",
+    "docs/plans/typescript-7-migration.md",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/79/71cc5ebc45/0/metadata.json",
+      "transcript": "/79/71cc5ebc45/0/full.jsonl",
+      "compact_transcript": "/79/71cc5ebc45/0/transcript.jsonl",
+      "content_hash": "/79/71cc5ebc45/0/content_hash.txt",
+      "prompt": "/79/71cc5ebc45/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 213470,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 3418112,
+    "output_tokens": 19087,
+    "api_call_count": 56
+  }
+}

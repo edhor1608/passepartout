@@ -1,0 +1,60 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "7971cc5ebc45",
+  "session_id": "019f48ea-0bcf-7620-90dd-4240b853b8ab",
+  "strategy": "manual-commit",
+  "created_at": "2026-07-10T06:25:05.777677Z",
+  "branch": "chore/typescript-7-adoption",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "bun.lock",
+    "docs/plans/decisions-log.md",
+    "docs/plans/typescript-7-migration.md",
+    "package.json",
+    "tsconfig.json"
+  ],
+  "agent": "Codex",
+  "model": "gpt-5.6-sol",
+  "turn_id": "b0cff2d92fbf",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 213470,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 3418112,
+    "output_tokens": 19087,
+    "api_call_count": 56
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-07-10T06:25:05.631727Z",
+    "agent_lines": 59,
+    "agent_removed": 4,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 4,
+    "total_committed": 59,
+    "total_lines_changed": 67,
+    "agent_percentage": 94.02985074626866,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 140,
+      "user_lines_removed": 4,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".codex/agents/entire-search.toml": 23,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 40,
+        ".cursor/hooks.json": 40,
+        "docs/plans/typescript-7-migration.md": 31,
+        "package.json": 2,
+        "tsconfig.json": 1
+      },
+      "user_removed_per_file": {
+        "package.json": 4
+      }
+    }
+  ]
+}

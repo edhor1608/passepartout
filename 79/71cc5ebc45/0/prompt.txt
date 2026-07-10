@@ -1,0 +1,9 @@
+können wir typescript 7 hier verwenden? das ist jetzt live
+
+---
+
+okay, setz das e2e um, einmal von researche über anpassung über testen, reviewn lassen und final in main bringen
+
+---
+
+okay, setz das e2e um, einmal von researche über anpassung über testen, reviewn lassen und final in main bringen
