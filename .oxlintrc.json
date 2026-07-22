@@ -4,7 +4,9 @@
     "typeAware": true,
     "maxWarnings": 0
   },
+  "plugins": ["node", "import", "jsx-a11y", "promise", "vitest"],
   "rules": {
+    "import/no-cycle": "error",
     "typescript/no-explicit-any": "error",
     "typescript/no-misused-promises": "error"
   }

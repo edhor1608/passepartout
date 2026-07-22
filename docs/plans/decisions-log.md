@@ -917,3 +917,29 @@ One Oxc-based lint-and-format toolchain removes the remaining duplicate parser d
 - The initial `bun run format` normalized eight files; import order remained unchanged.
 - `bun run check` passes TypeScript 7 typechecking, type-aware Oxlint, Oxfmt verification across 29 files, 10 unit tests, and 10 FFmpeg integration tests.
 - Oxfmt traverses this repository without Biome's broken-symlink warning for `.cursor/rules`, so no formatter-specific ignore workaround is required.
+
+## 2026-07-22: Expand Oxlint coverage and standardize agent output
+
+### Context
+
+The initial Oxlint setup only loaded its default plugins and two explicit TypeScript rules. The
+repository needs broader checks for its Bun/Node runtime, imports, accessibility, promises, and
+Vitest tests, while lint diagnostics should use Oxlint's agent-oriented output consistently.
+
+### Decision
+
+Enable the built-in `node`, `import`, `jsx-a11y`, `promise`, and `vitest` plugins in the root
+Oxlint configuration. Enforce `import/no-cycle` as an error. Make the package lint command pass
+`--format=agent`; all quality-gate linting continues to flow through that command.
+
+### Rationale
+
+A single checked-in plugin policy keeps editor and command-line lint behavior aligned. Explicit
+cycle detection protects the small domain-module graph from hidden circular dependencies. The
+agent formatter makes diagnostics compact and actionable for the agents that own implementation.
+
+### Consequences
+
+New correctness diagnostics from these plugins and import cycles fail `bun run lint` and therefore
+`bun run check`. Direct ad hoc Oxlint invocations must also use `--format=agent` when diagnostics
+are intended for consumption.
