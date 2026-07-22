@@ -58,7 +58,11 @@ export function computePrepareImageLayout(input: PrepareImageLayoutInput): Prepa
 
   const target = input.sourceWidth > input.sourceHeight ? LANDSCAPE_TARGET : PORTRAIT_TARGET;
 
-  for (let outputWidth = target.maxWidth; outputWidth >= target.ratioWidth; outputWidth -= target.ratioWidth) {
+  for (
+    let outputWidth = target.maxWidth;
+    outputWidth >= target.ratioWidth;
+    outputWidth -= target.ratioWidth
+  ) {
     const outputHeight = (outputWidth / target.ratioWidth) * target.ratioHeight;
     if (outputHeight > target.maxHeight) {
       continue;
@@ -139,7 +143,10 @@ function createPortraitLayout(
     dimensions.innerHeight / input.sourceHeight,
   );
   const renderWidth = Math.min(dimensions.innerWidth, Math.round(input.sourceWidth * renderScale));
-  const renderHeight = Math.min(dimensions.innerHeight, Math.round(input.sourceHeight * renderScale));
+  const renderHeight = Math.min(
+    dimensions.innerHeight,
+    Math.round(input.sourceHeight * renderScale),
+  );
 
   return {
     ...dimensions,
