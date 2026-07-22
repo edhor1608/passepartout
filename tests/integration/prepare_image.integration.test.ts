@@ -188,7 +188,13 @@ describe("prepare-image cli", () => {
     createFixture(secondInput, "30x40", "blue");
     writeFileSync(join(batchInputDir, "notes.txt"), "skip");
 
-    const result = await runPrepareImageCli([batchInputDir, "--out", batchOutDir, "--border-px", "0"]);
+    const result = await runPrepareImageCli([
+      batchInputDir,
+      "--out",
+      batchOutDir,
+      "--border-px",
+      "0",
+    ]);
 
     const firstOut = join(batchOutDir, "a-portrait.jpg");
     const secondOut = join(batchOutDir, "b-landscape.jpg");
@@ -216,13 +222,33 @@ describe("prepare-image cli", () => {
     createFixture(jpegInput, "60x40", "blue");
     createFixture(tiffInput, "48x64", "green");
 
-    const jpegResult = await runPrepareImageCli([jpegInput, "--out", join(outDir, "from-jpeg"), "--border-px", "0"]);
-    const tiffResult = await runPrepareImageCli([tiffInput, "--out", join(outDir, "from-tiff"), "--border-px", "0"]);
+    const jpegResult = await runPrepareImageCli([
+      jpegInput,
+      "--out",
+      join(outDir, "from-jpeg"),
+      "--border-px",
+      "0",
+    ]);
+    const tiffResult = await runPrepareImageCli([
+      tiffInput,
+      "--out",
+      join(outDir, "from-tiff"),
+      "--border-px",
+      "0",
+    ]);
 
     expect(jpegResult.exitCode).toBe(0);
     expect(tiffResult.exitCode).toBe(0);
-    expect(probeImage(jpegResult.stdout.trim())).toMatchObject({ codec_name: "mjpeg", height: 40, width: 60 });
-    expect(probeImage(tiffResult.stdout.trim())).toMatchObject({ codec_name: "mjpeg", height: 64, width: 48 });
+    expect(probeImage(jpegResult.stdout.trim())).toMatchObject({
+      codec_name: "mjpeg",
+      height: 40,
+      width: 60,
+    });
+    expect(probeImage(tiffResult.stdout.trim())).toMatchObject({
+      codec_name: "mjpeg",
+      height: 64,
+      width: 48,
+    });
   });
 
   test("suffixes existing outputs", async () => {
@@ -257,7 +283,13 @@ describe("prepare-image cli", () => {
       throw new Error(result.stderr);
     }
 
-    const exportResult = await runPrepareImageCli([input, "--out", join(outDir, "transparent"), "--border-px", "0"]);
+    const exportResult = await runPrepareImageCli([
+      input,
+      "--out",
+      join(outDir, "transparent"),
+      "--border-px",
+      "0",
+    ]);
 
     expect(exportResult.exitCode).toBe(0);
     const [r, g, b] = readPixel(exportResult.stdout.trim(), 10, 10);
@@ -272,7 +304,13 @@ describe("prepare-image cli", () => {
     createFixture(rawInput, "40x60", "blue");
     insertExifOrientation(rawInput, orientedInput, 6);
 
-    const result = await runPrepareImageCli([orientedInput, "--out", join(outDir, "oriented"), "--border-px", "0"]);
+    const result = await runPrepareImageCli([
+      orientedInput,
+      "--out",
+      join(outDir, "oriented"),
+      "--border-px",
+      "0",
+    ]);
 
     expect(result.exitCode).toBe(0);
     expect(probeImage(result.stdout.trim())).toMatchObject({ height: 40, width: 60 });
@@ -284,7 +322,13 @@ describe("prepare-image cli", () => {
     createFixture(rawInput, "48x32", "red");
     insertExifOrientation(rawInput, input, 1);
 
-    const result = await runPrepareImageCli([input, "--out", join(outDir, "metadata"), "--border-px", "0"]);
+    const result = await runPrepareImageCli([
+      input,
+      "--out",
+      join(outDir, "metadata"),
+      "--border-px",
+      "0",
+    ]);
 
     expect(result.exitCode).toBe(0);
     expect(hasExifSegment(input)).toBe(true);
@@ -295,7 +339,13 @@ describe("prepare-image cli", () => {
     const input = join(inputDir, "invalid.png");
     createFixture(input, "48x32", "red");
 
-    const badBorder = await runPrepareImageCli([input, "--out", join(outDir, "bad-border"), "--border-px", "1.5"]);
+    const badBorder = await runPrepareImageCli([
+      input,
+      "--out",
+      join(outDir, "bad-border"),
+      "--border-px",
+      "1.5",
+    ]);
     const badFlag = await runPrepareImageCli([input, "--out", join(outDir, "bad-flag"), "--json"]);
 
     expect(badBorder.exitCode).not.toBe(0);

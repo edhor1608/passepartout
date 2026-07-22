@@ -1,14 +1,15 @@
 {
   "name": "passepartout",
-  "module": "index.ts",
-  "type": "module",
   "private": true,
+  "type": "module",
+  "module": "index.ts",
   "scripts": {
     "prepare-image": "bun run src/cli/prepare_image.ts",
     "typecheck": "bunx tsc --noEmit",
-    "lint": "biome lint src tests package.json tsconfig.json",
-    "format": "biome format --write .",
-    "check": "bun run typecheck && bun run lint && bun run test:fast",
+    "lint": "oxlint src tests",
+    "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
+    "check": "bun run typecheck && bun run lint && bun run format:check && bun run test:fast",
     "test": "bun test --timeout 30000",
     "test:unit": "bun test tests/*.test.ts",
     "test:fast": "bun run test:unit && bun test --timeout 30000 tests/integration/prepare_image.integration.test.ts",
@@ -16,13 +17,15 @@
     "test:integration": "bun test --timeout 30000 tests/integration/prepare_image.integration.test.ts",
     "test:all": "bun test --timeout 30000"
   },
-  "devDependencies": {
-    "@biomejs/biome": "^2.4.13",
-    "@types/bun": "latest",
-    "typescript": "^7.0.2"
-  },
   "dependencies": {
     "ffmpeg-static": "^5.3.0",
     "ffprobe-static": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "oxfmt": "0.60.0",
+    "oxlint": "^1.75.0",
+    "oxlint-tsgolint": "7.0.2001",
+    "typescript": "7.0.2"
   }
 }

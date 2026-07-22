@@ -2,7 +2,8 @@ import { mkdirSync, readdirSync, statSync } from "node:fs";
 import { join, parse, resolve } from "node:path";
 import { DEFAULT_PREPARE_IMAGE_BORDER_PX, prepareImage } from "../domain/prepare_image";
 
-const USAGE = "Usage: bun run prepare-image <input> --out <file-path-or-directory> [--border-px <integer>]";
+const USAGE =
+  "Usage: bun run prepare-image <input> --out <file-path-or-directory> [--border-px <integer>]";
 const SUPPORTED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".tif", ".tiff"]);
 
 type ParsedArgs = {
@@ -110,7 +111,11 @@ function prepareInput(parsed: ParsedArgs): string[] {
 
   return inputPaths.map((sourcePath) => {
     const outputBase = join(outputPath, parse(sourcePath).name);
-    return prepareImage({ borderPx: parsed.borderPx, inputPath: sourcePath, outputPath: outputBase }).outputPath;
+    return prepareImage({
+      borderPx: parsed.borderPx,
+      inputPath: sourcePath,
+      outputPath: outputBase,
+    }).outputPath;
   });
 }
 

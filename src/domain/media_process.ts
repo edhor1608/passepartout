@@ -22,7 +22,9 @@ function resolveBundledFfmpegPath(): string | undefined {
 function resolveBundledFfprobePath(): string | undefined {
   try {
     const ffprobeStatic = require("ffprobe-static") as { path?: unknown };
-    return typeof ffprobeStatic.path === "string" && ffprobeStatic.path.length > 0 ? ffprobeStatic.path : undefined;
+    return typeof ffprobeStatic.path === "string" && ffprobeStatic.path.length > 0
+      ? ffprobeStatic.path
+      : undefined;
   } catch {
     return undefined;
   }

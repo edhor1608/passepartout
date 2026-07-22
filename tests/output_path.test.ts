@@ -23,7 +23,9 @@ describe("prepare image output path", () => {
   test("rejects existing directories", () => {
     const dir = mkdtempSync(join(tmpdir(), "passepartout-output-path-"));
 
-    expect(() => resolvePrepareImageOutputPath(dir)).toThrow("--out must be a file path, not a directory");
+    expect(() => resolvePrepareImageOutputPath(dir)).toThrow(
+      "--out must be a file path, not a directory",
+    );
   });
 
   test("suffixes existing files without overwriting", () => {

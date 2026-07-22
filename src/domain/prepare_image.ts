@@ -117,7 +117,10 @@ function readExifOrientation(path: string): number | null {
     if (payloadEnd > bytes.length) {
       return null;
     }
-    if (marker === 0xe1 && bytes.subarray(payloadStart, payloadStart + 6).toString("ascii") === "Exif\0\0") {
+    if (
+      marker === 0xe1 &&
+      bytes.subarray(payloadStart, payloadStart + 6).toString("ascii") === "Exif\0\0"
+    ) {
       return readTiffOrientation(bytes.subarray(payloadStart + 6, payloadEnd));
     }
 

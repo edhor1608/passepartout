@@ -67,7 +67,7 @@ bun run prepare-image /full/path/input.jpg --out /full/path/exports/photo --bord
 bun run check
 ```
 
-This runs typecheck, Biome lint, unit tests, and the v1 integration test.
+This runs TypeScript 7 typechecking, type-aware Oxlint, Oxfmt verification, unit tests, and the v1 integration test.
 The integration test fixture helpers call system `ffmpeg` and `ffprobe`, so local checks still need both tools on `PATH`.
 
 ## Project Structure

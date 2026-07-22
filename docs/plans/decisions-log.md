@@ -865,3 +865,55 @@ The repository only invokes the `tsc` CLI and does not consume the compiler API.
 ### Consequences
 
 `bun install --frozen-lockfile` now installs a reproducible TypeScript 7 compiler. Any future tool that imports the TypeScript compiler API must be evaluated separately because TypeScript 7.0 does not expose that API.
+
+## 2026-07-22: Adopt stable type-aware Oxlint
+
+Formatter details in this decision are superseded by "2026-07-22: Complete the Oxc toolchain with Oxfmt."
+
+### Context
+
+Oxlint 1.75 and `oxlint-tsgolint` 7 provide stable type-aware linting backed by TypeScript Go. The repository already uses TypeScript 7.0.2, which is the exact compiler version targeted by the current `oxlint-tsgolint` 7.0.2001 release. Biome currently performs both formatting and syntax-only linting.
+
+### Decision
+
+Use Oxlint for `src` and `tests`, enable type-aware linting in the root configuration, and fail the quality gate on every warning. Keep Biome only as the formatter. Keep the independent `tsc --noEmit` quality gate instead of enabling Oxlint's still-experimental `typeCheck` option. Pin TypeScript and `oxlint-tsgolint` to their compatible exact versions.
+
+### Rationale
+
+Type-aware rules catch defects such as floating or misused promises that a syntax-only linter cannot prove. Retaining `tsc` keeps compiler diagnostics on the stable, established path while type-aware linting adds semantic rules without duplicating another TypeScript compiler implementation. Exact compatible versions prevent an independent dependency update from silently pairing `tsgolint` with a different TypeScript release.
+
+### Consequences
+
+`bun run lint` now requires the `oxlint-tsgolint` package and discovers the repository's `tsconfig.json` automatically. TypeScript and `oxlint-tsgolint` must be upgraded together. Biome configuration no longer contains lint rules; formatting behavior is unchanged.
+
+### Verification and lessons
+
+- `bun install --frozen-lockfile` resolves the pinned toolchain without lockfile changes.
+- `OXC_LOG=debug bunx oxlint src tests` confirms that `tsgolint` assigns all nine linted files to the root `tsconfig.json`; no files are unmatched.
+- `bun run check` passes typechecking, type-aware linting, 10 unit tests, and 10 FFmpeg integration tests.
+- Enabling `typeAware` does not implicitly replace compiler diagnostics. Keep the explicit typecheck until Oxlint's `typeCheck` option is no longer marked experimental.
+
+## 2026-07-22: Complete the Oxc toolchain with Oxfmt
+
+### Context
+
+After adopting type-aware Oxlint, Biome remains only as the repository formatter. Oxfmt 0.60 supports every text format used by this repository and provides a dedicated check mode suitable for the existing quality gate.
+
+### Decision
+
+Remove Biome completely and use pinned Oxfmt 0.60.0 for formatting and format verification. Adopt Oxfmt's 100-character line width with the existing two-space, double-quote, semicolon, and trailing-comma style. Keep import sorting disabled and enable deterministic `package.json` key sorting. Add `format:check` to `bun run check`.
+
+### Rationale
+
+One Oxc-based lint-and-format toolchain removes the remaining duplicate parser dependency. A checked-in configuration makes editor and CI behavior explicit. Import sorting is an independent ordering policy and remains disabled by default, avoiding semantic or high-churn changes unrelated to formatting. The 100-character width is Oxfmt's TypeScript-oriented default and reduces unnecessary wrapping.
+
+### Consequences
+
+`bun run format` writes Oxfmt output and `bun run format:check` performs a non-mutating verification. The complete quality gate now rejects formatting drift. The initial migration must format all supported repository files once; later diffs stay incremental.
+
+### Verification and lessons
+
+- `bun install --frozen-lockfile` resolves the Oxc toolchain without lockfile changes.
+- The initial `bun run format` normalized eight files; import order remained unchanged.
+- `bun run check` passes TypeScript 7 typechecking, type-aware Oxlint, Oxfmt verification across 29 files, 10 unit tests, and 10 FFmpeg integration tests.
+- Oxfmt traverses this repository without Biome's broken-symlink warning for `.cursor/rules`, so no formatter-specific ignore workaround is required.
