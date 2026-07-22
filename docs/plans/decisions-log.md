@@ -876,11 +876,11 @@ Oxlint 1.75 and `oxlint-tsgolint` 7 provide stable type-aware linting backed by 
 
 ### Decision
 
-Use Oxlint for `src` and `tests`, enable type-aware linting in the root configuration, and fail the quality gate on every warning. Keep Biome only as the formatter. Keep the independent `tsc --noEmit` quality gate instead of enabling Oxlint's still-experimental `typeCheck` option. Pin TypeScript and `oxlint-tsgolint` to their compatible exact versions.
+Use Oxlint for the package entry point, `src`, and `tests`, enable type-aware linting in the root configuration, and fail the quality gate on every warning. Keep Biome only as the formatter. Keep the independent `tsc --noEmit` quality gate instead of enabling Oxlint's still-experimental `typeCheck` option. Pin Oxlint, TypeScript, and `oxlint-tsgolint` to compatible exact versions.
 
 ### Rationale
 
-Type-aware rules catch defects such as floating or misused promises that a syntax-only linter cannot prove. Retaining `tsc` keeps compiler diagnostics on the stable, established path while type-aware linting adds semantic rules without duplicating another TypeScript compiler implementation. Exact compatible versions prevent an independent dependency update from silently pairing `tsgolint` with a different TypeScript release.
+Type-aware rules catch defects such as floating or misused promises that a syntax-only linter cannot prove. Retaining `tsc` keeps compiler diagnostics on the stable, established path while type-aware linting adds semantic rules without duplicating another TypeScript compiler implementation. Exact compatible versions prevent an independent dependency update from silently changing type-aware diagnostics or pairing `tsgolint` with a different TypeScript release.
 
 ### Consequences
 
@@ -889,7 +889,7 @@ Type-aware rules catch defects such as floating or misused promises that a synta
 ### Verification and lessons
 
 - `bun install --frozen-lockfile` resolves the pinned toolchain without lockfile changes.
-- `OXC_LOG=debug bunx oxlint src tests` confirms that `tsgolint` assigns all nine linted files to the root `tsconfig.json`; no files are unmatched.
+- `OXC_LOG=debug bunx oxlint index.ts src tests` confirms that `tsgolint` assigns all ten linted files to the root `tsconfig.json`; no files are unmatched.
 - `bun run check` passes typechecking, type-aware linting, 10 unit tests, and 10 FFmpeg integration tests.
 - Enabling `typeAware` does not implicitly replace compiler diagnostics. Keep the explicit typecheck until Oxlint's `typeCheck` option is no longer marked experimental.
 
