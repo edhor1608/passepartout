@@ -12,7 +12,7 @@ The command accepts PNG, JPEG, and TIFF images or a directory of those images, p
 
 ## Prerequisites
 
-- Bun 1.3 or newer.
+- Bun 1.3.6.
 - TypeScript through `bunx tsc`.
 - `ffmpeg` and `ffprobe` on `PATH` are preferred. Bundled fallback binaries are installed through `bun install`.
 
@@ -24,8 +24,8 @@ bun install --frozen-lockfile
 
 ## Quality Gates
 
-Use `bun run check` before PRs. It runs TypeScript 7 typechecking, type-aware Oxlint, Oxfmt verification, unit tests, and the v1 integration test.
-The integration test fixture helpers call system `ffmpeg` and `ffprobe`, so local checks still need both tools on `PATH`.
+Use `bun run check` before PRs. It runs TypeScript 7 typechecking, type-aware Oxlint, Oxfmt verification, and the v1 acceptance test.
+The acceptance-test oracle calls system `ffmpeg` and `ffprobe`, so local checks still need both tools on `PATH`. A dedicated test removes them from the product process's `PATH` to prove its bundled adapters independently.
 
 ## Common Commands
 
@@ -38,28 +38,24 @@ bun run prepare-image --help
 
 ## Test Layers
 
-- `bun run test:unit`: pure layout and output path tests.
-- `bun run test:integration`: the v1 CLI/FFmpeg integration test.
-- `bun run test:fast`: unit plus v1 integration tests.
-- `bun run test:all`: every Bun test with an explicit 30 second timeout.
+- `bun run test`: every acceptance test with an explicit 60 second per-test timeout.
+- `bun run test:integration`: the v1 command and Image engine acceptance test.
 
 ## Architecture Map
 
-- `src/cli/prepare_image.ts`: command parsing and stdout/stderr behavior.
-- `src/domain/prepare_image.ts`: source probing, layout selection, and FFmpeg export.
-- `src/domain/prepare_image_layout.ts`: pure target, border, crop, and contain math.
-- `src/domain/output_path.ts`: `.jpg` normalization, parent directory creation, and suffixing.
-- `src/domain/media_process.ts`: packaged FFmpeg/ffprobe process boundary.
+- `src/cli/prepare_image.ts`: argv and stdout/stderr adapter.
+- `src/domain/prepare_image.ts`: deep Prepare image workflow module for source discovery, staging, atomic output allocation, commit, and rollback.
+- `src/domain/image_engine.ts`: deep concrete Image engine module for FFmpeg/ffprobe adapters, orientation, layout, white-canvas rendering, and JPEG export.
 
 ## Branch Knowledge
 
-For feature branches, update the relevant markdown in `docs/plans/` with the problem, decisions, commands run, and lessons learned.
+Record durable architecture or product decisions immediately in `docs/plans/decisions-log.md`. Keep executable work in Linear and prefer explicit code plus local comments over new slice Markdown.
 
 ## Agent skills
 
 ### Issue tracker
 
-Executable work is tracked in Linear Issues/Subissues; durable planning knowledge lives in Linear Documents. See `docs/agents/issue-tracker.md`.
+Executable work is tracked in Linear Issues/Subissues; cross-repository and project planning knowledge lives in Linear Documents. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
@@ -67,4 +63,4 @@ Use the repo triage mapping with Linear `AFK` for agent-ready work and `HITL` fo
 
 ### Domain docs
 
-Single-context repo: read root `CONTEXT.md` and root decision docs before domain-sensitive work. See `docs/agents/domain.md`.
+Single-context repo: read `CONTEXT.md` and `docs/plans/decisions-log.md` before domain-sensitive work. See `docs/agents/domain.md`.

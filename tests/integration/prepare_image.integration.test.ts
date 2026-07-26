@@ -1,7 +1,14 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { runPrepareImageCli } from "../helpers/cli";
 
 const outDir = mkdtempSync(join(tmpdir(), "passepartout-prepare-image-"));
@@ -11,6 +18,8 @@ setDefaultTimeout(30_000);
 type ProbeResult = {
   codec_name: string;
   height: number;
+  pix_fmt: string;
+  profile: string;
   width: number;
 };
 
@@ -44,6 +53,60 @@ function createFixture(path: string, size: string, color: string): void {
   }
 }
 
+function createHorizontalPatternFixture(path: string): void {
+  const result = runTool([
+    "ffmpeg",
+    "-y",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-f",
+    "lavfi",
+    "-i",
+    "color=c=red:s=100x200",
+    "-f",
+    "lavfi",
+    "-i",
+    "color=c=green:s=200x200",
+    "-f",
+    "lavfi",
+    "-i",
+    "color=c=blue:s=100x200",
+    "-filter_complex",
+    "[0:v][1:v][2:v]hstack=inputs=3",
+    "-frames:v",
+    "1",
+    path,
+  ]);
+
+  if (result.exitCode !== 0) {
+    throw new Error(result.stderr);
+  }
+}
+
+function createTaggedDisplayP3Fixture(path: string, size: string, color: string): void {
+  const result = runTool([
+    "ffmpeg",
+    "-y",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-f",
+    "lavfi",
+    "-i",
+    `color=c=${color}:s=${size}`,
+    "-vf",
+    "format=rgb24,setparams=range=pc:colorspace=gbr:color_primaries=smpte432:color_trc=iec61966-2-1",
+    "-frames:v",
+    "1",
+    path,
+  ]);
+
+  if (result.exitCode !== 0) {
+    throw new Error(result.stderr);
+  }
+}
+
 function probeImage(path: string): ProbeResult {
   const result = runTool([
     "ffprobe",
@@ -52,7 +115,7 @@ function probeImage(path: string): ProbeResult {
     "-select_streams",
     "v:0",
     "-show_entries",
-    "stream=codec_name,width,height",
+    "stream=codec_name,profile,pix_fmt,width,height",
     "-of",
     "json",
     path,
@@ -126,6 +189,16 @@ function hasExifSegment(path: string): boolean {
   return readFileSync(path).includes(Buffer.from("Exif\0\0", "ascii"));
 }
 
+function hasExifOrientationTag(path: string): boolean {
+  return readFileSync(path).includes(Buffer.from([0x01, 0x12, 0x00, 0x03]));
+}
+
+function hasSrgbColorSpaceTag(path: string): boolean {
+  return readFileSync(path).includes(
+    Buffer.from([0xa0, 0x01, 0x00, 0x03, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01]),
+  );
+}
+
 function readPixel(path: string, x: number, y: number): [number, number, number] {
   const result = runTool([
     "ffmpeg",
@@ -175,7 +248,13 @@ describe("prepare-image cli", () => {
     expect(result.stdout).toBe(`${actualOut}\n`);
     expect(result.stderr).toBe("");
     expect(existsSync(actualOut)).toBe(true);
-    expect(probeImage(actualOut)).toMatchObject({ codec_name: "mjpeg", height: 32, width: 48 });
+    expect(probeImage(actualOut)).toMatchObject({
+      codec_name: "mjpeg",
+      height: 32,
+      pix_fmt: "yuvj420p",
+      profile: "Baseline",
+      width: 48,
+    });
   });
 
   test("exports supported images from a directory into an output directory", async () => {
@@ -205,6 +284,56 @@ describe("prepare-image cli", () => {
     expect(probeImage(secondOut)).toMatchObject({ codec_name: "mjpeg", height: 32, width: 48 });
   });
 
+  test("accepts only supported file inputs", async () => {
+    const unsupportedInput = join(inputDir, "unsupported.bmp");
+    createFixture(unsupportedInput, "48x32", "red");
+
+    const result = await runPrepareImageCli([
+      unsupportedInput,
+      "--out",
+      join(outDir, "unsupported"),
+    ]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("Unsupported input format: .bmp; expected PNG, JPEG, or TIFF");
+    expect(existsSync(join(outDir, "unsupported.jpg"))).toBe(false);
+  });
+
+  test("rolls back a directory run when any supported source fails", async () => {
+    const batchInputDir = mkdtempSync(join(inputDir, "rollback-"));
+    const batchOutDir = join(outDir, "rollback-output");
+    createFixture(join(batchInputDir, "a-valid.png"), "48x32", "red");
+    writeFileSync(join(batchInputDir, "b-broken.jpg"), "not a jpeg");
+
+    const result = await runPrepareImageCli([batchInputDir, "--out", batchOutDir]);
+
+    expect(result.exitCode).not.toBe(0);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("ffprobe");
+    expect(readdirSync(batchOutDir)).toEqual([]);
+  });
+
+  test("suffixes colliding basenames within one directory run", async () => {
+    const batchInputDir = mkdtempSync(join(inputDir, "same-basename-"));
+    const batchOutDir = join(outDir, "same-basename-output");
+    createFixture(join(batchInputDir, "photo.jpg"), "48x32", "red");
+    createFixture(join(batchInputDir, "photo.png"), "48x32", "blue");
+
+    const result = await runPrepareImageCli([
+      batchInputDir,
+      "--out",
+      batchOutDir,
+      "--border-px",
+      "0",
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe(
+      `${join(batchOutDir, "photo.jpg")}\n${join(batchOutDir, "photo-1.jpg")}\n`,
+    );
+  });
+
   test("uses 57px as the default border on full-size landscape exports", async () => {
     const input = join(inputDir, "default-border.png");
     createFixture(input, "2160x1440", "red");
@@ -212,8 +341,31 @@ describe("prepare-image cli", () => {
     const result = await runPrepareImageCli([input, "--out", join(outDir, "default-border")]);
 
     expect(result.exitCode).toBe(0);
-    expect(readPixel(result.stdout.trim(), 28, 720)).toEqual([255, 255, 255]);
-    expect(readPixel(result.stdout.trim(), 57, 720)).not.toEqual([255, 255, 255]);
+    const outputPath = result.stdout.trim();
+    expect(readPixel(outputPath, 28, 720)).toEqual([255, 255, 255]);
+    expect(readPixel(outputPath, 57, 720)).not.toEqual([255, 255, 255]);
+    expect(readPixel(outputPath, 2131, 720)).toEqual([255, 255, 255]);
+    expect(readPixel(outputPath, 2102, 720)).not.toEqual([255, 255, 255]);
+    expect(readPixel(outputPath, 1080, 28)).toEqual([255, 255, 255]);
+    expect(readPixel(outputPath, 1080, 57)).not.toEqual([255, 255, 255]);
+    expect(readPixel(outputPath, 1080, 1411)).toEqual([255, 255, 255]);
+    expect(readPixel(outputPath, 1080, 1382)).not.toEqual([255, 255, 255]);
+  });
+
+  test("shrinks small sources without upscaling and preserves the target ratio", async () => {
+    const input = join(inputDir, "small-landscape.png");
+    createFixture(input, "1000x600", "red");
+
+    const result = await runPrepareImageCli([
+      input,
+      "--out",
+      join(outDir, "small-landscape"),
+      "--border-px",
+      "165",
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    expect(probeImage(result.stdout.trim())).toMatchObject({ height: 778, width: 1167 });
   });
 
   test("exports JPEG and TIFF inputs", async () => {
@@ -263,6 +415,52 @@ describe("prepare-image cli", () => {
     expect(result.stdout).toBe(`${join(outDir, "suffix-1.jpg")}\n`);
   });
 
+  test("allocates colliding outputs atomically across concurrent commands", async () => {
+    const input = join(inputDir, "concurrent.png");
+    createFixture(input, "48x32", "red");
+    const requestedOut = join(outDir, "concurrent");
+
+    const results = await Promise.all(
+      Array.from({ length: 4 }, () =>
+        runPrepareImageCli([input, "--out", requestedOut, "--border-px", "0"]),
+      ),
+    );
+
+    expect(results.every((result) => result.exitCode === 0)).toBe(true);
+    expect(new Set(results.map((result) => result.stdout.trim()))).toEqual(
+      new Set([
+        join(outDir, "concurrent.jpg"),
+        join(outDir, "concurrent-1.jpg"),
+        join(outDir, "concurrent-2.jpg"),
+        join(outDir, "concurrent-3.jpg"),
+      ]),
+    );
+  });
+
+  test("creates missing output parents", async () => {
+    const input = join(inputDir, "parents.png");
+    createFixture(input, "48x32", "red");
+    const requestedOut = join(outDir, "missing", "parents", "photo.png");
+
+    const result = await runPrepareImageCli([input, "--out", requestedOut, "--border-px", "0"]);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe(`${join(outDir, "missing", "parents", "photo.jpg")}\n`);
+  });
+
+  test("uses bundled image-engine adapters when system tools are absent from PATH", async () => {
+    const input = join(inputDir, "bundled-fallback.png");
+    createFixture(input, "48x32", "red");
+
+    const result = await runPrepareImageCli(
+      [input, "--out", join(outDir, "bundled-fallback"), "--border-px", "0"],
+      { env: { PATH: dirname(process.execPath) } },
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(probeImage(result.stdout.trim())).toMatchObject({ height: 32, width: 48 });
+  });
+
   test("composites transparent pixels onto white", async () => {
     const input = join(inputDir, "transparent.png");
     const result = runTool([
@@ -296,6 +494,92 @@ describe("prepare-image cli", () => {
     expect(r).toBeGreaterThanOrEqual(245);
     expect(g).toBeGreaterThanOrEqual(245);
     expect(b).toBeGreaterThanOrEqual(245);
+  });
+
+  test("uses centered landscape crop through the rendered command interface", async () => {
+    const input = join(inputDir, "pattern-landscape.png");
+    createHorizontalPatternFixture(input);
+
+    const result = await runPrepareImageCli([
+      input,
+      "--out",
+      join(outDir, "pattern-landscape"),
+      "--border-px",
+      "30",
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    const outputPath = result.stdout.trim();
+    const { height, width } = probeImage(outputPath);
+    const left = readPixel(outputPath, 8, Math.floor(height / 2));
+    const center = readPixel(outputPath, Math.floor(width / 2), Math.floor(height / 2));
+    const right = readPixel(outputPath, width - 9, Math.floor(height / 2));
+    expect(left[0]).toBeGreaterThan(left[2]);
+    expect(center[1]).toBeGreaterThan(center[0]);
+    expect(right[2]).toBeGreaterThan(right[0]);
+  });
+
+  test("centers and contains portrait sources without cropping", async () => {
+    const input = join(inputDir, "contain-portrait.png");
+    createFixture(input, "100x200", "red");
+
+    const result = await runPrepareImageCli([
+      input,
+      "--out",
+      join(outDir, "contain-portrait"),
+      "--border-px",
+      "10",
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    const outputPath = result.stdout.trim();
+    expect(probeImage(outputPath)).toMatchObject({ height: 200, width: 150 });
+    expect(readPixel(outputPath, 10, 100)).toEqual([255, 255, 255]);
+    expect(readPixel(outputPath, 75, 100)[0]).toBeGreaterThan(240);
+  });
+
+  test("uses portrait output and a scaled one-pixel border for tiny square sources", async () => {
+    const input = join(inputDir, "tiny-square.png");
+    createFixture(input, "10x10", "red");
+
+    const result = await runPrepareImageCli([
+      input,
+      "--out",
+      join(outDir, "tiny-square"),
+      "--border-px",
+      "57",
+    ]);
+
+    expect(result.exitCode).toBe(0);
+    const outputPath = result.stdout.trim();
+    expect(probeImage(outputPath)).toMatchObject({ height: 16, width: 12 });
+    expect(readPixel(outputPath, 0, 8).every((channel) => channel >= 200)).toBe(true);
+    expect(readPixel(outputPath, 6, 8)[0]).toBeGreaterThan(240);
+  });
+
+  test("converts tagged Display-P3 input and marks the output as sRGB", async () => {
+    const p3Input = join(inputDir, "display-p3.png");
+    const untaggedInput = join(inputDir, "untagged-srgb.png");
+    createTaggedDisplayP3Fixture(p3Input, "48x32", "0x00ff80");
+    createFixture(untaggedInput, "48x32", "0x00ff80");
+
+    const [p3Result, untaggedResult] = await Promise.all([
+      runPrepareImageCli([p3Input, "--out", join(outDir, "display-p3"), "--border-px", "0"]),
+      runPrepareImageCli([
+        untaggedInput,
+        "--out",
+        join(outDir, "untagged-srgb"),
+        "--border-px",
+        "0",
+      ]),
+    ]);
+
+    expect(p3Result.exitCode).toBe(0);
+    expect(untaggedResult.exitCode).toBe(0);
+    expect(hasSrgbColorSpaceTag(p3Result.stdout.trim())).toBe(true);
+    expect(readPixel(p3Result.stdout.trim(), 24, 16)).not.toEqual(
+      readPixel(untaggedResult.stdout.trim(), 24, 16),
+    );
   });
 
   test("applies EXIF orientation visually before choosing the output ratio", async () => {
@@ -332,7 +616,10 @@ describe("prepare-image cli", () => {
 
     expect(result.exitCode).toBe(0);
     expect(hasExifSegment(input)).toBe(true);
-    expect(hasExifSegment(result.stdout.trim())).toBe(false);
+    expect(hasExifOrientationTag(input)).toBe(true);
+    expect(hasExifSegment(result.stdout.trim())).toBe(true);
+    expect(hasExifOrientationTag(result.stdout.trim())).toBe(false);
+    expect(hasSrgbColorSpaceTag(result.stdout.trim())).toBe(true);
   });
 
   test("rejects invalid border values and unknown flags", async () => {
@@ -352,5 +639,42 @@ describe("prepare-image cli", () => {
     expect(badBorder.stderr).toContain("Invalid --border-px value");
     expect(badFlag.exitCode).not.toBe(0);
     expect(badFlag.stderr).toContain("Unknown option: --json");
+  });
+
+  test("reports missing arguments and invalid directory destinations through the command interface", async () => {
+    const missingInput = await runPrepareImageCli([]);
+    const input = join(inputDir, "destination.png");
+    createFixture(input, "48x32", "red");
+    const missingOut = await runPrepareImageCli([input]);
+    const missingOutValue = await runPrepareImageCli([input, "--out"]);
+    const outputDirectory = mkdtempSync(join(outDir, "invalid-file-output-"));
+    const invalidDestination = await runPrepareImageCli([input, "--out", outputDirectory]);
+    const emptyInputDirectory = mkdtempSync(join(inputDir, "empty-"));
+    const emptyDirectory = await runPrepareImageCli([
+      emptyInputDirectory,
+      "--out",
+      join(outDir, "empty-output"),
+    ]);
+    const directoryInput = mkdtempSync(join(inputDir, "file-destination-"));
+    createFixture(join(directoryInput, "photo.png"), "48x32", "red");
+    const outputFile = join(outDir, "directory-output-file");
+    writeFileSync(outputFile, "existing");
+    const invalidDirectoryDestination = await runPrepareImageCli([
+      directoryInput,
+      "--out",
+      outputFile,
+    ]);
+
+    expect(missingInput.exitCode).not.toBe(0);
+    expect(missingInput.stderr).toContain("Usage:");
+    expect(missingOut.stderr).toContain("Missing required --out");
+    expect(missingOutValue.stderr).toContain("Missing value for --out");
+    expect(invalidDestination.exitCode).not.toBe(0);
+    expect(invalidDestination.stderr).toContain("--out must be a file path, not a directory");
+    expect(emptyDirectory.stderr).toContain("No supported images found in directory");
+    expect(invalidDirectoryDestination.stderr).toContain(
+      "--out must be a directory for directory input",
+    );
+    expect(readFileSync(outputFile, "utf8")).toBe("existing");
   });
 });

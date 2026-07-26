@@ -9,11 +9,9 @@ This is a single-context repo.
 ## Before exploring, read these
 
 - **`CONTEXT.md`** at the repo root.
-- **`docs/plans/decisions-log.md`** for architectural and planning decisions recorded during branch work.
-- **`docs/plans/`** for branch knowledge relevant to the area you're about to work in.
-- **`docs/adr/`** if it exists.
+- **`docs/plans/decisions-log.md`** for repository architecture and product decisions.
 
-If any of these files don't exist, proceed silently. Don't flag their absence or suggest creating them upfront. Producer skills create them lazily when terms or decisions actually get resolved.
+Do not create per-slice plan or ADR Markdown. Keep executable work in Linear, broader project artifacts in Linear Documents, and repository architecture/product decisions in the existing decision log.
 
 ## File structure
 
@@ -23,7 +21,6 @@ If any of these files don't exist, proceed silently. Don't flag their absence or
 ├── docs/
 │   ├── plans/
 │   │   └── decisions-log.md
-│   └── adr/
 └── src/
 ```
 

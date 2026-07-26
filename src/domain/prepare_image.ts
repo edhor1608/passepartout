@@ -1,252 +1,172 @@
-import { closeSync, openSync, readSync } from "node:fs";
-import { resolve } from "node:path";
-import { computePrepareImageLayout, type PrepareImageLayout } from "./prepare_image_layout";
-import { runFfmpeg, runFfprobe } from "./media_process";
-import { resolvePrepareImageOutputPath } from "./output_path";
+import {
+  linkSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  unlinkSync,
+} from "node:fs";
+import { dirname, extname, join, parse, resolve } from "node:path";
+import { renderReadyToUploadImage } from "./image_engine";
 
 export const DEFAULT_PREPARE_IMAGE_BORDER_PX = 57;
 
-type PrepareImageInput = {
+type PrepareImagesInput = {
   inputPath: string;
   outputPath: string;
   borderPx?: number;
 };
 
-type PrepareImageOutput = {
-  outputPath: string;
-  layout: PrepareImageLayout;
+type PlannedImage = {
+  sourcePath: string;
+  requestedOutputPath: string;
 };
 
-type SourceDimensions = {
-  width: number;
-  height: number;
+type StagedImage = PlannedImage & {
+  stagedOutputPath: string;
+  stagingDirectory: string;
 };
 
-export function prepareImage(input: PrepareImageInput): PrepareImageOutput {
-  const sourcePath = resolve(input.inputPath);
-  const outputPath = resolvePrepareImageOutputPath(resolve(input.outputPath));
-  const source = inspectSourceDimensions(sourcePath);
-  const layout = computePrepareImageLayout({
-    borderPx: input.borderPx ?? DEFAULT_PREPARE_IMAGE_BORDER_PX,
-    sourceHeight: source.height,
-    sourceWidth: source.width,
-  });
+const SUPPORTED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".tif", ".tiff"]);
 
-  const proc = runFfmpeg([
-    "-n",
-    "-hide_banner",
-    "-loglevel",
-    "error",
-    "-i",
-    sourcePath,
-    "-filter_complex",
-    buildPrepareImageFilter(layout),
-    "-map",
-    "[out]",
-    "-frames:v",
-    "1",
-    "-q:v",
-    "1",
-    "-pix_fmt",
-    "yuvj420p",
-    "-map_metadata",
-    "-1",
-    outputPath,
-  ]);
+export function prepareImages(input: PrepareImagesInput): string[] {
+  const plans = planImages(resolve(input.inputPath), resolve(input.outputPath));
+  const stagedImages: StagedImage[] = [];
+  const committedPaths: string[] = [];
 
-  if (proc.exitCode !== 0) {
-    throw new Error(`ffmpeg export failed: ${proc.stderr.trim()}`);
-  }
-
-  return { layout, outputPath };
-}
-
-function inspectSourceDimensions(path: string): SourceDimensions {
-  const proc = runFfprobe([
-    "-v",
-    "error",
-    "-select_streams",
-    "v:0",
-    "-show_streams",
-    "-of",
-    "json",
-    path,
-  ]);
-
-  if (proc.exitCode !== 0) {
-    throw new Error(`ffprobe failed: ${proc.stderr.trim()}`);
-  }
-
-  const payload = JSON.parse(proc.stdout) as unknown;
-  const stream = getFirstStream(payload);
-  const width = getNumber(stream, "width");
-  const height = getNumber(stream, "height");
-  const rotation = getRotation(stream);
-
-  if (rotation === 90 || rotation === 270 || isExifOrientationSwapped(readExifOrientation(path))) {
-    return { height: width, width: height };
-  }
-
-  return { height, width };
-}
-
-function readExifOrientation(path: string): number | null {
-  const lower = path.toLowerCase();
-  if (!lower.endsWith(".jpg") && !lower.endsWith(".jpeg")) {
-    return null;
-  }
-
-  const bytes = readFileHeader(path);
-  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) {
-    return null;
-  }
-
-  let offset = 2;
-  while (offset + 4 < bytes.length) {
-    if (bytes[offset] !== 0xff) {
-      return null;
-    }
-
-    const marker = bytes[offset + 1];
-    const length = bytes.readUInt16BE(offset + 2);
-    if (length < 2) {
-      return null;
-    }
-    const payloadStart = offset + 4;
-    const payloadEnd = offset + 2 + length;
-    if (payloadEnd > bytes.length) {
-      return null;
-    }
-    if (
-      marker === 0xe1 &&
-      bytes.subarray(payloadStart, payloadStart + 6).toString("ascii") === "Exif\0\0"
-    ) {
-      return readTiffOrientation(bytes.subarray(payloadStart + 6, payloadEnd));
-    }
-
-    offset = payloadEnd;
-  }
-
-  return null;
-}
-
-function readFileHeader(path: string): Buffer {
-  const fd = openSync(path, "r");
   try {
-    const buffer = Buffer.alloc(64 * 1024);
-    const bytesRead = readSync(fd, buffer, 0, buffer.length, 0);
-    return buffer.subarray(0, bytesRead);
+    for (const plan of plans) {
+      const requestedOutputPath = normalizeJpegExtension(plan.requestedOutputPath);
+      const outputDirectory = dirname(requestedOutputPath);
+      mkdirSync(outputDirectory, { recursive: true });
+      const stagingDirectory = mkdtempSync(join(outputDirectory, ".passepartout-"));
+      const stagedOutputPath = join(stagingDirectory, "prepared.jpg");
+      const stagedImage = { ...plan, stagedOutputPath, stagingDirectory };
+      stagedImages.push(stagedImage);
+
+      renderReadyToUploadImage({
+        borderPx: input.borderPx ?? DEFAULT_PREPARE_IMAGE_BORDER_PX,
+        outputPath: stagedOutputPath,
+        sourcePath: plan.sourcePath,
+      });
+    }
+
+    for (const stagedImage of stagedImages) {
+      const committedPath = commitWithoutOverwrite(
+        stagedImage.stagedOutputPath,
+        normalizeJpegExtension(stagedImage.requestedOutputPath),
+      );
+      committedPaths.push(committedPath);
+      unlinkSync(stagedImage.stagedOutputPath);
+    }
+
+    return committedPaths;
+  } catch (error) {
+    for (const committedPath of committedPaths) {
+      unlinkIfExists(committedPath);
+    }
+    throw error;
   } finally {
-    closeSync(fd);
-  }
-}
-
-function readTiffOrientation(bytes: Buffer): number | null {
-  if (bytes.length < 8) {
-    return null;
-  }
-
-  const littleEndian = bytes.subarray(0, 2).toString("ascii") === "II";
-  const bigEndian = bytes.subarray(0, 2).toString("ascii") === "MM";
-  if (!littleEndian && !bigEndian) {
-    return null;
-  }
-
-  const readUInt16 = littleEndian ? Buffer.prototype.readUInt16LE : Buffer.prototype.readUInt16BE;
-  const readUInt32 = littleEndian ? Buffer.prototype.readUInt32LE : Buffer.prototype.readUInt32BE;
-  if (readUInt16.call(bytes, 2) !== 42) {
-    return null;
-  }
-  const ifdOffset = readUInt32.call(bytes, 4);
-  if (ifdOffset + 2 > bytes.length) {
-    return null;
-  }
-  const entryCount = readUInt16.call(bytes, ifdOffset);
-  if (ifdOffset + 2 + entryCount * 12 > bytes.length) {
-    return null;
-  }
-
-  for (let index = 0; index < entryCount; index += 1) {
-    const entryOffset = ifdOffset + 2 + index * 12;
-    if (readUInt16.call(bytes, entryOffset) !== 0x0112) {
-      continue;
+    for (const stagedImage of stagedImages) {
+      rmSync(stagedImage.stagingDirectory, { force: true, recursive: true });
     }
+  }
+}
 
-    const type = readUInt16.call(bytes, entryOffset + 2);
-    const count = readUInt32.call(bytes, entryOffset + 4);
-    if (type !== 3 || count !== 1) {
-      return null;
+function planImages(inputPath: string, outputPath: string): PlannedImage[] {
+  const inputStat = statSync(inputPath);
+  if (!inputStat.isDirectory()) {
+    assertSupportedSource(inputPath);
+    if (statSyncIfExists(outputPath)?.isDirectory()) {
+      throw new Error("--out must be a file path, not a directory");
     }
-
-    return readUInt16.call(bytes, entryOffset + 8);
+    if (outputPath.trim() === "") {
+      throw new Error("--out must be a file path");
+    }
+    return [{ requestedOutputPath: outputPath, sourcePath: inputPath }];
   }
 
-  return null;
+  if (statSyncIfExists(outputPath)?.isFile()) {
+    throw new Error("--out must be a directory for directory input");
+  }
+
+  const sourcePaths = readdirSync(inputPath)
+    .filter((entry) => isSupportedSource(entry))
+    .sort()
+    .map((entry) => join(inputPath, entry))
+    .filter((entryPath) => statSync(entryPath).isFile());
+
+  if (sourcePaths.length === 0) {
+    throw new Error("No supported images found in directory");
+  }
+
+  return sourcePaths.map((sourcePath) => ({
+    requestedOutputPath: join(outputPath, parse(sourcePath).name),
+    sourcePath,
+  }));
 }
 
-function isExifOrientationSwapped(orientation: number | null): boolean {
-  return orientation === 5 || orientation === 6 || orientation === 7 || orientation === 8;
-}
-
-function buildPrepareImageFilter(layout: PrepareImageLayout): string {
-  const sourceFilters = [];
-  if (layout.sourceCrop) {
-    sourceFilters.push(
-      `crop=${layout.sourceCrop.width}:${layout.sourceCrop.height}:${layout.sourceCrop.x}:${layout.sourceCrop.y}`,
+function assertSupportedSource(path: string): void {
+  if (!isSupportedSource(path)) {
+    const extension = extname(path).toLowerCase();
+    throw new Error(
+      `Unsupported input format${extension === "" ? "" : `: ${extension}`}; expected PNG, JPEG, or TIFF`,
     );
   }
-  sourceFilters.push(`scale=${layout.renderWidth}:${layout.renderHeight}`, "setsar=1");
-
-  return [
-    `[0:v]${sourceFilters.join(",")}[fg]`,
-    `color=c=white:s=${layout.outputWidth}x${layout.outputHeight}[bg]`,
-    `[bg][fg]overlay=${layout.renderOffsetX}:${layout.renderOffsetY}:format=auto,format=yuvj420p[out]`,
-  ].join(";");
 }
 
-function getFirstStream(value: unknown): Record<string, unknown> {
-  if (!isRecord(value) || !Array.isArray(value.streams) || !isRecord(value.streams[0])) {
-    throw new Error("ffprobe did not return an image stream");
-  }
-
-  return value.streams[0];
+function isSupportedSource(path: string): boolean {
+  return SUPPORTED_EXTENSIONS.has(extname(path).toLowerCase());
 }
 
-function getNumber(record: Record<string, unknown>, key: string): number {
-  const value = record[key];
-  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
-    throw new Error(`ffprobe returned invalid ${key}`);
+function normalizeJpegExtension(requestedPath: string): string {
+  const extension = extname(requestedPath);
+  if (extension === "") {
+    return `${requestedPath}.jpg`;
   }
 
-  return value;
+  return `${requestedPath.slice(0, -extension.length)}.jpg`;
 }
 
-function getRotation(stream: Record<string, unknown>): number {
-  const tags = stream.tags;
-  if (isRecord(tags) && typeof tags.rotate === "string") {
-    return normalizeRotation(Number.parseInt(tags.rotate, 10));
-  }
+function commitWithoutOverwrite(stagedPath: string, requestedPath: string): string {
+  const parsed = parse(requestedPath);
 
-  const sideData = stream.side_data_list;
-  if (Array.isArray(sideData)) {
-    for (const entry of sideData) {
-      if (isRecord(entry) && typeof entry.rotation === "number") {
-        return normalizeRotation(entry.rotation);
+  for (let index = 0; ; index += 1) {
+    const candidate = index === 0 ? requestedPath : join(parsed.dir, `${parsed.name}-${index}.jpg`);
+    try {
+      linkSync(stagedPath, candidate);
+      return candidate;
+    } catch (error) {
+      if (hasErrorCode(error, "EEXIST")) {
+        continue;
       }
+      throw error;
     }
   }
-
-  return 0;
 }
 
-function normalizeRotation(rotation: number): number {
-  if (!Number.isFinite(rotation)) {
-    return 0;
+function statSyncIfExists(path: string): ReturnType<typeof statSync> | null {
+  try {
+    return statSync(path);
+  } catch (error) {
+    if (hasErrorCode(error, "ENOENT")) {
+      return null;
+    }
+    throw error;
   }
-
-  return ((rotation % 360) + 360) % 360;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
+function unlinkIfExists(path: string): void {
+  try {
+    unlinkSync(path);
+  } catch (error) {
+    if (!hasErrorCode(error, "ENOENT")) {
+      throw error;
+    }
+  }
+}
+
+function hasErrorCode(error: unknown, code: string): boolean {
+  return error instanceof Error && "code" in error && error.code === code;
 }

@@ -8,10 +8,14 @@ export type CliRunResult = {
 
 const REPO_ROOT = resolve(import.meta.dir, "..", "..");
 
-export async function runPrepareImageCli(args: string[]): Promise<CliRunResult> {
+export async function runPrepareImageCli(
+  args: string[],
+  options?: { env?: Record<string, string | undefined> },
+): Promise<CliRunResult> {
   const proc = Bun.spawn({
-    cmd: ["bun", "src/cli/prepare_image.ts", ...args],
+    cmd: [process.execPath, "run", "--silent", "prepare-image", ...args],
     cwd: REPO_ROOT,
+    env: options?.env ? { ...process.env, ...options.env } : undefined,
     stderr: "pipe",
     stdout: "pipe",
   });
