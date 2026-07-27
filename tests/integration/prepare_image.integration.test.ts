@@ -53,6 +53,93 @@ function createFixture(path: string, size: string, color: string): void {
   }
 }
 
+/**
+ * Quadrant marker colours, keyed by their position in the *stored* (pre-rotation)
+ * frame. Each is far from the others in RGB so lossy JPEG round-tripping cannot
+ * make one classify as another.
+ */
+const QUADRANT_COLORS = {
+  bottomLeft: [0x00, 0x00, 0xff],
+  bottomRight: [0xff, 0xff, 0x00],
+  topLeft: [0xff, 0x00, 0x00],
+  topRight: [0x00, 0xff, 0x00],
+} as const;
+
+type QuadrantName = keyof typeof QUADRANT_COLORS;
+
+/** Portrait 40x60 JPEG with a distinct solid colour in each 20x30 quadrant. */
+function createQuadrantFixture(path: string): void {
+  const result = runTool([
+    "ffmpeg",
+    "-y",
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-f",
+    "lavfi",
+    "-i",
+    "color=c=0xFF0000:s=20x30",
+    "-f",
+    "lavfi",
+    "-i",
+    "color=c=0x00FF00:s=20x30",
+    "-f",
+    "lavfi",
+    "-i",
+    "color=c=0x0000FF:s=20x30",
+    "-f",
+    "lavfi",
+    "-i",
+    "color=c=0xFFFF00:s=20x30",
+    "-filter_complex",
+    "[0:v][1:v]hstack[top];[2:v][3:v]hstack[bottom];[top][bottom]vstack",
+    "-frames:v",
+    "1",
+    path,
+  ]);
+
+  if (result.exitCode !== 0) {
+    throw new Error(result.stderr);
+  }
+}
+
+/** Nearest-marker classification, so JPEG chroma subsampling cannot fail the test. */
+function classifyQuadrantColor(pixel: readonly [number, number, number]): QuadrantName {
+  let best: QuadrantName = "topLeft";
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (const [name, reference] of Object.entries(QUADRANT_COLORS) as [
+    QuadrantName,
+    readonly [number, number, number],
+  ][]) {
+    const distance =
+      (pixel[0] - reference[0]) ** 2 +
+      (pixel[1] - reference[1]) ** 2 +
+      (pixel[2] - reference[2]) ** 2;
+    if (distance < bestDistance) {
+      best = name;
+      bestDistance = distance;
+    }
+  }
+
+  return best;
+}
+
+/** Which stored quadrant ends up in each displayed corner, per EXIF orientation. */
+function readCornerQuadrants(path: string): Record<QuadrantName, QuadrantName> {
+  const { height, width } = probeImage(path);
+  const inset = 4;
+  const right = width - 1 - inset;
+  const bottom = height - 1 - inset;
+
+  return {
+    bottomLeft: classifyQuadrantColor(readPixel(path, inset, bottom)),
+    bottomRight: classifyQuadrantColor(readPixel(path, right, bottom)),
+    topLeft: classifyQuadrantColor(readPixel(path, inset, inset)),
+    topRight: classifyQuadrantColor(readPixel(path, right, inset)),
+  };
+}
+
 function createHorizontalPatternFixture(path: string): void {
   const result = runTool([
     "ffmpeg",
@@ -599,6 +686,61 @@ describe("prepare-image cli", () => {
     expect(result.exitCode).toBe(0);
     expect(probeImage(result.stdout.trim())).toMatchObject({ height: 40, width: 60 });
   });
+
+  // Dimensions alone cannot tell a correct rotation from a wrong one: orientations
+  // 5-8 all swap width and height, but only one of them puts the right pixels in
+  // the right corner. These expectations come from the EXIF spec, not from ffmpeg.
+  const ORIENTATION_CORNER_EXPECTATIONS = {
+    // Mirror horizontal + rotate 270 CW == transpose across the main diagonal.
+    5: {
+      bottomLeft: "topRight",
+      bottomRight: "bottomRight",
+      topLeft: "topLeft",
+      topRight: "bottomLeft",
+    },
+    // Rotate 90 CW.
+    6: {
+      bottomLeft: "bottomRight",
+      bottomRight: "topRight",
+      topLeft: "bottomLeft",
+      topRight: "topLeft",
+    },
+    // Mirror horizontal + rotate 90 CW == transpose across the anti-diagonal.
+    7: {
+      bottomLeft: "bottomLeft",
+      bottomRight: "topLeft",
+      topLeft: "bottomRight",
+      topRight: "topRight",
+    },
+    // Rotate 270 CW.
+    8: {
+      bottomLeft: "topLeft",
+      bottomRight: "bottomLeft",
+      topLeft: "topRight",
+      topRight: "bottomRight",
+    },
+  } as const satisfies Record<number, Record<QuadrantName, QuadrantName>>;
+
+  for (const [orientation, expected] of Object.entries(ORIENTATION_CORNER_EXPECTATIONS)) {
+    test(`places source pixels correctly for EXIF orientation ${orientation}`, async () => {
+      const rawInput = join(inputDir, `raw-quadrants-${orientation}.jpg`);
+      const orientedInput = join(inputDir, `quadrants-${orientation}.jpg`);
+      createQuadrantFixture(rawInput);
+      insertExifOrientation(rawInput, orientedInput, Number(orientation));
+
+      const result = await runPrepareImageCli([
+        orientedInput,
+        "--out",
+        join(outDir, `quadrants-${orientation}`),
+        "--border-px",
+        "0",
+      ]);
+
+      expect(result.exitCode).toBe(0);
+      expect(probeImage(result.stdout.trim())).toMatchObject({ height: 40, width: 60 });
+      expect(readCornerQuadrants(result.stdout.trim())).toEqual(expected);
+    });
+  }
 
   test("strips input metadata from the output", async () => {
     const rawInput = join(inputDir, "raw-metadata.jpg");

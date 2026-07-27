@@ -30,6 +30,9 @@ type StagedImage = PlannedImage & {
 
 const SUPPORTED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".tif", ".tiff"]);
 
+/** Upper bound for the `name-<n>.jpg` collision suffix search in `commitWithoutOverwrite`. */
+const MAX_OUTPUT_NAME_SUFFIX = 10_000;
+
 export function prepareImages(input: PrepareImagesInput): string[] {
   const plans = planImages(resolve(input.inputPath), resolve(input.outputPath));
   const stagedImages: StagedImage[] = [];
@@ -81,9 +84,8 @@ function planImages(inputPath: string, outputPath: string): PlannedImage[] {
     if (statSyncIfExists(outputPath)?.isDirectory()) {
       throw new Error("--out must be a file path, not a directory");
     }
-    if (outputPath.trim() === "") {
-      throw new Error("--out must be a file path");
-    }
+    // No empty-path check here: callers pass an already-`resolve`d absolute path,
+    // and the CLI rejects a missing/empty `--out` value while parsing argv.
     return [{ requestedOutputPath: outputPath, sourcePath: inputPath }];
   }
 
@@ -132,7 +134,11 @@ function normalizeJpegExtension(requestedPath: string): string {
 function commitWithoutOverwrite(stagedPath: string, requestedPath: string): string {
   const parsed = parse(requestedPath);
 
-  for (let index = 0; ; index += 1) {
+  // `linkSync` is atomic and fails with EEXIST rather than overwriting, so the
+  // suffix search stays race-free without a lock. The cap turns a pathological
+  // directory (or a filesystem that reports EEXIST for another reason) into an
+  // error instead of an infinite loop.
+  for (let index = 0; index <= MAX_OUTPUT_NAME_SUFFIX; index += 1) {
     const candidate = index === 0 ? requestedPath : join(parsed.dir, `${parsed.name}-${index}.jpg`);
     try {
       linkSync(stagedPath, candidate);
@@ -144,6 +150,10 @@ function commitWithoutOverwrite(stagedPath: string, requestedPath: string): stri
       throw error;
     }
   }
+
+  throw new Error(
+    `Could not find a free output name for ${requestedPath} after ${MAX_OUTPUT_NAME_SUFFIX} attempts`,
+  );
 }
 
 function statSyncIfExists(path: string): ReturnType<typeof statSync> | null {
