@@ -1,0 +1,70 @@
+{
+  "cli_version": "0.6.1",
+  "checkpoint_id": "4448d79cc6d0",
+  "session_id": "019fc328-f5bb-7e40-91b3-b720fb0dc505",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-02T15:52:26.189052Z",
+  "branch": "codex/deepen-prepare-image-architecture",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".oxlintrc.json",
+    "src/cli/prepare_image.ts",
+    "src/domain/image_engine.ts",
+    "src/domain/prepare_image.ts",
+    "tsconfig.json"
+  ],
+  "agent": "Codex",
+  "model": "gpt-5.6-sol",
+  "turn_id": "d0148b435102",
+  "token_usage": {
+    "input_tokens": 68414,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 624128,
+    "output_tokens": 6694,
+    "api_call_count": 14
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-02T15:52:26.162593Z",
+    "agent_lines": 0,
+    "agent_removed": 5,
+    "human_added": 0,
+    "human_modified": 4,
+    "human_removed": 11,
+    "total_committed": 0,
+    "total_lines_changed": 21,
+    "agent_percentage": 23.809523809523807,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 213,
+      "user_lines_removed": 15,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".codex/agents/entire-search.toml": 23,
+        ".codex/config.toml": 3,
+        ".codex/hooks.json": 40,
+        ".cursor/hooks.json": 40,
+        ".oxlintrc.json": 7,
+        "src/cli/prepare_image.ts": 99,
+        "tsconfig.json": 1
+      },
+      "user_removed_per_file": {
+        ".oxlintrc.json": 2,
+        "src/cli/prepare_image.ts": 13
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}

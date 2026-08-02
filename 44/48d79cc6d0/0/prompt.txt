@@ -1,0 +1,83 @@
+You are implementing a scoped change for Claude.
+
+Repository: /Users/jonas/.codex/worktrees/b77a31b9-7d35-418b-bdb0-198bc52ad94e/passepartout
+Branch: codex/deepen-prepare-image-architecture (PR #67)
+
+## Situation
+
+A `git merge --no-ff origin/main` is ALREADY IN PROGRESS and left exactly one
+conflict: `src/cli/prepare_image.ts`. Do not run `git merge`, `git rebase`,
+`git commit`, `git push`, or `git merge --abort`. Leave the merge state intact;
+Claude will commit it.
+
+Two things landed on main while this PR was open:
+- #68 enabled `exactOptionalPropertyTypes: true` in tsconfig.json
+- #69 added `typescript` to the oxlint plugin array and enabled
+  `typescript/no-non-null-assertion` and `typescript/strict-boolean-expressions`
+
+Both rules are now `"error"` with `maxWarnings: 0`.
+
+## Goal
+
+Land the merge so `bun run check` passes, WITHOUT losing any behavior from this PR.
+
+## Conflict resolution rule (important — read before editing)
+
+The two sides are not alternative implementations of the same thing:
+
+- THIS BRANCH (`HEAD`, ours) deliberately made the CLI thin. All directory
+  enumeration, output allocation, staging, commit and rollback moved into
+  `src/domain/prepare_image.ts` behind `prepareImages()`. The CLI's old
+  `prepareInput()` helper and its `statSyncIfExists()` were deleted on purpose.
+- MAIN (theirs) still has the OLD architecture (`prepareImage()` singular,
+  `prepareInput()` in the CLI) and only rewrote its expressions to satisfy the
+  new strict-boolean rules.
+
+So: KEEP THIS BRANCH'S STRUCTURE. Do NOT reintroduce `prepareInput`,
+`statSyncIfExists`, or `prepareImage` (singular) into the CLI — those are gone by
+design and `prepareImage` no longer exists in the domain module.
+
+From main, take only the *idioms* that the new lint rules require, and apply them
+to this branch's code:
+- `!inputPath` -> `inputPath === undefined || inputPath === ""`
+- `!outputPath` -> `outputPath === undefined`
+- `!value || value.startsWith("--")` -> `value === undefined || value === "" || value.startsWith("--")`
+- `?.isFile()` in a condition -> `?.isFile() === true`
+
+Note: main also inlined `parseBorderPx` into its caller. That was incidental, not
+required by any rule. Keep this branch's `parseBorderPx` helper.
+
+## Then: fix the rest of the branch
+
+`src/domain/prepare_image.ts` and `src/domain/image_engine.ts` were written before
+these rules existed and are NOT part of the conflict, but will now violate them.
+Expect things like `statSyncIfExists(outputPath)?.isDirectory()` used directly as
+a condition, truthiness checks on strings/numbers/objects, and optional properties
+(`borderPx?: number`) that `exactOptionalPropertyTypes` now treats more strictly.
+Fix all of them.
+
+## Hard constraints
+
+- Behavior must not change. All 26 existing tests must still pass unmodified.
+  If you think a test needs changing, STOP and report it instead.
+- Prefer the most explicit form that states the real intent. When a value is
+  `string | undefined`, compare against `undefined` rather than coercing.
+  Do not silence a rule with `!` (non-null assertion is now an error anyway),
+  with `as`, or with an eslint/oxlint disable comment.
+- Touch only what the new rules force you to touch. This is not a refactor.
+- Do not modify tsconfig.json, .oxlintrc.json, package.json, or any config to
+  make errors go away. The rules are the requirement, not the obstacle.
+- Preserve unrelated user changes. Do not touch untracked `.codex/`, `.cursor/`, `.entire/`.
+- Do not commit, push, deploy, or edit global config.
+
+## Verification
+
+Run `bun run check` (typecheck + oxlint + oxfmt --check + 26 tests) until green.
+Run `bun run format` if oxfmt complains about formatting.
+
+## Report
+
+- Files changed and why each change was needed (which rule forced it)
+- Confirmation that the conflict kept this branch's architecture
+- Full `bun run check` result (test count and assertion count)
+- Anything you were unsure about or had to judge

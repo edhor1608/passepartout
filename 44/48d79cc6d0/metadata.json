@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.6.1",
+  "checkpoint_id": "4448d79cc6d0",
+  "strategy": "manual-commit",
+  "branch": "codex/deepen-prepare-image-architecture",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".oxlintrc.json",
+    "src/cli/prepare_image.ts",
+    "src/domain/image_engine.ts",
+    "src/domain/prepare_image.ts",
+    "tsconfig.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/44/48d79cc6d0/0/metadata.json",
+      "transcript": "/44/48d79cc6d0/0/full.jsonl",
+      "content_hash": "/44/48d79cc6d0/0/content_hash.txt",
+      "prompt": "/44/48d79cc6d0/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 68414,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 624128,
+    "output_tokens": 6694,
+    "api_call_count": 14
+  }
+}
