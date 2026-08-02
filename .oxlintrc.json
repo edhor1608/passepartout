@@ -8,6 +8,7 @@
   "rules": {
     "import/no-cycle": "error",
     "typescript/no-explicit-any": "error",
-    "typescript/no-misused-promises": "error"
+    "typescript/no-misused-promises": "error",
+    "typescript/no-non-null-assertion": "error"
   }
 }
