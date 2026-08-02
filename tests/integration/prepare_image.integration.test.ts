@@ -13,7 +13,10 @@ import { runPrepareImageCli } from "../helpers/cli";
 
 const outDir = mkdtempSync(join(tmpdir(), "passepartout-prepare-image-"));
 const inputDir = mkdtempSync(join(tmpdir(), "passepartout-prepare-image-input-"));
-setDefaultTimeout(30_000);
+// Every test here shells out to ffmpeg several times, so they need the 60s
+// budget AGENTS.md mandates for acceptance tests. This call, not the runner's
+// `--timeout` flag, is what decides: `setDefaultTimeout` overrides the flag.
+setDefaultTimeout(60_000);
 
 type ProbeResult = {
   codec_name: string;
