@@ -4,11 +4,15 @@
     "typeAware": true,
     "maxWarnings": 0
   },
-  "plugins": ["node", "import", "jsx-a11y", "promise", "vitest"],
+  // "typescript" must stay first: listing "plugins" explicitly replaces oxlint's
+  // default set, and every typescript/* rule below silently stops executing
+  // (no error, no violation, exit 0) if "typescript" is missing from this array.
+  "plugins": ["typescript", "node", "import", "jsx-a11y", "promise", "vitest"],
   "rules": {
     "import/no-cycle": "error",
     "typescript/no-explicit-any": "error",
     "typescript/no-misused-promises": "error",
-    "typescript/no-non-null-assertion": "error"
+    "typescript/no-non-null-assertion": "error",
+    "typescript/strict-boolean-expressions": "error"
   }
 }
