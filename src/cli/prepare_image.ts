@@ -1,11 +1,7 @@
-import { mkdirSync, readdirSync, statSync } from "node:fs";
-import { join, parse, resolve } from "node:path";
-import { DEFAULT_PREPARE_IMAGE_BORDER_PX, prepareImage } from "../domain/prepare_image";
+import { DEFAULT_PREPARE_IMAGE_BORDER_PX, prepareImages } from "../domain/prepare_image";
 
 const USAGE =
   "Usage: bun run prepare-image <input> --out <file-path-or-directory> [--border-px <integer>]";
-const SUPPORTED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".tif", ".tiff"]);
-
 type ParsedArgs = {
   inputPath: string;
   outputPath: string;
@@ -71,53 +67,11 @@ try {
     process.exit(0);
   }
 
-  const outputPaths = prepareInput(parsed);
+  const outputPaths = prepareImages(parsed);
   for (const outputPath of outputPaths) {
     console.log(outputPath);
   }
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
-}
-
-function prepareInput(parsed: ParsedArgs): string[] {
-  const inputPath = resolve(parsed.inputPath);
-  const inputStat = statSync(inputPath);
-
-  if (!inputStat.isDirectory()) {
-    return [prepareImage(parsed).outputPath];
-  }
-
-  const outputPath = resolve(parsed.outputPath);
-  let existingOutputStat: ReturnType<typeof statSync> | null = null;
-  try {
-    existingOutputStat = statSync(outputPath);
-  } catch (error) {
-    if (!(error instanceof Error && "code" in error && error.code === "ENOENT")) {
-      throw error;
-    }
-  }
-  if (existingOutputStat?.isFile() === true) {
-    throw new Error("--out must be a directory for directory input");
-  }
-
-  mkdirSync(outputPath, { recursive: true });
-  const inputPaths = readdirSync(inputPath)
-    .filter((entry) => SUPPORTED_EXTENSIONS.has(parse(entry).ext.toLowerCase()))
-    .sort()
-    .map((entry) => join(inputPath, entry))
-    .filter((entryPath) => statSync(entryPath).isFile());
-
-  if (inputPaths.length === 0) {
-    throw new Error("No supported images found in directory");
-  }
-
-  return inputPaths.map((sourcePath) => {
-    const outputBase = join(outputPath, parse(sourcePath).name);
-    return prepareImage({
-      borderPx: parsed.borderPx,
-      inputPath: sourcePath,
-      outputPath: outputBase,
-    }).outputPath;
-  });
 }

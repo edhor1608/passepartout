@@ -32,11 +32,3 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 # Finder (MacOS) folder config
 .DS_Store
-
-# generated export test outputs
-tests/fixtures/exports/*
-!tests/fixtures/exports/.gitkeep
-
-# generated watch-folder test outputs
-tests/fixtures/watch/*
-tests/fixtures/watch_e2e/*

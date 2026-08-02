@@ -7,5 +7,6 @@
   "singleQuote": false,
   "trailingComma": "all",
   "sortImports": false,
-  "sortPackageJson": true
+  "sortPackageJson": true,
+  "ignorePatterns": [".codex/**", ".cursor/hooks.json", ".entire/**"]
 }

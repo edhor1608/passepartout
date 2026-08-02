@@ -943,3 +943,126 @@ agent formatter makes diagnostics compact and actionable for the agents that own
 New correctness diagnostics from these plugins and import cycles fail `bun run lint` and therefore
 `bun run check`. Direct ad hoc Oxlint invocations must also use `--format=agent` when diagnostics
 are intended for consumption.
+
+## 2026-07-25: Deepen the prepare-image workflow and image engine
+
+### Context
+
+The production product remains one `prepare-image` command, but its product rules are currently
+spread across the CLI, `prepare_image.ts`, `prepare_image_layout.ts`, `output_path.ts`, and
+`media_process.ts`. Directory input added source discovery, ordering, output-directory semantics,
+and partial-failure behavior to the CLI instead of the domain workflow. The output-path and media
+process modules each have one caller and expose almost as much knowledge as their implementations:
+one returns a path before the write is safely reserved, while the other exposes raw FFmpeg and
+ffprobe arguments. The exported layout has eleven renderer-facing fields that only the FFmpeg
+caller understands.
+
+The deletion test therefore identifies the CLI orchestration, output-path module, raw media-process
+module, and external layout representation as shallow. Deleting any of them moves their knowledge
+to one caller rather than causing useful behavior to reappear across multiple callers. The
+single-image rendering implementation itself remains substantial and should become a deeper
+module, not be split into more hypothetical seams.
+
+Directory input also superseded older decisions that described v1 as strictly one input file and
+required `--out` to always be a full file path. The live product accepts either one supported image
+or one directory of supported top-level images. For directory input, `--out` is an output
+directory.
+
+### Decision
+
+Create two deep modules:
+
+- The **Prepare image workflow module** owns supported-source validation, file-versus-directory
+  discovery, deterministic batch order, destination semantics, JPEG path normalization, collision
+  allocation, staging, commit, rollback, and the final list of written paths. Its interface accepts
+  the command's input path, output path, and border value.
+- The concrete **Image engine module** owns system-versus-bundled FFmpeg executable selection,
+  source inspection and orientation normalization, target/layout computation, white-canvas
+  rendering, baseline JPEG encoding, and normalized engine failures. Its interface renders one
+  ready-to-upload Instagram image from a supported source into a caller-provided staging path.
+
+The CLI remains the adapter for argv, stdout, stderr, and process exit behavior. Layout math stays
+pure inside the image engine implementation, but its renderer-specific execution object is no
+longer an external interface. Tests primarily exercise the same command interface users call.
+Do not add abstract filesystem, parser, or alternate-image-engine seams: each would currently have
+only one adapter.
+
+For a directory input, processing is all-or-nothing from the caller's perspective. Every image is
+rendered into a private staging directory first. Final paths are committed with atomic
+no-overwrite allocation; if preparation or commit fails, staged files and any outputs committed by
+that invocation are removed. Successful output paths retain sorted source order.
+
+Delete the unused package entry point and its `Hello via Bun!` implementation. The private package
+has no library interface; its package script is the production entry.
+
+### Rationale
+
+This gives callers leverage through one workflow interface and gives maintainers locality for
+source, batch, output-lifecycle, image-engine, and error invariants. It also turns “never overwrite”
+from a check-then-write convention into an allocation guarantee and makes batch failure semantics
+explicit. Keeping FFmpeg concrete respects the existing engine decision without inventing a
+hypothetical adapter seam.
+
+Acceptance tests at the command interface cover the real package script, supported-format policy,
+file and directory destinations, deterministic output, rollback, layout effects, metadata,
+orientation, and both system and bundled executable adapters. Focused internal examples are only
+retained when they protect an invariant that is impractical to observe through rendered output.
+
+### Consequences
+
+This supersedes the earlier decisions that directory orchestration belongs only in the CLI, that
+v1 excludes batch preparation, and that `--out` is always a full file path. It also revisits the
+earlier decision that the exported layout object is the core test surface: the interface is now the
+test surface, while layout remains an internal pure implementation detail.
+
+`CONTEXT.md`, README, AGENTS, scripts, and CI must describe the same current workflow. Completed
+slice plans should be removed once their durable decisions are represented here, reducing stale
+Markdown surfaces without deleting history from Git.
+
+## 2026-07-25: Make the sRGB output contract explicit and observable
+
+### Context
+
+The Image engine encoded baseline `yuvj420p` JPEGs but did not convert tagged non-sRGB sources or
+write observable sRGB evidence. JPEG YCbCr pixel format is not itself proof of sRGB. FFmpeg's
+system and bundled `colorspace` filters can convert sources whose color space, primaries, transfer
+function, and range are explicitly tagged, but the bundled encoder does not preserve primaries and
+transfer metadata in its JPEG stream.
+
+### Decision
+
+Treat untagged v1 sources as sRGB, matching the conventional PNG/JPEG photo workflow. When FFprobe
+reports a complete supported color description, convert it inside the Image engine to JPEG-range
+BT.601 YCbCr with BT.709 primaries and the IEC 61966-2-1 transfer function. After FFmpeg strips all
+source metadata and writes the JPEG, add one generated EXIF ColorSpace tag whose value is `1`
+(sRGB). Do not copy any source EXIF/XMP fields.
+
+The generated color marker is product output metadata, not metadata preservation. Tests must prove
+both conversion of an explicitly Display-P3-tagged fixture and replacement of source metadata by
+the single generated sRGB marker.
+
+### Rationale
+
+This gives the ready-to-upload Instagram image interface an observable sRGB contract while keeping
+all color handling local to the concrete Image engine. It avoids claiming that `yuvj420p` alone is
+sRGB and does not add a new module or adapter seam.
+
+### Consequences
+
+Sources with complete recognized color tags are transformed. Untagged sources are explicitly
+assumed to already contain sRGB pixel values; v1 does not attempt arbitrary ICC-profile parsing.
+The exported JPEG contains a minimal generated EXIF segment even though all source EXIF/XMP
+metadata remains stripped.
+
+### Verification and lessons
+
+- `bun install --frozen-lockfile` completes without lockfile changes.
+- `bun run check` passes TypeScript 7, type-aware Oxlint, Oxfmt, and 22 command/Image engine
+  acceptance tests with 87 assertions.
+- `bun run prepare-image --help` matches the documented command interface.
+- `git diff --check` passes.
+- Three independent architecture sweeps found no remaining P0/P1 deepening candidates after the
+  workflow, Image engine, output lifecycle, color, test-surface, documentation, and tooling
+  changes.
+- A requested external Fable review could not start because the configured Claude account had
+  reached its monthly spend limit; the implementation did not depend on that unavailable review.

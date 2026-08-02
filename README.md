@@ -12,12 +12,13 @@ The v1 product surface is one command: `prepare-image`. It accepts a single PNG,
 - Uses a `57px` default border at full target size.
 - Avoids upscaling small source images.
 - Applies EXIF orientation before choosing landscape or portrait output.
-- Strips EXIF/XMP metadata from the final JPEG.
+- Converts completely and recognizably tagged non-sRGB sources, strips source EXIF/XMP, and adds only a generated sRGB color marker.
 - Never overwrites existing exports.
+- Publishes a directory run only after every source has been prepared successfully.
 
 ## Prerequisites
 
-- Bun 1.3 or newer.
+- Bun 1.3.6.
 - TypeScript through `bunx tsc`.
 - `ffmpeg` and `ffprobe` on `PATH` are preferred. Bundled fallback binaries are installed through `bun install`.
 
@@ -56,7 +57,8 @@ bun run prepare-image /full/path/input.jpg --out /full/path/exports/photo --bord
 
 - File inputs print one output path.
 - Directory inputs process top-level PNG, JPEG, and TIFF files in filename order and print one output path per export.
-- Existing outputs are suffixed as `photo-1.jpg`, `photo-2.jpg`, and so on.
+- Directory outputs are staged as one batch; a failed run publishes none of its outputs.
+- Existing outputs are atomically preserved and new outputs are suffixed as `photo-1.jpg`, `photo-2.jpg`, and so on.
 - Landscape inputs use centered cover fitting into an equal-border inner frame.
 - Portrait and square inputs use contain fitting so the full source image remains visible.
 - Transparent pixels are composited onto white.
@@ -67,22 +69,17 @@ bun run prepare-image /full/path/input.jpg --out /full/path/exports/photo --bord
 bun run check
 ```
 
-This runs TypeScript 7 typechecking, type-aware Oxlint, Oxfmt verification, unit tests, and the v1 integration test.
-The integration test fixture helpers call system `ffmpeg` and `ffprobe`, so local checks still need both tools on `PATH`.
+This runs TypeScript 7 typechecking, type-aware Oxlint, Oxfmt verification, and the v1 acceptance test.
+The independent test oracle calls system `ffmpeg` and `ffprobe`, so local checks still need both tools on `PATH`; the product's bundled fallback is covered in a separate child-process scenario.
 
 ## Project Structure
 
-- `src/cli/prepare_image.ts`: command parsing, file-vs-directory orchestration, and stdout/stderr behavior.
-- `src/domain/prepare_image.ts`: source probing, layout selection, and FFmpeg export.
-- `src/domain/prepare_image_layout.ts`: pure target, border, crop, and contain math.
-- `src/domain/output_path.ts`: `.jpg` normalization, parent directory creation, and suffixing.
-- `src/domain/media_process.ts`: FFmpeg/ffprobe process boundary.
-- `tests/integration/prepare_image.integration.test.ts`: CLI and FFmpeg integration coverage.
+- `src/cli/prepare_image.ts`: argv and stdout/stderr adapter.
+- `src/domain/prepare_image.ts`: source discovery, staging, atomic output allocation, commit, and rollback.
+- `src/domain/image_engine.ts`: executable selection, orientation, layout, white-canvas rendering, and JPEG export.
+- `tests/integration/prepare_image.integration.test.ts`: command and Image engine acceptance coverage.
 
 ## Docs
 
-- `docs/v1_split_plan.md`: product contract and split plan.
+- `CONTEXT.md`: current product vocabulary and behavior.
 - `docs/plans/decisions-log.md`: decision log.
-- `docs/plans/v1-prepare-image-layout.md`: layout slice notes.
-- `docs/plans/v1-prepare-image-cli.md`: CLI slice notes.
-- `docs/plans/prepare-image-directory-input.md`: directory input slice notes.
