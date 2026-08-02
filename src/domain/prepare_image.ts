@@ -81,7 +81,7 @@ function planImages(inputPath: string, outputPath: string): PlannedImage[] {
   const inputStat = statSync(inputPath);
   if (!inputStat.isDirectory()) {
     assertSupportedSource(inputPath);
-    if (statSyncIfExists(outputPath)?.isDirectory()) {
+    if (statSyncIfExists(outputPath)?.isDirectory() === true) {
       throw new Error("--out must be a file path, not a directory");
     }
     // No empty-path check here: callers pass an already-`resolve`d absolute path,
@@ -89,7 +89,7 @@ function planImages(inputPath: string, outputPath: string): PlannedImage[] {
     return [{ requestedOutputPath: outputPath, sourcePath: inputPath }];
   }
 
-  if (statSyncIfExists(outputPath)?.isFile()) {
+  if (statSyncIfExists(outputPath)?.isFile() === true) {
     throw new Error("--out must be a directory for directory input");
   }
 

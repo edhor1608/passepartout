@@ -487,7 +487,7 @@ function buildPrepareImageFilter(
   color: SourceColorProperties | null,
 ): string {
   const sourceFilters = [];
-  if (color) {
+  if (color !== null) {
     sourceFilters.push(
       [
         `colorspace=ispace=${color.space}`,
@@ -501,7 +501,7 @@ function buildPrepareImageFilter(
       ].join(":"),
     );
   }
-  if (layout.sourceCrop) {
+  if (layout.sourceCrop !== undefined) {
     sourceFilters.push(
       `crop=${layout.sourceCrop.width}:${layout.sourceCrop.height}:${layout.sourceCrop.x}:${layout.sourceCrop.y}`,
     );
@@ -521,7 +521,7 @@ function getSourceColorProperties(stream: Record<string, unknown>): SourceColorP
   const transfer = getSupportedString(stream, "color_transfer", SUPPORTED_COLOR_TRANSFERS);
   const range = getSupportedString(stream, "color_range", SUPPORTED_COLOR_RANGES);
 
-  if (!space || !primaries || !transfer || !range) {
+  if (space === null || primaries === null || transfer === null || range === null) {
     return null;
   }
 

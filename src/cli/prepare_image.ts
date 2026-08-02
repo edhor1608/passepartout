@@ -14,7 +14,7 @@ function parseArgs(args: string[]): ParsedArgs | "help" {
   }
 
   const inputPath = args[0];
-  if (!inputPath || inputPath.startsWith("--")) {
+  if (inputPath === undefined || inputPath === "" || inputPath.startsWith("--")) {
     throw new Error(USAGE);
   }
 
@@ -32,7 +32,11 @@ function parseArgs(args: string[]): ParsedArgs | "help" {
 
     if (flag === "--border-px") {
       const value = readFlagValue(args, index, "--border-px");
-      borderPx = parseBorderPx(value);
+      const parsedBorderPx = Number.parseInt(value, 10);
+      if (!/^\d+$/.test(value) || !Number.isInteger(parsedBorderPx)) {
+        throw new Error("Invalid --border-px value");
+      }
+      borderPx = parsedBorderPx;
       index += 1;
       continue;
     }
@@ -40,7 +44,7 @@ function parseArgs(args: string[]): ParsedArgs | "help" {
     throw new Error(`Unknown option: ${flag}`);
   }
 
-  if (!outputPath) {
+  if (outputPath === undefined) {
     throw new Error("Missing required --out <file-path>");
   }
 
@@ -49,20 +53,11 @@ function parseArgs(args: string[]): ParsedArgs | "help" {
 
 function readFlagValue(args: string[], index: number, flag: string): string {
   const value = args[index + 1];
-  if (!value || value.startsWith("--")) {
+  if (value === undefined || value === "" || value.startsWith("--")) {
     throw new Error(`Missing value for ${flag}`);
   }
 
   return value;
-}
-
-function parseBorderPx(value: string): number {
-  const parsed = Number.parseInt(value, 10);
-  if (!/^\d+$/.test(value) || !Number.isInteger(parsed)) {
-    throw new Error("Invalid --border-px value");
-  }
-
-  return parsed;
 }
 
 try {
