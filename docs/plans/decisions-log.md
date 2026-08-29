@@ -943,3 +943,287 @@ agent formatter makes diagnostics compact and actionable for the agents that own
 New correctness diagnostics from these plugins and import cycles fail `bun run lint` and therefore
 `bun run check`. Direct ad hoc Oxlint invocations must also use `--format=agent` when diagnostics
 are intended for consumption.
+
+## 2026-08-26: Keep Passepartout a local photo finisher
+
+### Context
+
+The current v1 is a focused Instagram image-preparation CLI. A durable product identity is needed
+so future agents can distinguish useful growth from scope creep instead of treating v1 as either a
+temporary implementation snapshot or the seed of a broad social-publishing suite.
+
+### Decision
+
+Passepartout remains a deterministic, local photo-finishing tool for producing high-quality,
+visually consistent upload artifacts while preserving the user's originals. Uploading,
+scheduling, and social-account management remain outside the product core.
+
+### Rationale
+
+The product's value is the trusted transformation from selected originals to predictable final
+artifacts. Keeping publication and account operations outside that boundary preserves a small,
+understandable system and prevents unrelated social-platform complexity from steering the product.
+
+### Consequences
+
+New capabilities may improve input handling, finishing, preview, export quality, and repeatable
+local workflows. Proposals that add publishing, scheduling, or social-account management need an
+explicit product-direction decision rather than being treated as a natural extension of v1.
+
+## 2026-08-26: Make AGENTS.md a directional core with routed detail
+
+### Context
+
+The existing root agent guide repeats installation, commands, test layers, and the source map from
+the README, but gives agents little help with product direction, trade-offs, blast radius, or local
+engineering taste. The repository already has focused agent documents for domain and issue-tracker
+work.
+
+### Decision
+
+Keep the root `AGENTS.md` as the always-loaded product and engineering core: product model,
+direction, vocabulary, invariants, blast radius, verification, and taste. Route detailed domain,
+tracker, and triage workflows to their existing focused documents instead of copying them into the
+root file.
+
+### Rationale
+
+Agents need enough context at startup to make aligned decisions, while procedural detail should be
+loaded only when the task requires it. This improves direction without making every future task pay
+for duplicated README or workflow content.
+
+### Consequences
+
+The rewritten root guide should stay useful without reading the README, but it should link to the
+canonical detailed documents at their point of use. Commands belong in the root only when their
+exact behavior changes how an agent verifies work or avoids a project-specific hazard.
+
+## 2026-08-26: Optimize for a boring happy path and fail clearly outside it
+
+### Context
+
+Passepartout's primary product promise is a frictionless local workflow. That promise needs a
+boundary so an agent does not interpret convenience as permission to silently guess when an
+artifact's correctness or image quality is uncertain.
+
+### Decision
+
+Optimize the normal path for one command, strong defaults, and no unnecessary questions. When the
+tool cannot produce a trustworthy artifact, fail the affected operation with a concise,
+actionable error instead of silently degrading quality or inventing a choice.
+
+### Rationale
+
+Most users should not need to understand image-engine details or configure routine output rules.
+Clear failure at the edge preserves that ease without making successful output ambiguous or
+untrustworthy.
+
+### Consequences
+
+New controls must earn their place by solving a demonstrated case that safe defaults cannot handle.
+Warnings, prompts, diagnostic chatter, and extra modes should not leak into normal successful
+output. Tests for uncertain inputs should assert the chosen failure boundary as well as the happy
+path.
+
+## 2026-08-26: Use original, export, and batch as canonical product terms
+
+### Context
+
+The glossary still described one source image producing one ready-to-upload image even though the
+live CLI accepts both files and directories. This made the product language disagree with the
+current batch behavior and left several generic names for the same concepts.
+
+### Decision
+
+Call a user-owned input photo an **original**, a generated JPEG an **export**, and a directory
+preparation run a **batch**. Use **preparation run** for one invocation that may process either one
+original or one input directory.
+
+### Rationale
+
+These terms separate user-owned material from generated artifacts and let agents describe single
+and directory workflows without pretending every invocation has exactly one input and output.
+
+### Consequences
+
+Product documentation and agent communication should use these terms consistently. The literal
+command remains `prepare-image`, and implementation identifiers do not need mechanical renaming
+unless a code change independently makes that useful.
+
+## 2026-08-26: Treat the Instagram white-canvas flow as the first recipe
+
+### Context
+
+Passepartout's current product surface has one white-canvas recipe with fixed Instagram-oriented
+shape rules. The durable product identity as a local photo finisher should neither freeze every
+future export to that recipe nor reopen the generic profile matrix removed from v1.
+
+### Decision
+
+Keep the current white-canvas Instagram flow as Passepartout's simple default and only current
+recipe. Additional local finishing recipes may be added when a concrete workflow proves the need,
+but not as a speculative matrix of platforms, styles, modes, and combinable presets.
+
+### Rationale
+
+This lets the product grow around real photo-finishing needs while preserving the boring happy path
+and the deliberate deletion of lab-style configurability.
+
+### Consequences
+
+Agents should not reject a new local export target merely because it is not Instagram, but they
+must establish the user workflow and keep one obvious default. Generic profile engines, arbitrary
+style systems, and dormant configurability require a separate product decision.
+
+## 2026-08-26: Allow real local photos as read-only test data
+
+### Context
+
+Generated fixtures prove deterministic image rules, but real camera files expose composition,
+metadata, color, and decoder behavior that synthetic fixtures may miss. Agents need an explicit
+boundary for using Jonas's local photo library and cleaning up generated artifacts.
+
+### Decision
+
+Agents may read local personal photos without separate permission when they are relevant test data.
+They may write test exports next to those originals. After inspection, they may automatically delete
+only the exact export paths that the same agent run recorded as newly created.
+
+### Rationale
+
+Real photos shorten the feedback loop and make product verification representative. Exact
+output-path tracking preserves that convenience without granting broad mutation or cleanup rights
+over personal photo directories.
+
+### Consequences
+
+Originals must never be edited, renamed, moved, deleted, or committed. Cleanup must never identify
+targets through a glob, filename pattern, inferred suffix range, or directory-wide command; if the
+agent cannot prove that a path is its own newly created export, it leaves the file in place and
+reports it. For adjacent visual tests, use a unique requested basename whose normalized `.jpg` path
+is confirmed absent before the run, then require successful stdout to report that same path before
+automatic deletion. Personal originals and generated visual-test exports must not enter repository
+history.
+
+## 2026-08-26: Keep a small set of living repository documents
+
+### Context
+
+The root agent guide currently requires feature branches to maintain separate files under
+`docs/plans/`, while the repository's tracker guide assigns durable planning to Linear Documents.
+This duplicates knowledge and conflicts with the preference for self-explaining code and local
+comments.
+
+### Decision
+
+Keep implementation truth in explicit code and nearby comments, product language in `CONTEXT.md`,
+durable trade-off decisions in this decision log, and user-facing behavior in `README.md`. Keep
+detailed plans and executable work in Linear. Do not create new per-feature plan Markdown files.
+
+### Rationale
+
+Each kind of knowledge gets one clear home, so future agents find current facts instead of several
+branch narratives that drift after implementation.
+
+### Consequences
+
+Existing files under `docs/plans/` remain as historical records unless a separate cleanup is
+requested. Update a living repository document only when its owned truth changes; do not add
+implementation inventories, command transcripts, or lessons-learned sections by default.
+
+## 2026-08-26: Verify image behavior with tests and a real visual export
+
+### Context
+
+Layout math, metadata assertions, pixel samples, and successful FFmpeg execution can prove many
+properties, but they do not by themselves show that a changed photo-finishing path looks correct on
+a representative camera file.
+
+### Decision
+
+Changes to layout, color, orientation, compositing, or JPEG rendering require both focused
+automated evidence and visual inspection of at least one representative export made from a real
+local original. Report what each evidence lane proved.
+
+### Rationale
+
+Automated checks keep image behavior deterministic and regression-resistant; a real visual export
+catches composition or rendering failures that narrow assertions can miss.
+
+### Consequences
+
+A process exit code, file existence, or image dimensions alone are insufficient proof for visible
+image changes. Visual test exports follow the exact-path cleanup rule and are not committed. Changes
+that cannot affect rendered pixels do not earn this extra verification ceremony.
+
+## 2026-08-26: Keep export technology out of the user's normal workflow
+
+### Context
+
+Passepartout needs a short personal product motivation that helps agents judge whether a technically
+reasonable feature makes the actual workflow better.
+
+### Decision
+
+Use this direction: Jonas wants to select, finish, and post photos, not repeatedly manage export
+parameters, color profiles, and filename collisions by hand.
+
+### Rationale
+
+The product exists to absorb repetitive export knowledge into trustworthy defaults. That explains
+why a technically sophisticated implementation can be appropriate while an equally sophisticated
+user-facing option surface is not.
+
+### Consequences
+
+Prefer automatic, deterministic decisions for the normal workflow. Expose a new control only when
+a real finishing need cannot be served safely by a default, and keep engine terminology out of
+ordinary success output.
+
+## 2026-08-26: Support macOS, Linux, and Windows as equal CLI surfaces
+
+### Context
+
+Passepartout is a local Bun CLI with system and bundled FFmpeg/ffprobe resolution, but the current
+GitHub Actions job runs only on Ubuntu. Platform support needs to be an explicit product boundary
+rather than an accidental property of whichever machine ran the last test.
+
+### Decision
+
+Treat macOS, Linux, and Windows as equally supported product surfaces.
+
+### Rationale
+
+A local photo-finishing tool should remain portable across the environments supported by its
+runtime and packaged media binaries. Platform-specific filesystem, process, path, and binary
+behavior must not silently become the product contract.
+
+### Consequences
+
+Every platform-relevant change needs an explicit macOS, Linux, and Windows applicability decision
+and evidence proportionate to the risk. The current Ubuntu-only CI is Linux evidence, not proof of
+the cross-platform guarantee; closing that automation gap is separate implementation work.
+
+## 2026-08-26: Keep the CLI as the canonical product workflow
+
+### Context
+
+`prepare-image` is the only current product surface, but Passepartout may gain a graphical client in
+the future. The relationship between such a client and the existing command needs to be explicit.
+
+### Decision
+
+Keep the CLI as Passepartout's stable, scriptable product boundary. A future GUI may drive the same
+domain workflow, but it must not introduce a second image-processing implementation, conflicting
+defaults, or different artifact semantics.
+
+### Rationale
+
+One canonical workflow keeps exports predictable and lets automation, manual use, and future clients
+share the same finishing behavior.
+
+### Consequences
+
+Changes to domain rules, defaults, errors, or export naming must consider CLI compatibility and any
+future clients together. UI-specific interaction may differ, but generated artifacts and the
+underlying finishing decisions remain aligned.

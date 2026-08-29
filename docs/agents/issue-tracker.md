@@ -6,12 +6,16 @@ Issues and implementation work for this repo live in Linear. Use the Linear tool
 
 - **Initiatives**: Long-running outcomes or business directions.
 - **Projects**: The work container for a feature, product area, or themed effort.
-- **Documents**: Long-lived knowledge such as PRDs, RFCs, ADRs, research, decision logs, and project planning notes. Attach Documents to the relevant Linear project unless the user asks for a different location.
+- **Documents**: Detailed planning knowledge such as PRDs, RFCs, research, and project planning
+  notes. Attach Documents to the relevant Linear project unless the user asks for a different
+  location. Canonical product and engineering decisions remain in the repository's single decision
+  log.
 - **Issues**: Executable work. Create issues only for work that someone or an agent can actually implement, verify, or decide.
 - **Subissues**: Vertical slices or child work under a parent Linear issue. Use `parentId` when breaking an existing issue into slices.
 - **Labels**: Use domain labels for product area and the mapped triage labels for workflow state. See `triage-labels.md`.
 
-Keep the Linear project description short: goal, scope, and links to important Documents. Do not use the project description as a replacement for a PRD/RFC/ADR/Research Document.
+Keep the Linear project description short: goal, scope, and links to important Documents. Do not use
+the project description as a replacement for a PRD/RFC/Research Document.
 
 ## Naming conventions
 
@@ -24,7 +28,10 @@ Bracketed prefixes are a naming convention for grouping work by product, effort,
 
 ## Common operations
 
-- **Create or update a PRD/RFC/ADR/Research artifact**: create or update a Linear Document on the relevant project.
+- **Create or update a PRD/RFC/Research artifact**: create or update a Linear Document on the
+  relevant project.
+- **Record a durable product or engineering decision**: update
+  `docs/plans/decisions-log.md`; link it from the relevant Linear plan when useful.
 - **Read source material**: fetch the referenced Linear Document, Project, or Issue, including comments when the source is an issue.
 - **Create implementation work**: create Linear Issues in the relevant project.
 - **Create vertical slices from an existing issue**: create Linear subissues with `parentId`.
@@ -33,7 +40,9 @@ Bracketed prefixes are a naming convention for grouping work by product, effort,
 
 ## When a skill says "publish to the issue tracker"
 
-For PRDs/RFCs/ADRs/Research, create or update a Linear Document on the relevant project.
+For PRDs/RFCs/Research, create or update a Linear Document on the relevant project. Record the
+canonical result of a durable product or engineering trade-off in
+`docs/plans/decisions-log.md`.
 
 For executable work, create Linear Issues or Subissues in the relevant project.
 
