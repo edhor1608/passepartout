@@ -9,11 +9,12 @@ This is a single-context repo.
 ## Before exploring, read these
 
 - **`CONTEXT.md`** at the repo root.
-- **`docs/plans/decisions-log.md`** for architectural and planning decisions recorded during branch work.
-- **`docs/plans/`** for branch knowledge relevant to the area you're about to work in.
-- **`docs/adr/`** if it exists.
+- **`docs/plans/decisions-log.md`** for durable product and engineering decisions.
+- Existing files under **`docs/plans/`** only when their historical branch context is directly
+  relevant. Revalidate them against the live source and decision log.
 
-If any of these files don't exist, proceed silently. Don't flag their absence or suggest creating them upfront. Producer skills create them lazily when terms or decisions actually get resolved.
+Do not create new per-feature plan or ADR files. Update the living context or decision log only when
+its owned truth changes.
 
 ## File structure
 
@@ -21,9 +22,8 @@ If any of these files don't exist, proceed silently. Don't flag their absence or
 /
 ├── CONTEXT.md
 ├── docs/
-│   ├── plans/
-│   │   └── decisions-log.md
-│   └── adr/
+│   └── plans/
+│       └── decisions-log.md
 └── src/
 ```
 
