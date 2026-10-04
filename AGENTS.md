@@ -10,6 +10,11 @@ bun run prepare-image <input> --out <file-path-or-directory> [--border-px <integ
 
 The command accepts PNG, JPEG, and TIFF images or a directory of those images, places each image on a white canvas, and exports high-quality baseline sRGB JPEGs for manual Instagram app upload.
 
+## Compatibility
+
+Add compatibility code only for a documented consumer or an explicit
+compatibility requirement.
+
 ## Prerequisites
 
 - Bun 1.3 or newer.
