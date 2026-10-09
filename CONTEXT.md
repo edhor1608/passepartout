@@ -4,11 +4,11 @@
 
 ### Ready-to-upload Instagram image
 
-A single highest-quality baseline sRGB JPEG output prepared from one user-provided source image so it can be uploaded manually through the Instagram app without additional resizing or padding. V1 source images are PNG, JPEG, or TIFF. For v1, this excludes scheduler/API upload compatibility, video, batch processing, benchmarking, matrix validation, and experimental research workflows.
+A single highest-quality baseline sRGB JPEG output prepared from one user-provided source image so it can be uploaded manually through the Instagram app without additional resizing or padding. V1 source images are PNG, JPEG, or TIFF. For v1, this excludes scheduler/API upload compatibility, video, benchmarking, matrix validation, and experimental research workflows. Directory preparation can produce multiple ready-to-upload Instagram images without changing the contract of each output.
 
 ### Metadata preservation
 
-V1 strips source EXIF/XMP metadata from the exported JPEG by default, while still exporting sRGB. Color correctness is part of the image output; GPS/device/time metadata is not.
+V1 strips source EXIF/XMP metadata from the exported JPEG. It adds only a generated EXIF ColorSpace tag identifying the output as sRGB; source GPS/device/time/orientation metadata is not copied.
 
 ### EXIF orientation
 
@@ -16,11 +16,15 @@ V1 respects source EXIF orientation visually before stripping metadata. The expo
 
 ### Prepare image
 
-The single v1 user-facing command/workflow: source image in, upload-ready JPEG out. It accepts one positional input, required `--out` full file path, and optional `--border-px`. Internal analysis and layout are implementation details, not separate v1 product commands.
+The single v1 user-facing command/workflow: a supported source file or directory in, ready-to-upload JPEG output or outputs out. It accepts one positional input, required `--out`, and optional `--border-px`. For file input, `--out` is a full file path. For directory input, `--out` is an output directory. Internal source discovery, analysis, layout, staging, and rendering are implementation details, not separate v1 product commands.
+
+### Directory preparation
+
+When Prepare image receives a directory, it processes supported top-level files in sorted filename order and ignores unsupported files and nested directories. It stages every output before publishing any of them. A failed directory preparation leaves no output from that invocation; a successful run prints one final path per source in source order.
 
 ### Image engine
 
-V1 uses FFmpeg for source decoding, orientation/color handling, scaling/compositing, and JPEG export.
+V1 uses FFmpeg for source decoding, orientation/color handling, scaling/compositing, and JPEG export. Completely and recognizably tagged non-sRGB sources are converted to sRGB characteristics; untagged photo sources are treated as already containing sRGB pixel values.
 
 ### Help output
 
@@ -28,7 +32,7 @@ V1 uses FFmpeg for source decoding, orientation/color handling, scaling/composit
 
 ### Output path suffixing
 
-V1 does not overwrite an existing output file by default. If the requested output path already exists after `.jpg` normalization, the command writes to the first available suffixed path: `photo-1.jpg`, `photo-2.jpg`, and so on.
+V1 never overwrites an existing output file. It atomically commits to the first available path after `.jpg` normalization: `photo.jpg`, `photo-1.jpg`, `photo-2.jpg`, and so on. This also disambiguates directory inputs whose source files share the same basename.
 
 ### Output extension normalization
 
@@ -40,7 +44,7 @@ If the parent directory of the requested output file path does not exist, v1 cre
 
 ### Command output
 
-The v1 command always prints the actual written output path on success. This may differ from the requested `--out` path when suffixing is applied. Normal behavior, including metadata stripping, should not print warnings.
+The v1 command prints every actual written output path on success. A path may differ from the requested or derived output path when suffixing is applied. Normal behavior, including metadata stripping, should not print warnings.
 
 ### Command errors
 
@@ -60,7 +64,7 @@ By default, v1 chooses the output shape from the input image dimensions after ap
 
 ### White canvas
 
-A solid white background used for every v1 output. The source image is attached to this canvas without cropping, creating a polaroid-ish look and a visually consistent Instagram profile grid. This is the canonical term for what a user may call a white border.
+A solid white background used for every v1 output. Portrait images are attached without cropping; landscape images may use a centered crop to preserve their equal outer border. The result creates a polaroid-ish look and a visually consistent Instagram profile grid. This is the canonical term for what a user may call a white border.
 
 ### Transparency handling
 
@@ -68,7 +72,7 @@ Transparent pixels in the source image are composited onto white in v1 output.
 
 ### Minimum white border
 
-The smallest allowed white margin around the fitted source image at full target size, defined as one non-negative integer pixel value. The v1 default is `165px`, converted from `124pt` at `96px / 72pt`. `0px` is valid. If the output must shrink to avoid upscaling, the border scales down by the same factor, for example `165px` becomes about `83px` at `50%` output size. Effective scaled borders are rounded to the nearest integer pixel, with a minimum of `1px` when the configured border is greater than `0`; configured `0px` stays `0px`. Landscape uses the scaled value as the exact equal outer border. Portrait uses it as the minimum border.
+The smallest allowed white margin around the fitted source image at full target size, defined as one non-negative integer pixel value. The v1 default is `57px`. `0px` is valid. If the output must shrink to avoid upscaling, the border scales down by the same factor. Effective scaled borders are rounded to the nearest integer pixel, with a minimum of `1px` when the configured border is greater than `0`; configured `0px` stays `0px`. Landscape uses the scaled value as the exact equal outer border. Portrait uses it as the minimum border.
 
 ### No upscaling
 

@@ -3,13 +3,13 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "instagram-upload-quality-lab",
+      "name": "passepartout",
       "dependencies": {
         "ffmpeg-static": "^5.3.0",
         "ffprobe-static": "^3.1.0",
       },
       "devDependencies": {
-        "@types/bun": "latest",
+        "@types/bun": "1.3.9",
         "oxfmt": "0.60.0",
         "oxlint": "1.75.0",
         "oxlint-tsgolint": "7.0.2001",
