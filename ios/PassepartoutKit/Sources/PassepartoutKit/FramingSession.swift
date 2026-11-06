@@ -1,6 +1,7 @@
 import CoreGraphics
 import Foundation
 import Observation
+import Synchronization
 
 /// Picked photos in, framed copies in the library out.
 ///
@@ -17,15 +18,18 @@ public final class FramingSession {
 
   private(set) var runner: Task<Void, Never>?
   private let library: PhotoLibrary
+  private let stallTimeout: Duration
   private var nextID = 0
 
-  public init(library: PhotoLibrary = .system) {
+  /// `stallTimeout` is how long a transfer may report no progress before its photo fails.
+  public init(library: PhotoLibrary = .system, stallTimeout: Duration = .seconds(60)) {
     self.library = library
+    self.stallTimeout = stallTimeout
   }
 
   /// Adding during a run extends it. Adding after a finished batch starts a new one and keeps
   /// only the failures a retry can still fix.
-  public func add(_ sources: [some PhotoSource]) {
+  public func add(_ sources: [any PhotoSource]) {
     guard !sources.isEmpty else { return }
     if summary.inProgress == 0 { photos.removeAll { $0.state.failure?.isRetryable != true } }
     for source in sources {
@@ -66,8 +70,8 @@ public final class FramingSession {
 
   private func process(_ photo: Photo) async {
     do throws(PhotoFailure) {
-      set(photo.id, .loading)
-      let file = try await load(photo.source)
+      set(photo.id, .loading(fraction: nil))
+      let file = try await load(photo)
       set(photo.id, .framing)
       let framed = try await framePhoto(file, borderPx: defaultBorderPx)
       set(photo.id, .saving)
@@ -82,15 +86,47 @@ public final class FramingSession {
     }
   }
 
-  private func load(_ source: any PhotoSource) async throws(PhotoFailure) -> SourceFile {
-    let file: SourceFile?
-    do {
-      file = try await source.loadOriginal()
-    } catch {
-      throw .notLoaded
+  /// The picker keeps a stalled iCloud download pending without a deadline, which would hold up
+  /// every photo behind it. A watchdog cancels the transfer once it stops moving.
+  private func load(_ photo: Photo) async throws(PhotoFailure) -> SourceFile {
+    let result = await withCheckedContinuation { continuation in
+      let handover = Handover(continuation)
+      let progress = photo.source.loadOriginal { handover.finish($0) }
+      Task { await watch(progress, of: photo.id, until: handover) }
     }
-    guard let file else { throw .unreadable }
-    return file
+    switch result {
+    case .success(let file?): return file
+    case .success(nil): throw .unreadable
+    case .failure: throw .notLoaded
+    }
+  }
+
+  /// Counts polls rather than clock time, so time spent suspended in the background is not a
+  /// stall.
+  private func watch(_ progress: Progress, of id: Photo.ID, until handover: Handover) async {
+    let poll = min(.milliseconds(500), stallTimeout / 4)
+    var fraction = progress.fractionCompleted
+    var unchanged = Duration.zero
+    while !handover.isFinished {
+      try? await Task.sleep(for: poll)
+      guard progress.fractionCompleted == fraction else {
+        fraction = progress.fractionCompleted
+        unchanged = .zero
+        showLoading(id, fraction: progress.isIndeterminate ? nil : fraction)
+        continue
+      }
+      unchanged += poll
+      if unchanged >= stallTimeout, handover.finish(.failure(TransferStalled())) {
+        progress.cancel()
+      }
+    }
+  }
+
+  private func showLoading(_ id: Photo.ID, fraction: Double?) {
+    guard let index = photos.firstIndex(where: { $0.id == id }),
+      case .loading = photos[index].state
+    else { return }
+    photos[index].state = .loading(fraction: fraction)
   }
 
   private func set(_ id: Photo.ID, _ state: Photo.State) {
@@ -102,8 +138,9 @@ public final class FramingSession {
 public struct Photo: Identifiable, Sendable {
   public enum State: Equatable, Sendable {
     case queued
-    /// Fetching the original from Photos, which may download it from iCloud.
-    case loading
+    /// Fetching the original from Photos, which may download it from iCloud. `fraction` is
+    /// `nil` until the transfer reports one.
+    case loading(fraction: Double?)
     case framing
     case saving
     case saved(preview: CGImage)
@@ -159,3 +196,25 @@ public struct Summary: Equatable, Sendable {
     retryable = photos.count { $0.state.failure?.isRetryable == true }
   }
 }
+
+/// Resumes the load with whichever comes first, the transfer's completion or the watchdog. A
+/// completion that comes later is dropped, which releases its file and so deletes the copy.
+private final class Handover: Sendable {
+  private let continuation: Mutex<CheckedContinuation<Result<SourceFile?, any Error>, Never>?>
+
+  init(_ continuation: CheckedContinuation<Result<SourceFile?, any Error>, Never>) {
+    self.continuation = Mutex(continuation)
+  }
+
+  var isFinished: Bool { continuation.withLock { $0 == nil } }
+
+  /// `false` when the load was already resumed.
+  @discardableResult
+  func finish(_ result: Result<SourceFile?, any Error>) -> Bool {
+    guard let continuation = continuation.withLock({ $0.take() }) else { return false }
+    continuation.resume(returning: result)
+    return true
+  }
+}
+
+private struct TransferStalled: Error {}

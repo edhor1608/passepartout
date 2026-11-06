@@ -1,5 +1,6 @@
 import Foundation
 import Photos
+import Synchronization
 import Testing
 
 @testable import PassepartoutKit
@@ -146,6 +147,44 @@ struct FramingSessionTests {
     #expect(saved == ["a-passepartout.jpg", "d-passepartout.jpg"])
   }
 
+  @Test(.timeLimit(.minutes(1)))
+  func aStalledDownloadFailsWithoutHoldingUpThePhotosBehindIt() async throws {
+    let stalled = StalledSource()
+    let session = FramingSession(library: recorder.library, stallTimeout: .milliseconds(200))
+
+    session.add([stalled, try photo("b")])
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["failed(notLoaded)", "saved"])
+    #expect(stalled.progress.isCancelled)
+
+    let lateCopy = try stalled.completeLate(
+      copying: try directory.solidImage(width: 60, height: 40))
+    #expect(!FileManager.default.fileExists(atPath: lateCopy.path))
+    #expect(session.photos.map(\.state.label) == ["failed(notLoaded)", "saved"])
+    #expect(!session.isRunning)
+  }
+
+  @Test(.timeLimit(.minutes(1)))
+  func aSlowDownloadThatKeepsMovingShowsItsProgressAndFinishes() async throws {
+    let session = FramingSession(library: recorder.library, stallTimeout: .milliseconds(600))
+    let slow = SlowSource(file: try photo("a"), steps: 4, interval: .milliseconds(375))
+    var fractions: [Double] = []
+    let sampler = Task { @MainActor in
+      while !Task.isCancelled {
+        if case .loading(let fraction?) = session.photos.first?.state { fractions.append(fraction) }
+        try? await Task.sleep(for: .milliseconds(20))
+      }
+    }
+
+    session.add([slow])
+    await finish(session)
+    sampler.cancel()
+
+    #expect(session.photos.map(\.state.label) == ["saved"])
+    #expect(fractions.contains { $0 > 0 && $0 < 1 }, "\(fractions)")
+  }
+
   @Test func deletesEveryCopiedOriginal() async throws {
     await recorder.failSaves(of: "c-passepartout.jpg", times: 1)
     let session = FramingSession(library: recorder.library)
@@ -203,13 +242,77 @@ struct FixtureSource: PhotoSource {
   /// Loads that throw before one succeeds, like an iCloud photo while offline.
   var failedLoads = 0
 
-  func loadOriginal() async throws -> SourceFile? {
+  func loadOriginal(
+    completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
+  ) -> Progress {
+    let progress = Progress(totalUnitCount: 1)
+    Task {
+      do {
+        completion(.success(try await load()))
+      } catch {
+        completion(.failure(error))
+      }
+      progress.completedUnitCount = 1
+    }
+    return progress
+  }
+
+  func load() async throws -> SourceFile {
     if await recorder.log("load \(url.lastPathComponent)") < failedLoads {
       throw URLError(.notConnectedToInternet)
     }
     let file = try SourceFile(copying: url)
     await recorder.keep(file.url)
     return file
+  }
+}
+
+/// A download that never moves, like an iCloud original on a dead connection. The test can
+/// complete it after the session gave up on it.
+final class StalledSource: PhotoSource {
+  let progress = Progress(totalUnitCount: 100)
+  private let completion = Mutex<(@Sendable (Result<SourceFile?, any Error>) -> Void)?>(nil)
+
+  func loadOriginal(
+    completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
+  ) -> Progress {
+    self.completion.withLock { $0 = completion }
+    return progress
+  }
+
+  /// Hands over a copy of `url` the way the picker might after a cancel. Returns where the copy
+  /// was.
+  func completeLate(copying url: URL) throws -> URL {
+    let file = try SourceFile(copying: url)
+    let copy = file.url
+    completion.withLock { $0 }?(.success(file))
+    return copy
+  }
+}
+
+/// A download that moves one step per interval. Each pause is shorter than the stall timeout,
+/// all of them together are longer.
+struct SlowSource: PhotoSource {
+  let file: FixtureSource
+  let steps: Int64
+  let interval: Duration
+
+  func loadOriginal(
+    completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
+  ) -> Progress {
+    let progress = Progress(totalUnitCount: steps)
+    Task {
+      for step in 1...steps {
+        try? await Task.sleep(for: interval)
+        progress.completedUnitCount = step
+      }
+      do {
+        completion(.success(try await file.load()))
+      } catch {
+        completion(.failure(error))
+      }
+    }
+    return progress
   }
 }
 

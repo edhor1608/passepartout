@@ -104,7 +104,9 @@ private struct PhotoTile: View {
   @ViewBuilder private var badge: some View {
     switch photo.state {
     case .queued: Text("Wartet").font(.caption2).foregroundStyle(.secondary)
-    case .loading: progress("Lädt …")
+    case .loading(let fraction?):
+      progress("Lädt … \(fraction.formatted(.percent.precision(.fractionLength(0))))")
+    case .loading(nil): progress("Lädt …")
     case .framing: progress("Rahmt …")
     case .saving: progress("Speichert …")
     case .saved:

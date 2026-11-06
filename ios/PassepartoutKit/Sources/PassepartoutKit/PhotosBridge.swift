@@ -11,16 +11,22 @@ import UniformTypeIdentifiers
 /// One picked photo that can hand over its original: `PhotosPickerItem` in the app, synthetic
 /// files in tests.
 public protocol PhotoSource: Sendable {
-  /// `nil` when the item carries no image.
-  func loadOriginal() async throws -> SourceFile?
+  /// Starts the handover and returns its progress. `completion` gets `nil` when the item carries
+  /// no image. Cancelling the progress abandons the transfer.
+  func loadOriginal(
+    completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
+  ) -> Progress
 }
 
 extension PhotosPickerItem: PhotoSource {
   /// The picker process downloads iCloud-only originals on demand; no library permission is
   /// involved. The stored encoding (HEIC, RAW, JPEG) arrives only when the picker uses
-  /// `preferredItemEncoding: .current`.
-  public func loadOriginal() async throws -> SourceFile? {
-    try await loadTransferable(type: SourceFile.self)
+  /// `preferredItemEncoding: .current`. The async variant offers no progress and no way to give
+  /// up on a stalled download.
+  public func loadOriginal(
+    completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
+  ) -> Progress {
+    loadTransferable(type: SourceFile.self, completionHandler: completion)
   }
 }
 
