@@ -116,8 +116,13 @@ struct PhotoFramerTests {
       context.fill(CGRect(x: 0, y: 0, width: 600, height: 400), with: target)
     }
 
-    let output = try Pixels(jpeg: try await framed(try directory.write(source, as: .png)).jpeg)
+    let jpeg = try await framed(try directory.write(source, as: .png)).jpeg
 
+    // `Pixels` converts to sRGB itself, so it would also pass a correctly tagged P3 JPEG.
+    let encoded = try #require(CGImageSourceCreateWithData(jpeg as CFData, nil))
+    let image = try #require(CGImageSourceCreateImageAtIndex(encoded, 0, nil))
+    #expect(image.colorSpace?.name == CGColorSpace.sRGB)
+    let output = try Pixels(image)
     #expect(output[output.width / 2, output.height / 2].isClose(to: target, within: 2))
   }
 
