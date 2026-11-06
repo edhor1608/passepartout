@@ -6,8 +6,8 @@ import UniformTypeIdentifiers
 
 /// A finished passepartout image, ready to add to the Photos library.
 struct FramedPhoto: Sendable {
-  /// Baseline sRGB JPEG at quality 1.0. Its only metadata is JFIF and ImageIO's own Exif
-  /// ColorSpace and pixel dimensions, none of it from the source.
+  /// Baseline JPEG at quality 1.0 with an embedded sRGB profile. Its only other metadata is JFIF
+  /// and ImageIO's own Exif ColorSpace and pixel dimensions, none of it from the source.
   let jpeg: Data
   let preview: CGImage
 }
