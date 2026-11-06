@@ -13,7 +13,7 @@ let package = Package(
     .testTarget(
       name: "PassepartoutKitTests",
       dependencies: ["PassepartoutKit"],
-      resources: [.copy("Resources/layout-parity.json")],
+      resources: [.copy("Resources/layout-parity.json"), .copy("Resources/hdr-10bit.heic")],
       swiftSettings: strict
     ),
   ]
