@@ -74,8 +74,9 @@ private func openImage(_ url: URL) throws(PhotoFailure) -> OpenedImage {
 }
 
 private func frameLayout(_ image: OpenedImage, borderPx: Int) throws(PhotoFailure) -> FrameLayout {
+  let layout: FrameLayout
   do throws(FrameLayoutError) {
-    return try FrameLayout(
+    layout = try FrameLayout(
       sourceWidth: image.orientedWidth, sourceHeight: image.orientedHeight, borderPx: borderPx)
   } catch {
     switch error {
@@ -83,6 +84,10 @@ private func frameLayout(_ image: OpenedImage, borderPx: Int) throws(PhotoFailur
     case .invalidInput: throw .unreadable
     }
   }
+  // The TS layout rounds the render rect of extreme ratios such as 1x5 down to zero pixels,
+  // and vImage traps on an empty buffer.
+  guard layout.renderWidth > 0, layout.renderHeight > 0 else { throw .tooSmall }
+  return layout
 }
 
 /// Twice the long edge the render needs, capped at the source. The 2x headroom leaves the

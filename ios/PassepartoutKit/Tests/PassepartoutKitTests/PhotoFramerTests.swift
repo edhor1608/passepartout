@@ -205,9 +205,11 @@ struct PhotoFramerTests {
     await #expect(throws: PhotoFailure.unreadable) { try await framed(url) }
   }
 
-  @Test func rejectsASourceTooSmallForTheBorder() async throws {
+  /// 3x2 leaves no room for the border. 1x5 fits a canvas but scales to zero pixels wide.
+  @Test(arguments: [(3, 2), (1, 5)])
+  func rejectsASourceTooSmallForTheBorder(width: Int, height: Int) async throws {
     let directory = try TestDirectory()
-    let url = try directory.solidImage(width: 3, height: 2, as: .png)
+    let url = try directory.solidImage(width: width, height: height, as: .png)
     await #expect(throws: PhotoFailure.tooSmall) { try await framed(url) }
   }
 
