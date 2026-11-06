@@ -219,10 +219,12 @@ private func encodeJPEG(_ canvas: CGImage) throws(PhotoFailure) -> Data {
   return data as Data
 }
 
+/// Every saved photo keeps its preview for the rest of the batch, about 0.4 MB at 360 px. A grid
+/// tile is about 115 pt wide, so 360 px stays sharp at 3x.
 private func makePreview(_ jpeg: Data) throws(PhotoFailure) -> CGImage {
   let options: [CFString: Any] = [
     kCGImageSourceCreateThumbnailFromImageAlways: true,
-    kCGImageSourceThumbnailMaxPixelSize: 480,
+    kCGImageSourceThumbnailMaxPixelSize: 360,
     kCGImageSourceShouldCacheImmediately: true,
   ]
   guard

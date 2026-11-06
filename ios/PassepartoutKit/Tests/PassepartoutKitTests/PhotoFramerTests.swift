@@ -195,7 +195,7 @@ struct PhotoFramerTests {
   @Test func previewIsASmallCopyOfTheOutput() async throws {
     let directory = try TestDirectory()
     let photo = try await framed(try directory.solidImage(width: 4000, height: 3000))
-    #expect(max(photo.preview.width, photo.preview.height) == 480)
+    #expect(max(photo.preview.width, photo.preview.height) == 360)
     #expect(try Pixels(photo.preview)[0, 0] == .white)
   }
 
