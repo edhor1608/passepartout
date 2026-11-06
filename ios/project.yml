@@ -24,6 +24,12 @@ targets:
     sources: [Passepartout]
     dependencies:
       - package: PassepartoutKit
+    # xcodegen writes this file; Xcode merges the INFOPLIST_KEY_ settings below into it.
+    info:
+      path: Passepartout/Info.plist
+      properties:
+        # One continued-processing task per batch, so each needs its own identifier.
+        BGTaskSchedulerPermittedIdentifiers: [$(PRODUCT_BUNDLE_IDENTIFIER).framing.*]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: me.edhor.passepartout

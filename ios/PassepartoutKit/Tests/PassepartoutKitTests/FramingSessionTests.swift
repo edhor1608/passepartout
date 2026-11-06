@@ -133,6 +133,22 @@ struct FramingSessionTests {
       ])
   }
 
+  @Test func aPauseFinishesThePhotoInFlightAndKeepsTheRestForResume() async throws {
+    let session = FramingSession(library: recorder.library)
+    await recorder.onFirstSave { session.pause() }
+
+    session.add([try photo("a"), try photo("b"), try photo("c")])
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["saved", "queued", "queued"])
+    #expect(!session.isRunning)
+
+    session.resume()
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["saved", "saved", "saved"])
+  }
+
   @Test func addingAfterAFinishedBatchKeepsOnlyFailuresWorthRetrying() async throws {
     let session = FramingSession(library: recorder.library)
 

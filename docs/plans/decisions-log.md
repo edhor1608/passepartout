@@ -961,5 +961,7 @@ The generated 3049-case fixture fails a build on drift in either direction. The 
 ### Consequences
 
 - App JPEGs use 4:4:4 chroma, not the CLI's 4:2:0. ImageIO offers no 4:2:0 at quality 1.0, and 4:4:4 is the higher quality. Instagram re-encodes uploads anyway.
-- The batch queue lives in memory. If iOS kills the app mid-batch, saved photos stay saved and the rest are lost. Picking the same photos again duplicates the saved ones. `BGContinuedProcessingTask` is the upgrade if this matters in practice.
+- A running batch asks iOS for a `BGContinuedProcessingTask`, so it keeps running in the background while the user posts from another app, with progress in system UI. When that task expires, the photo in flight finishes and the rest stays queued until the app is active again. If iOS declines the task, as the simulator always does, `beginBackgroundTask` buys about 30 s, after which iOS suspends the app mid-batch and the same runner continues on return.
+- The batch queue lives in memory, with no persisted copy. If iOS kills the app mid-batch, saved photos stay saved and the rest are lost. Picking the same photos again duplicates the saved ones.
+- A picker transfer whose progress has not moved for 60 s is cancelled and fails as retryable, so one iCloud original on a bad connection cannot hold up the local photos behind it.
 - A TypeScript layout change fails the Bun test until the fixture is regenerated, then fails `make -C ios check` until the Swift port matches.

@@ -81,7 +81,7 @@ The integration test fixture helpers call system `ffmpeg` and `ffprobe`, so loca
 
 ## iOS App
 
-`ios/` contains Passepartout for iPhone. Pick photos from the Photos library, and the app saves a framed copy of each one as a new photo, dated when it is saved. The originals stay unchanged. It uses the CLI's layout and `57px` border, held equal by a shared test fixture. It reads every format Photos stores, including HEIC and RAW, and asks only for permission to add photos.
+`ios/` contains Passepartout for iPhone. Pick photos from the Photos library, and the app saves a framed copy of each one as a new photo, dated when it is saved. The originals stay unchanged. It uses the CLI's layout and `57px` border, held equal by a shared test fixture. It reads every format Photos stores, including HEIC and RAW, and asks only for permission to add photos. A batch keeps running while you switch to another app, and iOS shows its progress. If iOS stops it, the rest of the batch continues when you return to the app.
 
 The app runs on iPhone with iOS 26 or newer. To install it on your iPhone:
 

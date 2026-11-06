@@ -65,20 +65,22 @@ struct FramingScreen: View {
   }
 }
 
-/// "3 von 12 gespeichert" while photos wait or run, "12 Fotos gespeichert" when done.
 private struct StatusLine: View {
   let summary: Summary
 
   var body: some View {
-    Text(text)
+    Text(summary.statusText)
       .font(.subheadline)
       .foregroundStyle(.secondary)
   }
+}
 
-  private var text: String {
-    if summary.inProgress > 0 { return "\(summary.saved) von \(summary.total) gespeichert" }
-    let saved = summary.saved == 1 ? "1 Foto gespeichert" : "\(summary.saved) Fotos gespeichert"
-    return summary.failed > 0 ? "\(saved) · \(summary.failed) fehlgeschlagen" : saved
+extension Summary {
+  /// "3 von 12 gespeichert" while photos wait or run, "12 Fotos gespeichert" when done.
+  var statusText: String {
+    if inProgress > 0 { return "\(saved) von \(total) gespeichert" }
+    let savedText = saved == 1 ? "1 Foto gespeichert" : "\(saved) Fotos gespeichert"
+    return failed > 0 ? "\(savedText) · \(failed) fehlgeschlagen" : savedText
   }
 }
 

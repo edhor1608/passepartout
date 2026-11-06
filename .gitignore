@@ -41,7 +41,8 @@ tests/fixtures/exports/*
 tests/fixtures/watch/*
 tests/fixtures/watch_e2e/*
 
-# iOS: generated Xcode project and build outputs
+# iOS: generated Xcode project and Info.plist, build outputs
 ios/Passepartout.xcodeproj/
+ios/Passepartout/Info.plist
 ios/**/.build/
 ios/**/.swiftpm/

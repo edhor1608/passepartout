@@ -20,6 +20,7 @@ public final class FramingSession {
   private let library: PhotoLibrary
   private let stallTimeout: Duration
   private var nextID = 0
+  private var isPaused = false
 
   /// `stallTimeout` is how long a transfer may report no progress before its photo fails.
   public init(library: PhotoLibrary = .system, stallTimeout: Duration = .seconds(60)) {
@@ -36,7 +37,7 @@ public final class FramingSession {
       photos.append(Photo(id: nextID, state: .queued, source: source))
       nextID += 1
     }
-    startRunnerIfIdle()
+    continueQueue()
   }
 
   /// Requeues failures that can succeed on a second try. Unreadable and too-small photos stay.
@@ -44,15 +45,23 @@ public final class FramingSession {
     for index in photos.indices where photos[index].state.failure?.isRetryable == true {
       photos[index].state = .queued
     }
-    startRunnerIfIdle()
+    continueQueue()
   }
 
   /// Call when the app becomes active: asks the library again and continues queued work.
   public func resume() {
-    startRunnerIfIdle()
+    continueQueue()
   }
 
-  private func startRunnerIfIdle() {
+  /// Lets the photo in flight finish and keeps the rest queued until the next `add`,
+  /// `retryFailed` or `resume`. For when iOS takes the app's background time away.
+  public func pause() {
+    isPaused = true
+  }
+
+  /// Lifts a pause and starts the runner unless one is already going.
+  private func continueQueue() {
+    isPaused = false
     guard runner == nil, photos.contains(where: { $0.state == .queued }) else { return }
     runner = Task {
       await drain()
@@ -63,7 +72,7 @@ public final class FramingSession {
   private func drain() async {
     blocker = await library.requestAddAccess()
     guard blocker == nil else { return }
-    while let photo = photos.first(where: { $0.state == .queued }) {
+    while !isPaused, let photo = photos.first(where: { $0.state == .queued }) {
       await process(photo)
     }
   }
