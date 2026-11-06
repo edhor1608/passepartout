@@ -1,6 +1,5 @@
 # iOS app commands: `make -C ios <target>`. `make check` is the gate before a PR.
 SHELL := /bin/bash
-.SHELLFLAGS := -o pipefail -c
 BUILD := $(CURDIR)/.build
 DERIVED := $(BUILD)/DerivedData
 SWIFT_SOURCES := PassepartoutKit/Package.swift PassepartoutKit/Sources PassepartoutKit/Tests Passepartout
@@ -17,8 +16,9 @@ test:
 
 # The same tests on the iOS simulator: ImageIO codecs and colour handling as shipped. Runs on
 # SIM_ID=<udid>, else on the simulator pick-simulator.awk chooses from simctl's device list.
+# pipefail is set here because macOS ships GNU make 3.81, which ignores .SHELLFLAGS.
 test-ios:
-	sim="$(SIM_ID)"; [ -n "$$sim" ] || sim=$$(xcrun simctl list devices available \
+	set -o pipefail; sim="$(SIM_ID)"; [ -n "$$sim" ] || sim=$$(xcrun simctl list devices available \
 	  | awk -v sdk="$$(xcrun --sdk iphonesimulator --show-sdk-version)" -f pick-simulator.awk); \
 	  [ -n "$$sim" ] || { echo "error: no iPhone simulator; pass SIM_ID=<udid>" >&2; exit 1; }; \
 	  echo "simulator $$sim"; \
