@@ -102,13 +102,13 @@ final class TestDirectory {
     return file
   }
 
-  func solidImage(width: Int, height: Int, color: RGB = .gray, as type: UTType = .jpeg) throws
-    -> URL
-  {
+  func solidImage(
+    width: Int, height: Int, as type: UTType = .jpeg, named name: String = UUID().uuidString
+  ) throws -> URL {
     let image = try makeImage(width: width, height: height) { context in
-      context.fill(CGRect(x: 0, y: 0, width: width, height: height), with: color)
+      context.fill(CGRect(x: 0, y: 0, width: width, height: height), with: .gray)
     }
-    return try write(image, as: type)
+    return try write(image, as: type, named: name)
   }
 }
 
