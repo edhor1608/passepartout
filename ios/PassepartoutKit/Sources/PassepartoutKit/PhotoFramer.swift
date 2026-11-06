@@ -13,8 +13,10 @@ struct FramedPhoto: Sendable {
 }
 
 /// Decode, orient, tone-map to SDR, convert to sRGB, crop and Lanczos-resample to the layout,
-/// composite onto white, encode. Peak memory is about two decodes at twice the render scale
-/// (~100 MB for a 48 MP source), so the session runs one photo at a time.
+/// composite onto white, encode. Peak footprint measured in a fresh macOS process: about 160 MB
+/// for a 48 MP JPEG or HEIC, 240 MB for a 24 MP JPEG, 360 MB for a 16000x3000 HEIC and 520 MB
+/// for the same panorama as JPEG, which ImageIO decodes in full. So the session runs one photo
+/// at a time.
 @concurrent
 func framePhoto(_ source: SourceFile, borderPx: Int) async throws(PhotoFailure) -> FramedPhoto {
   // ImageIO and vImage autorelease their buffers; draining per photo keeps a batch at one peak.
@@ -90,9 +92,11 @@ private func frameLayout(_ image: OpenedImage, borderPx: Int) throws(PhotoFailur
   return layout
 }
 
-/// Twice the long edge the render needs, capped at the source. The 2x headroom leaves the
-/// anti-aliasing to Lanczos: on a zone plate it measured within noise of a full decode
-/// (passband 89.9 vs 90.3) while decoding a quarter of the pixels.
+/// Twice the long edge the render needs, capped at the source, rounded down to a JPEG DCT step
+/// (the long edge halved up to three times) when that keeps at least 1.5x. ImageIO decodes a JPEG
+/// at a step without a full decode, so a 48 MP JPEG at 4032 instead of 4092 px peaks at 160
+/// instead of 430 MB. On a 6000 px zone plate, Lanczos after a 2x decode is within noise of a full
+/// decode (passband 89.9 vs 90.3) and after a 1.5x decode close to it (89.0).
 private func decodeLongEdge(_ image: OpenedImage, layout: FrameLayout) -> Int {
   let cropWidth = layout.sourceCrop?.width ?? image.orientedWidth
   let cropHeight = layout.sourceCrop?.height ?? image.orientedHeight
@@ -100,7 +104,13 @@ private func decodeLongEdge(_ image: OpenedImage, layout: FrameLayout) -> Int {
     Double(layout.renderWidth) / Double(cropWidth),
     Double(layout.renderHeight) / Double(cropHeight))
   let longEdge = max(image.orientedWidth, image.orientedHeight)
-  return min(longEdge, 2 * Int((Double(longEdge) * scale).rounded(.up)))
+  let needed = Double(longEdge) * scale
+  let twice = min(longEdge, 2 * Int(needed.rounded(.up)))
+  let steps = (1...3).map { halvings in (longEdge + (1 << halvings) - 1) >> halvings }
+  guard let step = steps.first(where: { $0 <= twice }), Double(step) >= 1.5 * needed else {
+    return twice
+  }
+  return step
 }
 
 private func decodeOriented(_ image: OpenedImage, longEdge: Int) throws(PhotoFailure) -> CGImage {
@@ -120,7 +130,7 @@ private func decodeOriented(_ image: OpenedImage, longEdge: Int) throws(PhotoFai
 }
 
 /// Maps the layout crop from oriented-source pixels to decoded pixels. Edges round
-/// independently, so the error stays below one decoded pixel (0.25 output px at 2x).
+/// independently, so the error stays within half a decoded pixel (0.33 output px at 1.5x).
 private func cropInDecodedPixels(_ crop: PixelRect?, image: OpenedImage, decoded: CGImage)
   -> PixelRect
 {
@@ -137,8 +147,8 @@ private func cropInDecodedPixels(_ crop: PixelRect?, image: OpenedImage, decoded
   return PixelRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
 }
 
-/// Draws the decoded image into 8-bit premultiplied sRGB, the one colour conversion, then
-/// Lanczos-scales the crop to exactly the render size. Core Graphics reads every pixel format
+/// Draws the crop of the decoded image into 8-bit premultiplied sRGB, the one colour conversion,
+/// then Lanczos-scales it to exactly the render size. Core Graphics reads every pixel format
 /// ImageIO returns; `vImage_Buffer(cgImage:format:)` rejects the packed 10-bit format of HDR HEIC.
 private func resample(
   _ decoded: CGImage, crop: PixelRect, width: Int, height: Int, colorSpace: CGColorSpace
@@ -147,8 +157,8 @@ private func resample(
   guard
     let converted = CGContext(
       data: nil,
-      width: decoded.width,
-      height: decoded.height,
+      width: crop.width,
+      height: crop.height,
       bitsPerComponent: 8,
       bytesPerRow: 0,
       space: colorSpace,
@@ -159,11 +169,17 @@ private func resample(
       colorSpace: colorSpace,
       bitmapInfo: CGBitmapInfo(rawValue: alpha))
   else { throw .renderFailed }
-  converted.draw(decoded, in: CGRect(x: 0, y: 0, width: decoded.width, height: decoded.height))
+  // The crop counts y from the top and Core Graphics from the bottom, so this offset puts the
+  // crop's top edge on the context's top row.
+  converted.draw(
+    decoded,
+    in: CGRect(
+      x: -crop.x, y: crop.y + crop.height - decoded.height, width: decoded.width,
+      height: decoded.height))
   guard let pixels = converted.data else { throw .renderFailed }
 
   var cropped = vImage_Buffer(
-    data: pixels.advanced(by: crop.y * converted.bytesPerRow + crop.x * 4),
+    data: pixels,
     height: vImagePixelCount(crop.height),
     width: vImagePixelCount(crop.width),
     rowBytes: converted.bytesPerRow)
