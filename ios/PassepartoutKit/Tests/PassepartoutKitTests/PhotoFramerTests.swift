@@ -151,8 +151,10 @@ struct PhotoFramerTests {
 
   /// The fixture is a 600x400 ISO HDR HEIC encoded on macOS: sRGB gray (128, 128, 128) with a
   /// strip four times brighter than white on the right. It is pre-encoded because the iOS
-  /// simulator's HEIC encoder writes linear values for this request.
-  @Test func readsA10BitHDRHEIC() async throws {
+  /// simulator's HEIC encoder writes linear values for this request. It proves that a 10-bit
+  /// HEIC decodes, not the tone mapping: drawn into 8-bit sRGB, PQ, HLG and gain-map HEICs give
+  /// the same pixels with and without `kCGImageSourceDecodeToSDR` on macOS.
+  @Test func decodesA10BitHEIC() async throws {
     let url = try #require(Bundle.module.url(forResource: "hdr-10bit", withExtension: "heic"))
     let source = try #require(CGImageSourceCreateWithURL(url as CFURL, nil))
     let depth = try properties(source)["Depth"] as? Int
