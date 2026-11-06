@@ -23,10 +23,11 @@ public final class FramingSession {
     self.library = library
   }
 
-  /// Adding during a run extends it. Adding after a finished batch starts a new one.
+  /// Adding during a run extends it. Adding after a finished batch starts a new one and keeps
+  /// only the failures a retry can still fix.
   public func add(_ sources: [some PhotoSource]) {
     guard !sources.isEmpty else { return }
-    if summary.inProgress == 0 { photos.removeAll() }
+    if summary.inProgress == 0 { photos.removeAll { $0.state.failure?.isRetryable != true } }
     for source in sources {
       photos.append(Photo(id: nextID, state: .queued, source: source))
       nextID += 1

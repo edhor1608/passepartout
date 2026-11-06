@@ -132,17 +132,18 @@ struct FramingSessionTests {
       ])
   }
 
-  @Test func addingAfterAFinishedBatchStartsANewOne() async throws {
+  @Test func addingAfterAFinishedBatchKeepsOnlyFailuresWorthRetrying() async throws {
     let session = FramingSession(library: recorder.library)
 
-    session.add([try photo("a"), try garbage("b")])
+    session.add([try photo("a"), try garbage("b"), try photo("c", failedLoads: 1)])
     await finish(session)
-    session.add([try photo("c")])
+    session.add([try photo("d")])
     await finish(session)
 
-    #expect(session.photos.map(\.state.label) == ["saved"])
+    #expect(session.photos.map(\.state.label) == ["failed(notLoaded)", "saved"])
+    #expect(session.summary.retryable == 1)
     let saved = await recorder.saved
-    #expect(saved == ["a-passepartout.jpg", "c-passepartout.jpg"])
+    #expect(saved == ["a-passepartout.jpg", "d-passepartout.jpg"])
   }
 
   @Test func deletesEveryCopiedOriginal() async throws {
