@@ -97,7 +97,7 @@ public final class FramingSession {
     switch result {
     case .success(let file?): return file
     case .success(nil): throw .unreadable
-    case .failure: throw .notLoaded
+    case .failure(let error): throw isOutOfSpace(error) ? .storageFull : .notLoaded
     }
   }
 
@@ -164,6 +164,8 @@ public struct Photo: Identifiable, Sendable {
 public enum PhotoFailure: Error, Equatable, Sendable {
   /// Photos could not hand over the original, for example an iCloud photo while offline.
   case notLoaded
+  /// The iPhone had no space left for the copy of the original.
+  case storageFull
   /// The file is not an image ImageIO can read.
   case unreadable
   /// Smaller than the border allows.
@@ -175,7 +177,7 @@ public enum PhotoFailure: Error, Equatable, Sendable {
 
   public var isRetryable: Bool {
     switch self {
-    case .notLoaded, .renderFailed, .notSaved: true
+    case .notLoaded, .storageFull, .renderFailed, .notSaved: true
     case .unreadable, .tooSmall: false
     }
   }
@@ -218,3 +220,12 @@ private final class Handover: Sendable {
 }
 
 private struct TransferStalled: Error {}
+
+/// A full disk as Foundation or POSIX reports it, also when the picker wraps it in its own error.
+private func isOutOfSpace(_ error: any Error) -> Bool {
+  switch error {
+  case let error as CocoaError where error.code == .fileWriteOutOfSpace: true
+  case let error as POSIXError where error.code == .ENOSPC: true
+  default: (error as NSError).underlyingErrors.contains(where: isOutOfSpace)
+  }
+}

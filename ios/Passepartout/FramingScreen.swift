@@ -155,6 +155,7 @@ extension PhotoFailure {
   fileprivate var message: String {
     switch self {
     case .notLoaded: "Laden fehlgeschlagen, bist du online?"
+    case .storageFull: "iPhone-Speicher ist voll."
     case .unreadable: "Dieses Format wird nicht unterstützt."
     case .tooSmall: "Zu klein für den Rand."
     case .renderFailed: "Rahmen fehlgeschlagen."

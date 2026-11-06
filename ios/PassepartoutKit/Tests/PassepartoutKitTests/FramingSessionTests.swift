@@ -185,6 +185,28 @@ struct FramingSessionTests {
     #expect(fractions.contains { $0 > 0 && $0 < 1 }, "\(fractions)")
   }
 
+  @Test(
+    arguments: [
+      (CocoaError(.fileWriteOutOfSpace), "failed(storageFull)"),
+      (POSIXError(.ENOSPC), "failed(storageFull)"),
+      (
+        NSError(
+          domain: "TransferDomain", code: 1,
+          userInfo: [NSUnderlyingErrorKey: POSIXError(.ENOSPC) as NSError]),
+        "failed(storageFull)"
+      ),
+      (URLError(.notConnectedToInternet), "failed(notLoaded)"),
+    ] as [(any Error, String)])
+  func aFullDiskIsNotReportedAsBeingOffline(error: any Error, expected: String) async {
+    let session = FramingSession(library: recorder.library)
+
+    session.add([FailingSource(error: error)])
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == [expected])
+    #expect(session.summary.retryable == 1)
+  }
+
   @Test func deletesEveryCopiedOriginal() async throws {
     await recorder.failSaves(of: "c-passepartout.jpg", times: 1)
     let session = FramingSession(library: recorder.library)
@@ -264,6 +286,18 @@ struct FixtureSource: PhotoSource {
     let file = try SourceFile(copying: url)
     await recorder.keep(file.url)
     return file
+  }
+}
+
+/// A handover that fails with `error`, like a copy into a full disk.
+struct FailingSource: PhotoSource {
+  let error: any Error
+
+  func loadOriginal(
+    completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
+  ) -> Progress {
+    completion(.failure(error))
+    return Progress(totalUnitCount: 1)
   }
 }
 
