@@ -40,3 +40,8 @@ tests/fixtures/exports/*
 # generated watch-folder test outputs
 tests/fixtures/watch/*
 tests/fixtures/watch_e2e/*
+
+# iOS: generated Xcode project and build outputs
+ios/Passepartout.xcodeproj/
+ios/**/.build/
+ios/**/.swiftpm/
