@@ -1,0 +1,41 @@
+# Source of truth for the Xcode project. The generated Passepartout.xcodeproj is gitignored;
+# `make project` regenerates it. All logic and tests live in the PassepartoutKit package.
+name: Passepartout
+options:
+  bundleIdPrefix: me.edhor
+  developmentLanguage: de
+  deploymentTarget:
+    iOS: "26.0"
+packages:
+  PassepartoutKit:
+    path: PassepartoutKit
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    DEVELOPMENT_TEAM: 385HM7FDCL
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  Passepartout:
+    type: application
+    platform: iOS
+    sources: [Passepartout]
+    dependencies:
+      - package: PassepartoutKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: me.edhor.passepartout
+        # iPhone only. Must sit on the target: xcodegen's iOS preset sets "1,2" here.
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        SWIFT_APPROACHABLE_CONCURRENCY: YES
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Passepartout
+        INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: >-
+          Passepartout speichert jedes gerahmte Foto als neues Foto. Deine Originale bleiben
+          unverändert.
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
