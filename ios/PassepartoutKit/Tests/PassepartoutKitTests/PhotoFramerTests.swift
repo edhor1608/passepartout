@@ -89,6 +89,29 @@ struct PhotoFramerTests {
     #expect(output[output.width - 1, output.height - 1] == .white)
   }
 
+  /// Camera JPEGs and HEICs carry a small embedded thumbnail that ImageIO hands back for any
+  /// size request unless told otherwise. Framed from it, 8 px stripes would blur into flat grey.
+  @Test(arguments: [UTType.jpeg, .heic])
+  func framesTheFullImageNotItsEmbeddedThumbnail(type: UTType) async throws {
+    let directory = try TestDirectory()
+    let stripes = try makeImage(width: 4000, height: 3000) { context in
+      context.fill(CGRect(x: 0, y: 0, width: 4000, height: 3000), with: .white)
+      for x in stride(from: 0, to: 4000, by: 16) {
+        context.fill(CGRect(x: x, y: 0, width: 8, height: 3000), with: RGB(0, 0, 0))
+      }
+    }
+    let url = try directory.write(stripes, as: type, embedsThumbnail: true)
+    let source = try #require(CGImageSourceCreateWithURL(url as CFURL, nil))
+    let sizeRequest = [kCGImageSourceThumbnailMaxPixelSize: 2000] as CFDictionary
+    let embedded = try #require(CGImageSourceCreateThumbnailAtIndex(source, 0, sizeRequest))
+    #expect(embedded.width < 400, "the fixture must carry a small embedded thumbnail")
+
+    let output = try Pixels(jpeg: try await framed(url).jpeg)
+
+    let row = (0..<16).map { output[output.width / 2 + $0, output.height / 2].red }
+    #expect((row.max() ?? 0) - (row.min() ?? 0) > 150, "\(row)")
+  }
+
   @Test func compositesTransparencyOntoWhite() async throws {
     let directory = try TestDirectory()
     let source = try makeImage(width: 600, height: 400, alpha: true) { context in

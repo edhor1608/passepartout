@@ -105,7 +105,7 @@ private func decodeLongEdge(_ image: OpenedImage, layout: FrameLayout) -> Int {
 
 private func decodeOriented(_ image: OpenedImage, longEdge: Int) throws(PhotoFailure) -> CGImage {
   let options: [CFString: Any] = [
-    // Without this, RAW and HEIC files hand back their small embedded preview.
+    // Without this, JPEG, HEIC and RAW files hand back their small embedded thumbnail.
     kCGImageSourceCreateThumbnailFromImageAlways: true,
     kCGImageSourceCreateThumbnailWithTransform: true,
     kCGImageSourceThumbnailMaxPixelSize: longEdge,

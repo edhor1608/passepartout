@@ -75,7 +75,7 @@ final class TestDirectory {
 
   func write(
     _ image: CGImage, as type: UTType, named name: String = UUID().uuidString,
-    orientation: Int = 1, metadata: CGImageMetadata? = nil
+    orientation: Int = 1, metadata: CGImageMetadata? = nil, embedsThumbnail: Bool = false
   ) throws -> URL {
     let file = url.appending(path: name).appendingPathExtension(
       type.preferredFilenameExtension ?? "img")
@@ -86,6 +86,7 @@ final class TestDirectory {
       [
         kCGImagePropertyOrientation: orientation,
         kCGImageDestinationLossyCompressionQuality: 1.0,
+        kCGImageDestinationEmbedThumbnail: embedsThumbnail,
       ] as CFDictionary
     if let metadata {
       CGImageDestinationAddImageAndMetadata(destination, image, metadata, options)
