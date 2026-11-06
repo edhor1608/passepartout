@@ -15,16 +15,14 @@ project:
 test:
 	swift test --package-path PassepartoutKit --scratch-path $(BUILD)/SwiftPM
 
-# The same tests on the iOS simulator: ImageIO codecs and colour handling as shipped. Runs on the
-# first iPhone simulator this Xcode can test on, or on SIM_ID=<udid>.
+# The same tests on the iOS simulator: ImageIO codecs and colour handling as shipped. Runs on
+# SIM_ID=<udid>, else on the simulator pick-simulator.awk chooses from simctl's device list.
 test-ios:
-	cd PassepartoutKit && sim="$(SIM_ID)" \
-	  && if [ -z "$$sim" ]; then sim=$$(xcodebuild -showdestinations -scheme PassepartoutKit 2>/dev/null \
-	    | grep -m1 -E 'platform:iOS Simulator,.*name:iPhone' \
-	    | grep -oE '[0-9A-F]{8}(-[0-9A-F]{4}){3}-[0-9A-F]{12}'); fi \
-	  && if [ -z "$$sim" ]; then echo "error: no iPhone simulator; pass SIM_ID=<udid>" >&2; exit 1; fi \
-	  && echo "simulator $$sim" \
-	  && xcodebuild test -scheme PassepartoutKit \
+	sim="$(SIM_ID)"; [ -n "$$sim" ] || sim=$$(xcrun simctl list devices available \
+	  | awk -v sdk="$$(xcrun --sdk iphonesimulator --show-sdk-version)" -f pick-simulator.awk); \
+	  [ -n "$$sim" ] || { echo "error: no iPhone simulator; pass SIM_ID=<udid>" >&2; exit 1; }; \
+	  echo "simulator $$sim"; \
+	  cd PassepartoutKit && xcodebuild test -scheme PassepartoutKit \
 	    -destination "platform=iOS Simulator,id=$$sim" -derivedDataPath $(DERIVED) \
 	    2>&1 | grep -E 'error:|✘|Test run with|\*\* TEST'
 
