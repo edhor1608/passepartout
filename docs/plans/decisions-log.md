@@ -943,3 +943,23 @@ agent formatter makes diagnostics compact and actionable for the agents that own
 New correctness diagnostics from these plugins and import cycles fail `bun run lint` and therefore
 `bun run check`. Direct ad hoc Oxlint invocations must also use `--format=agent` when diagnostics
 are intended for consumption.
+
+## 2026-11-06: Add a native iOS app
+
+### Context
+
+Photos for Instagram are shot and posted on the iPhone, often while travelling without a Mac. The CLI needs a Mac and FFmpeg.
+
+### Decision
+
+Add `ios/`, a SwiftUI app that frames photos picked from the Photos library and saves each result as a new photo through add-only access. Its layout is a Swift port of `computePrepareImageLayout`, held equal by a fixture that `tests/layout_parity.test.ts` generates from the TypeScript code. Pixels go through ImageIO, vImage Lanczos, and Core Graphics instead of FFmpeg.
+
+### Rationale
+
+The generated 3049-case fixture fails a build on drift in either direction. The six golden layout cases alone let two plausible porting bugs pass. ImageIO reads every format Photos stores, including HEIC and RAW, and converts color profiles to sRGB.
+
+### Consequences
+
+- App JPEGs use 4:4:4 chroma, not the CLI's 4:2:0. ImageIO offers no 4:2:0 at quality 1.0, and 4:4:4 is the higher quality. Instagram re-encodes uploads anyway.
+- The batch queue lives in memory. If iOS kills the app mid-batch, saved photos stay saved and the rest are lost. Picking the same photos again duplicates the saved ones. `BGContinuedProcessingTask` is the upgrade if this matters in practice.
+- A TypeScript layout change fails the Bun test until the fixture is regenerated, then fails `make -C ios check` until the Swift port matches.

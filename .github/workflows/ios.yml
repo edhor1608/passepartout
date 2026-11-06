@@ -1,0 +1,39 @@
+name: iOS
+
+on:
+  pull_request:
+    paths:
+      - "ios/**"
+      - "src/domain/prepare_image_layout.ts"
+      - "src/domain/prepare_image.ts"
+      - "tests/layout_parity.test.ts"
+      - ".github/workflows/ios.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "ios/**"
+      - "src/domain/prepare_image_layout.ts"
+      - "src/domain/prepare_image.ts"
+      - "tests/layout_parity.test.ts"
+      - ".github/workflows/ios.yml"
+
+jobs:
+  check:
+    # Xcode 26 or newer: Swift 6.2 (@concurrent, default actor isolation) and the iOS 26 SDK.
+    runs-on: macos-26
+    # macOS minutes are expensive, and a simulator test can hang instead of failing.
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select newest Xcode
+        run: sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      # The existing Bun CI checks that the layout parity fixture is fresh.
+      - name: Check
+        run: make -C ios check SIM="iPhone 17 Pro"

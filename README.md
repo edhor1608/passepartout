@@ -79,6 +79,20 @@ The integration test fixture helpers call system `ffmpeg` and `ffprobe`, so loca
 - `src/domain/media_process.ts`: FFmpeg/ffprobe process boundary.
 - `tests/integration/prepare_image.integration.test.ts`: CLI and FFmpeg integration coverage.
 
+## iOS App
+
+`ios/` contains Passepartout for iPhone. Pick photos from the Photos library, and the app saves a framed copy of each one as a new photo, dated when it is saved. The originals stay unchanged. It uses the CLI's layout and `57px` border, held equal by a shared test fixture. It reads every format Photos stores, including HEIC and RAW, and asks only for permission to add photos.
+
+The app runs on iPhone with iOS 26 or newer. To install it on your iPhone:
+
+1. Install Xcode 26 or newer and xcodegen: `brew install xcodegen`.
+2. Generate the Xcode project: `make -C ios project`.
+3. Open `ios/Passepartout.xcodeproj`, connect the iPhone, and select it as the run destination.
+4. Click **Run**. Xcode signs the app with automatic signing for team `385HM7FDCL`.
+5. If the iPhone asks for it, turn on **Developer Mode** in **Settings > Privacy & Security**, then run again.
+
+Before a PR, run `make -C ios check`. It lints, runs the kit tests on the Mac and on the simulator, and builds the app.
+
 ## Docs
 
 - `docs/v1_split_plan.md`: product contract and split plan.

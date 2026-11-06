@@ -68,7 +68,7 @@ Transparent pixels in the source image are composited onto white in v1 output.
 
 ### Minimum white border
 
-The smallest allowed white margin around the fitted source image at full target size, defined as one non-negative integer pixel value. The v1 default is `165px`, converted from `124pt` at `96px / 72pt`. `0px` is valid. If the output must shrink to avoid upscaling, the border scales down by the same factor, for example `165px` becomes about `83px` at `50%` output size. Effective scaled borders are rounded to the nearest integer pixel, with a minimum of `1px` when the configured border is greater than `0`; configured `0px` stays `0px`. Landscape uses the scaled value as the exact equal outer border. Portrait uses it as the minimum border.
+The smallest allowed white margin around the fitted source image at full target size, defined as one non-negative integer pixel value. The v1 default is `57px`. `0px` is valid. If the output must shrink to avoid upscaling, the border scales down by the same factor, for example `57px` becomes about `29px` at `50%` output size. Effective scaled borders are rounded to the nearest integer pixel, with a minimum of `1px` when the configured border is greater than `0`; configured `0px` stays `0px`. Landscape uses the scaled value as the exact equal outer border. Portrait uses it as the minimum border.
 
 ### No upscaling
 
