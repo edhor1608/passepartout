@@ -48,12 +48,12 @@ final class BatchKeepAlive {
       (self.session.isRunning, self.session.isPaused, self.session.summary)
     }
     for await _ in changes {
+      report(session.summary)
       if !session.isRunning {
         releaseTime()
       } else if !session.isPaused {
         holdTime()
       }
-      report(session.summary)
     }
   }
 
