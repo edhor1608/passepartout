@@ -32,7 +32,9 @@ private func frame(_ url: URL, borderPx: Int) throws(PhotoFailure) -> FramedPhot
   guard let sRGB else { throw .renderFailed }
   let image = try openImage(url)
   let layout = try frameLayout(image, borderPx: borderPx)
-  let decoded = try decodeOriented(image, longEdge: decodeLongEdge(image, layout: layout))
+  let longEdge = decodeLongEdge(
+    sourceWidth: image.orientedWidth, sourceHeight: image.orientedHeight, layout: layout)
+  let decoded = try decodeOriented(image, longEdge: longEdge)
   let render = try resample(
     decoded,
     crop: cropInDecodedPixels(layout.sourceCrop, image: image, decoded: decoded),
@@ -97,13 +99,13 @@ private func frameLayout(_ image: OpenedImage, borderPx: Int) throws(PhotoFailur
 /// at a step without a full decode, so a 48 MP JPEG at 4032 instead of 4092 px peaks at 160
 /// instead of 430 MB. On a 6000 px zone plate, Lanczos after a 2x decode is within noise of a full
 /// decode (passband 89.9 vs 90.3) and after a 1.5x decode close to it (89.0).
-private func decodeLongEdge(_ image: OpenedImage, layout: FrameLayout) -> Int {
-  let cropWidth = layout.sourceCrop?.width ?? image.orientedWidth
-  let cropHeight = layout.sourceCrop?.height ?? image.orientedHeight
+func decodeLongEdge(sourceWidth: Int, sourceHeight: Int, layout: FrameLayout) -> Int {
+  let cropWidth = layout.sourceCrop?.width ?? sourceWidth
+  let cropHeight = layout.sourceCrop?.height ?? sourceHeight
   let scale = max(
     Double(layout.renderWidth) / Double(cropWidth),
     Double(layout.renderHeight) / Double(cropHeight))
-  let longEdge = max(image.orientedWidth, image.orientedHeight)
+  let longEdge = max(sourceWidth, sourceHeight)
   let needed = Double(longEdge) * scale
   let twice = min(longEdge, 2 * Int(needed.rounded(.up)))
   let steps = (1...3).map { halvings in (longEdge + (1 << halvings) - 1) >> halvings }

@@ -229,6 +229,19 @@ struct PhotoFramerTests {
     #expect(try Pixels(photo.preview)[0, 0] == .white)
   }
 
+  /// A landscape 48 MP JPEG decodes at half size, a DCT step at 1.97x the render. Upright, its
+  /// half size is above 2x and its quarter below 1.5x, and every step of 6000 px is below 1.5x,
+  /// so both keep 2x. Sources smaller than 2x decode at their own size.
+  @Test(arguments: [
+    (8064, 6048, 4032), (6048, 8064, 3536), (6000, 4000, 4094), (3000, 2000, 3000),
+    (1200, 900, 1200),
+  ])
+  func decodesAtAJPEGStepWhenItKeepsEnoughDetail(width: Int, height: Int, longEdge: Int) throws {
+    let layout = try FrameLayout(
+      sourceWidth: width, sourceHeight: height, borderPx: defaultBorderPx)
+    #expect(decodeLongEdge(sourceWidth: width, sourceHeight: height, layout: layout) == longEdge)
+  }
+
   @Test func rejectsAFileImageIOCannotRead() async throws {
     let directory = try TestDirectory()
     let url = try directory.write(Data("not an image".utf8), named: "garbage.jpg")
