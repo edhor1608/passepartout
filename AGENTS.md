@@ -62,7 +62,7 @@ bun run prepare-image --help
 
 `ios/` holds a SwiftUI iPhone app that frames photos picked from the Photos library and saves each result as a new photo. Its layout is a Swift port of `src/domain/prepare_image_layout.ts`. `tests/layout_parity.test.ts` generates the fixture the port must match. After a deliberate layout change, regenerate it with `UPDATE_LAYOUT_PARITY=1 bun test tests/layout_parity.test.ts`.
 
-The app needs Xcode 26 or newer and `xcodegen` (`brew install xcodegen`).
+The app needs Xcode 26 or newer and `xcodegen` (`brew install xcodegen`). The kit tests run on the Mac host, so `check` and `test` also need macOS 26 or newer.
 
 ```bash
 make -C ios check         # swift-format lint, kit tests on the Mac and the simulator, app build
