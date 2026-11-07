@@ -168,8 +168,9 @@ private func resample(
   do {
     var scaled = try vImage_Buffer(width: width, height: height, bitsPerPixel: 32)
     defer { scaled.free() }
-    let status = vImageScale_ARGB8888(
-      &cropped, &scaled, nil, vImage_Flags(kvImageHighQualityResampling))
+    let status = withExtendedLifetime(converted) {
+      vImageScale_ARGB8888(&cropped, &scaled, nil, vImage_Flags(kvImageHighQualityResampling))
+    }
     guard status == kvImageNoError else { throw PhotoFailure.renderFailed }
     return try scaled.createCGImage(format: format)
   } catch {
