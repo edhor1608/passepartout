@@ -952,7 +952,7 @@ Photos for Instagram are shot and posted on the iPhone, often while travelling w
 
 ### Decision
 
-Add `ios/`, a SwiftUI app that frames photos picked from the Photos library and saves each result as a new photo through add-only access. Its layout is a Swift port of `computePrepareImageLayout`, held equal by a fixture that `tests/layout_parity.test.ts` generates from the TypeScript code. Pixels go through ImageIO, vImage Lanczos, and Core Graphics instead of FFmpeg.
+Add `ios/`, a SwiftUI app that frames photos picked from the Photos library and saves each result as a new photo through add-only access. Read access is optional and lets a batch run in the background. Its layout is a Swift port of `computePrepareImageLayout`, held equal by a fixture that `tests/layout_parity.test.ts` generates from the TypeScript code. Pixels go through ImageIO, vImage Lanczos, and Core Graphics instead of FFmpeg.
 
 ### Rationale
 
@@ -962,6 +962,7 @@ The generated 3049-case fixture fails a build on drift in either direction. The 
 
 - App JPEGs use 4:4:4 chroma, not the CLI's 4:2:0. ImageIO offers no 4:2:0 at quality 1.0, and 4:4:4 is the higher quality. Instagram re-encodes uploads anyway.
 - A running batch asks iOS for a `BGContinuedProcessingTask`, so it keeps running in the background while the user posts from another app, with progress in system UI. The task reports 100 units per photo, and the photo in flight counts with its download fraction, because iOS may expire a task whose progress looks stalled during a long iCloud download. When the task expires, the photo in flight finishes and the batch pauses until the user taps Fortsetzen. The expiration handler gives no reason, and a stop in system UI arrives the same way, so an automatic resume on return would override the user's stop. If iOS declines the task, as the simulator always does, `beginBackgroundTask` buys about 30 s, after which iOS suspends the app mid-batch and the same runner continues on return.
+- Picker handovers cannot run in the background. Each one makes `filecoordinationd` hold a claim on the app's ordinary background time, which the continued-processing task does not extend, and on an iPhone RunningBoard killed the app (`0x2182BAAD`) about 30 s after it left the screen. With read access, the app loads originals through PhotoKit, which takes no such claim: a 25-photo batch kept running for 77 s in the background on the same iPhone. Without read access, handovers run only while the app is on screen, a handover in flight goes back to the queue when the app leaves, and the app requests no continued-processing task.
 - The batch queue lives in memory, with no persisted copy. If iOS kills the app mid-batch, saved photos stay saved and the rest are lost. Picking the same photos again duplicates the saved ones.
 - A picker transfer whose progress has not moved for 60 s is cancelled and fails as retryable, so one iCloud original on a bad connection cannot hold up the local photos behind it.
 - A TypeScript layout change fails the Bun test until the fixture is regenerated, then fails `make -C ios check` until the Swift port matches.
