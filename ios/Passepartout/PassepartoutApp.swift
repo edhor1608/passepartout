@@ -17,7 +17,6 @@ struct PassepartoutApp: App {
   var body: some Scene {
     WindowGroup {
       FramingScreen(session: session)
-        .task { await keepAlive.followSession() }
         .onChange(of: scenePhase) { _, phase in
           guard phase == .active else { return }
           session.resume()

@@ -24,13 +24,15 @@ final class BatchKeepAlive {
   private var isAwaitingTask = false
   private var backgroundTime: UIBackgroundTaskIdentifier = .invalid
 
+  /// Follows the session for the app's lifetime, so a scene that iOS disconnects cannot leave
+  /// auto-lock off or a finished task open. Observation runs without SwiftUI, so it keeps
+  /// following the session while the app is in the background.
   init(session: FramingSession) {
     self.session = session
+    Task { await followSession() }
   }
 
-  /// Follows the session for as long as the caller's task lives. Observation runs without
-  /// SwiftUI, so it keeps following the session while the scene is in the background.
-  func followSession() async {
+  private func followSession() async {
     let changes = Observations { (self.session.isRunning, self.session.summary) }
     var wasRunning = false
     for await (running, summary) in changes {
