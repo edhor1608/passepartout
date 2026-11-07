@@ -5,9 +5,12 @@ import PhotosUI
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// One picked photo that can hand over its original: `PhotosPickerItem` in the app, synthetic
-/// files in tests.
+/// One picked photo that can hand over its original: `LibraryPhoto` or `PhotosPickerItem` in the
+/// app, synthetic files in tests.
 public protocol PhotoSource: Sendable {
+  /// Whether loading may start or continue while the app is in the background.
+  var loadsInBackground: Bool { get }
+
   /// Starts the handover and returns its progress. `completion` gets `nil` when the item carries
   /// no image. Cancelling the progress abandons the transfer.
   func loadOriginal(
@@ -16,6 +19,11 @@ public protocol PhotoSource: Sendable {
 }
 
 extension PhotosPickerItem: PhotoSource {
+  /// Each handover holds a file coordination claim on the app's background time, about 30
+  /// seconds. iOS kills the app when a claim outlives that time, and a background task does not
+  /// extend it.
+  public var loadsInBackground: Bool { false }
+
   /// The picker process downloads iCloud-only originals on demand; no library permission is
   /// involved. The stored encoding (HEIC, RAW, JPEG) arrives only when the picker uses
   /// `preferredItemEncoding: .current`. The async variant offers no progress and no way to give
@@ -24,6 +32,77 @@ extension PhotosPickerItem: PhotoSource {
     completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
   ) -> Progress {
     loadTransferable(type: SourceFile.self, completionHandler: completion)
+  }
+}
+
+/// A picked photo read straight from the library, which keeps working in the background and
+/// reports real iCloud download progress. Needs read access to the photo.
+public struct LibraryPhoto: PhotoSource {
+  let localIdentifier: String
+
+  public var loadsInBackground: Bool { true }
+
+  /// Swaps each picker item the library hands over itself for a `LibraryPhoto`: all of them with
+  /// full read access, those in the selection with limited access. One fetch for the whole pick.
+  /// The picker must be created with `photoLibrary: .shared()`, or items carry no identifier.
+  public static func preferred(_ sources: [any PhotoSource]) -> [any PhotoSource] {
+    let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+    let ids = sources.compactMap { ($0 as? PhotosPickerItem)?.itemIdentifier }
+    guard status == .authorized || status == .limited, !ids.isEmpty else { return sources }
+    let assets = PHAsset.fetchAssets(withLocalIdentifiers: ids, options: nil)
+    let readable = Set((0..<assets.count).map { assets.object(at: $0).localIdentifier })
+    return sources.map { source in
+      guard let id = (source as? PhotosPickerItem)?.itemIdentifier, readable.contains(id) else {
+        return source
+      }
+      return LibraryPhoto(localIdentifier: id)
+    }
+  }
+
+  /// Writes the current rendition, edits included, like the picker's `.current` encoding: the
+  /// rendered full-size photo of an edited asset, the stored photo otherwise.
+  public func loadOriginal(
+    completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
+  ) -> Progress {
+    let progress = Progress(totalUnitCount: 1000)
+    guard
+      let asset = PHAsset.fetchAssets(withLocalIdentifiers: [localIdentifier], options: nil)
+        .firstObject
+    else {
+      completion(.failure(CocoaError(.fileReadNoSuchFile)))
+      return progress
+    }
+    let resources = PHAssetResource.assetResources(for: asset)
+    let stored = resources.first { $0.type == .photo }
+    guard let rendition = resources.first(where: { $0.type == .fullSizePhoto }) ?? stored else {
+      completion(.success(nil))
+      return progress
+    }
+    // An edited asset's rendition is named FullSizeRender, so the name comes from the original.
+    let name = (stored ?? rendition).originalFilename
+    let destination: URL
+    do {
+      destination = try SourceFile.newURL(
+        pathExtension: (rendition.originalFilename as NSString).pathExtension)
+    } catch {
+      completion(.failure(error))
+      return progress
+    }
+    let options = PHAssetResourceRequestOptions()
+    options.isNetworkAccessAllowed = true
+    options.progressHandler = { fraction in progress.completedUnitCount = Int64(fraction * 1000) }
+    PHAssetResourceManager.default().writeData(
+      for: rendition, toFile: destination, options: options
+    ) {
+      error in
+      if let error {
+        try? FileManager.default.removeItem(at: destination)
+        completion(.failure(error))
+      } else {
+        completion(.success(SourceFile(owning: destination, originalName: name)))
+      }
+    }
+    return progress
   }
 }
 
@@ -36,14 +115,22 @@ public final class SourceFile: Sendable {
   private static let directory = FileManager.default.temporaryDirectory.appending(
     path: "PickedOriginals", directoryHint: .isDirectory)
 
+  /// Takes over a file at a URL from `newURL(pathExtension:)`.
+  init(owning url: URL, originalName: String) {
+    self.url = url
+    suggestedOutputName = (originalName as NSString).deletingPathExtension + "-passepartout.jpg"
+  }
+
   /// The picker's file is only valid inside its import closure, so it is copied out.
-  init(copying received: URL) throws {
-    try FileManager.default.createDirectory(at: Self.directory, withIntermediateDirectories: true)
-    let copy = Self.directory.appending(path: UUID().uuidString)
-      .appendingPathExtension(received.pathExtension)
+  convenience init(copying received: URL) throws {
+    let copy = try Self.newURL(pathExtension: received.pathExtension)
     try FileManager.default.copyItem(at: received, to: copy)
-    url = copy
-    suggestedOutputName = received.deletingPathExtension().lastPathComponent + "-passepartout.jpg"
+    self.init(owning: copy, originalName: received.lastPathComponent)
+  }
+
+  static func newURL(pathExtension: String) throws -> URL {
+    try FileManager.default.createDirectory(at: Self.directory, withIntermediateDirectories: true)
+    return Self.directory.appending(path: UUID().uuidString).appendingPathExtension(pathExtension)
   }
 
   deinit {

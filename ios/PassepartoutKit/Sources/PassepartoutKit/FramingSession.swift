@@ -11,18 +11,26 @@ import Synchronization
 @Observable
 public final class FramingSession {
   public private(set) var photos: [Photo] = []
-  /// Set while the library refuses adds. Queued photos wait for `recheckAccess()`.
+  /// Set while the library refuses adds. Queued photos wait for `appBecameActive()`.
   public private(set) var blocker: LibraryBlocker?
   /// Set by `pause()` during a run. The photo in flight still finishes, and queued photos wait
   /// for `resume()`, `add` or `retryFailed`. Clears itself once no photo is left queued.
   public private(set) var isPaused = false
   public var isRunning: Bool { runner != nil }
   public var summary: Summary { Summary(photos) }
+  /// Whether every photo not yet loaded can load with the app in the background. Only then is
+  /// there work for a background task beyond the photo in flight.
+  public var canFinishInBackground: Bool {
+    !photos.contains { $0.state.isAwaitingOriginal && !$0.source.loadsInBackground }
+  }
 
   private(set) var runner: Task<Void, Never>?
   private let library: PhotoLibrary
   private let stallTimeout: Duration
   private var nextID = 0
+  private var isInBackground = false
+  /// The handover in flight when its source cannot load in the background.
+  private var foregroundLoad: (handover: Handover, progress: Progress)?
 
   /// `stallTimeout` is how long a transfer may report no progress before its photo fails.
   public init(library: PhotoLibrary = .system, stallTimeout: Duration = .seconds(60)) {
@@ -50,6 +58,15 @@ public final class FramingSession {
     continueQueue()
   }
 
+  /// Replaces the sources of queued photos, for when library access changed, and continues the
+  /// queue unless it is paused. `update` gets and returns the sources in queue order.
+  public func updateQueuedSources(_ update: ([any PhotoSource]) -> [any PhotoSource]) {
+    let queued = photos.indices.filter { photos[$0].state == .queued }
+    let sources = update(queued.map { photos[$0].source })
+    for (index, source) in zip(queued, sources) { photos[index].source = source }
+    if !isPaused { continueQueue() }
+  }
+
   /// Continues a paused batch. Call it only on the user's tap, so a stop in system UI holds
   /// until the user lifts it.
   public func resume() {
@@ -63,11 +80,23 @@ public final class FramingSession {
     isPaused = true
   }
 
-  /// Call when the app becomes active: asks the library again while it refuses adds, since the
-  /// user may have allowed them in Settings. A pause stays.
-  public func recheckAccess() {
-    guard blocker != nil, !isPaused else { return }
+  /// Call when the app becomes active. Continues photos that waited for the app, and asks the
+  /// library again while it refuses adds, since the user may have allowed them in Settings. A
+  /// pause stays.
+  public func appBecameActive() {
+    isInBackground = false
+    guard !isPaused else { return }
     continueQueue()
+  }
+
+  /// Call when the app moves to the background. Photos whose source cannot load there wait for
+  /// `appBecameActive()`, and such a load in flight goes back to the queue: iOS kills an app whose
+  /// picker handover outlives its background time.
+  public func appMovedToBackground() {
+    isInBackground = true
+    if let load = foregroundLoad, load.handover.finish(.failure(MovedToBackground())) {
+      load.progress.cancel()
+    }
   }
 
   private func continueQueue() {
@@ -83,7 +112,7 @@ public final class FramingSession {
     blocker = await library.requestAddAccess()
     guard blocker == nil else { return }
     while let photo = photos.first(where: { $0.state == .queued }) {
-      guard !isPaused else { return }
+      guard !isPaused, !isInBackground || photo.source.loadsInBackground else { return }
       await process(photo)
     }
     isPaused = false
@@ -92,7 +121,10 @@ public final class FramingSession {
   private func process(_ photo: Photo) async {
     do throws(PhotoFailure) {
       set(photo.id, .loading(fraction: nil))
-      let file = try await load(photo)
+      guard let file = try await load(photo) else {
+        set(photo.id, .queued)
+        return
+      }
       set(photo.id, .framing)
       let framed = try await framePhoto(file, borderPx: defaultBorderPx)
       set(photo.id, .saving)
@@ -107,15 +139,20 @@ public final class FramingSession {
     }
   }
 
-  private func load(_ photo: Photo) async throws(PhotoFailure) -> SourceFile {
+  /// Returns `nil` when the app moved to the background before a foreground-only source handed
+  /// the original over.
+  private func load(_ photo: Photo) async throws(PhotoFailure) -> SourceFile? {
     let result = await withCheckedContinuation { continuation in
       let handover = Handover(continuation)
       let progress = photo.source.loadOriginal { handover.finish($0) }
+      if !photo.source.loadsInBackground { foregroundLoad = (handover, progress) }
       Task { await watch(progress, of: photo.id, until: handover) }
     }
+    foregroundLoad = nil
     switch result {
     case .success(let file?): return file
     case .success(nil): throw .unreadable
+    case .failure(let error) where error is MovedToBackground: return nil
     case .failure(let error): throw isOutOfSpace(error) ? .storageFull : .notLoaded
     }
   }
@@ -171,6 +208,13 @@ public struct Photo: Identifiable, Sendable {
       if case .failed(let failure) = self { failure } else { nil }
     }
 
+    var isAwaitingOriginal: Bool {
+      switch self {
+      case .queued, .loading: true
+      case .framing, .saving, .saved, .failed: false
+      }
+    }
+
     var completedUnits: Int64 {
       switch self {
       case .queued: 0
@@ -185,7 +229,7 @@ public struct Photo: Identifiable, Sendable {
 
   public let id: Int
   public fileprivate(set) var state: State
-  fileprivate let source: any PhotoSource
+  fileprivate var source: any PhotoSource
 }
 
 /// Why one photo did not make it into the library.
@@ -249,6 +293,8 @@ private final class Handover: Sendable {
 }
 
 private struct TransferStalled: Error {}
+
+private struct MovedToBackground: Error {}
 
 private func isOutOfSpace(_ error: any Error) -> Bool {
   switch error {

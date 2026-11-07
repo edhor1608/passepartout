@@ -9,7 +9,13 @@ final class BatchKeepAlive {
   private enum Grant {
     case awaiting(identifier: String)
     case task(BGContinuedProcessingTask)
+    /// iOS refused the task. Plain background time, and a new request on the next activation.
     case declined
+    /// A photo still to load cannot load in the background, so the batch stops there once the
+    /// app leaves the screen. Plain background time covers the photos up to it, and no system
+    /// progress UI promises more. Becomes a task once the rest can load in the background, for
+    /// example after the user grants library access.
+    case photoInFlightOnly
   }
 
   private static let title = "Fotos rahmen"
@@ -28,7 +34,10 @@ final class BatchKeepAlive {
 
   private func followSession() async {
     let changes = Observations {
-      (self.session.isRunning, self.session.isPaused, self.session.summary)
+      (
+        self.session.isRunning, self.session.isPaused, self.session.summary,
+        self.session.canFinishInBackground
+      )
     }
     for await _ in changes {
       report(session.summary)
@@ -43,7 +52,7 @@ final class BatchKeepAlive {
   func appBecameActive() {
     guard session.isRunning, !session.isPaused else { return }
     switch grant {
-    case .declined: requestTask()
+    case .declined, .photoInFlightOnly: requestTime()
     case .awaiting: beginBackgroundTime()
     case .task, nil: break
     }
@@ -51,7 +60,23 @@ final class BatchKeepAlive {
 
   private func holdTime() {
     UIApplication.shared.isIdleTimerDisabled = true
-    if grant == nil { requestTask() }
+    switch grant {
+    case nil: requestTime()
+    // iOS accepts the request only while the app is on screen.
+    case .photoInFlightOnly
+    where session.canFinishInBackground && UIApplication.shared.applicationState == .active:
+      requestTask()
+    default: break
+    }
+  }
+
+  private func requestTime() {
+    guard session.canFinishInBackground else {
+      grant = .photoInFlightOnly
+      beginBackgroundTime()
+      return
+    }
+    requestTask()
   }
 
   private func requestTask() {
@@ -83,7 +108,7 @@ final class BatchKeepAlive {
     case .awaiting(let identifier):
       BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: identifier)
     case .task(let task): task.setTaskCompleted(success: true)
-    case .declined, nil: break
+    case .declined, .photoInFlightOnly, nil: break
     }
     if grant != nil { Self.log.info("batch time released") }
     grant = nil

@@ -102,7 +102,7 @@ struct FramingSessionTests {
     #expect(events == ["access", "access"])
 
     await recorder.setBlocker(nil)
-    session.recheckAccess()
+    session.appBecameActive()
     await finish(session)
 
     #expect(session.blocker == nil)
@@ -143,7 +143,7 @@ struct FramingSessionTests {
     #expect(session.isPaused)
     #expect(!session.isRunning)
 
-    session.recheckAccess()
+    session.appBecameActive()
 
     #expect(session.isPaused)
     #expect(!session.isRunning)
@@ -155,7 +155,7 @@ struct FramingSessionTests {
     #expect(!session.isPaused)
   }
 
-  @Test func checkingAccessAgainDoesNotLiftAPause() async throws {
+  @Test func returningToTheAppDoesNotLiftAPause() async throws {
     await recorder.setBlocker(.denied)
     let session = FramingSession(library: recorder.library)
 
@@ -167,7 +167,7 @@ struct FramingSessionTests {
     #expect(session.isPaused)
 
     await recorder.setBlocker(nil)
-    session.recheckAccess()
+    session.appBecameActive()
     await finish(session)
 
     #expect(session.isPaused)
@@ -177,6 +177,74 @@ struct FramingSessionTests {
     await finish(session)
 
     #expect(session.photos.map(\.state.label) == ["saved"])
+  }
+
+  @Test func photosThatNeedTheAppWaitForItInPickOrder() async throws {
+    let session = FramingSession(library: recorder.library)
+
+    session.appMovedToBackground()
+    session.add([try photo("a"), try photo("b", inBackground: false), try photo("c")])
+    #expect(!session.canFinishInBackground)
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["saved", "queued", "queued"])
+    #expect(!session.isRunning)
+    let eventsInBackground = await recorder.events
+    #expect(eventsInBackground == ["access", "load a.jpeg", "save a-passepartout.jpg"])
+
+    session.appBecameActive()
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["saved", "saved", "saved"])
+    #expect(session.canFinishInBackground)
+    let saved = await recorder.saved
+    #expect(saved == ["a-passepartout.jpg", "b-passepartout.jpg", "c-passepartout.jpg"])
+  }
+
+  @Test(.timeLimit(.minutes(1)))
+  func leavingTheAppSendsAHandoverInFlightBackToTheQueue() async throws {
+    let held = StalledSource(loadsInBackground: false)
+    let session = FramingSession(library: recorder.library, stallTimeout: .seconds(5))
+    session.add([held, try photo("b")])
+    try await waitUntil { session.photos.first?.state.label == "loading" }
+    #expect(!session.canFinishInBackground)
+
+    session.appMovedToBackground()
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["queued", "queued"])
+    #expect(held.progress.isCancelled)
+    #expect(held.loads == 1)
+
+    session.appBecameActive()
+    try await waitUntil { held.loads == 2 }
+    _ = try held.completeLate(copying: try directory.solidImage(width: 60, height: 40))
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["saved", "saved"])
+  }
+
+  @Test func newSourcesForQueuedPhotosLetThemLoadInTheBackground() async throws {
+    let session = FramingSession(library: recorder.library)
+    session.appMovedToBackground()
+    session.add([try photo("a", inBackground: false), try photo("b", inBackground: false)])
+    await finish(session)
+    #expect(session.photos.map(\.state.label) == ["queued", "queued"])
+
+    var updated: [String] = []
+    session.updateQueuedSources { sources in
+      sources.compactMap { $0 as? FixtureSource }.map { source in
+        updated.append(source.url.lastPathComponent)
+        var library = source
+        library.loadsInBackground = true
+        return library
+      }
+    }
+    #expect(updated == ["a.jpeg", "b.jpeg"])
+    #expect(session.canFinishInBackground)
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["saved", "saved"])
   }
 
   @Test func aPauseWithNothingQueuedLeavesNothingPaused() async throws {
@@ -288,13 +356,15 @@ struct FramingSessionTests {
     #expect(copies.allSatisfy { !FileManager.default.fileExists(atPath: $0.path) })
   }
 
-  private func photo(_ name: String, width: Int = 600, height: Int = 400, failedLoads: Int = 0)
-    throws -> FixtureSource
-  {
+  private func photo(
+    _ name: String, width: Int = 600, height: Int = 400, failedLoads: Int = 0,
+    inBackground: Bool = true
+  ) throws -> FixtureSource {
     FixtureSource(
       url: try directory.solidImage(width: width, height: height, named: name),
       recorder: recorder,
-      failedLoads: failedLoads)
+      failedLoads: failedLoads,
+      loadsInBackground: inBackground)
   }
 
   private func garbage(_ name: String) throws -> FixtureSource {
@@ -305,6 +375,15 @@ struct FramingSessionTests {
 
   private func finish(_ session: FramingSession) async {
     await session.runner?.value
+  }
+
+  /// Polls until `condition` holds, for at most five seconds.
+  private func waitUntil(_ condition: () -> Bool) async throws {
+    let deadline = ContinuousClock.now + .seconds(5)
+    while !condition() {
+      try #require(ContinuousClock.now < deadline, "condition not met within five seconds")
+      try await Task.sleep(for: .milliseconds(5))
+    }
   }
 }
 
@@ -330,6 +409,7 @@ struct FixtureSource: PhotoSource {
   let url: URL
   let recorder: Recorder
   var failedLoads = 0
+  var loadsInBackground = true
 
   func loadOriginal(
     completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
@@ -358,6 +438,7 @@ struct FixtureSource: PhotoSource {
 
 struct FailingSource: PhotoSource {
   let error: any Error
+  var loadsInBackground: Bool { true }
 
   func loadOriginal(
     completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
@@ -369,12 +450,22 @@ struct FailingSource: PhotoSource {
 
 final class StalledSource: PhotoSource {
   let progress = Progress(totalUnitCount: 100)
+  let loadsInBackground: Bool
   private let completion = Mutex<(@Sendable (Result<SourceFile?, any Error>) -> Void)?>(nil)
+  private let loadCount = Mutex(0)
 
+  init(loadsInBackground: Bool = true) {
+    self.loadsInBackground = loadsInBackground
+  }
+
+  var loads: Int { loadCount.withLock { $0 } }
+
+  /// Keeps only the latest load's completion.
   func loadOriginal(
     completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
   ) -> Progress {
     self.completion.withLock { $0 = completion }
+    loadCount.withLock { $0 += 1 }
     return progress
   }
 
@@ -390,6 +481,7 @@ struct SlowSource: PhotoSource {
   let file: FixtureSource
   let steps: Int64
   let interval: Duration
+  var loadsInBackground: Bool { true }
 
   func loadOriginal(
     completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void

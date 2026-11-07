@@ -1,4 +1,5 @@
 import PassepartoutKit
+import Photos
 import PhotosUI
 import SwiftUI
 import UIKit
@@ -6,6 +7,8 @@ import UIKit
 struct FramingScreen: View {
   let session: FramingSession
   @State private var picked: [PhotosPickerItem] = []
+  @State private var readAccess = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+  @Environment(\.scenePhase) private var scenePhase
 
   var body: some View {
     NavigationStack {
@@ -15,23 +18,48 @@ struct FramingScreen: View {
     }
     .onChange(of: picked) { _, items in
       guard !items.isEmpty else { return }
-      session.add(items)
+      session.add(LibraryPhoto.preferred(items))
       picked = []
     }
+    .onChange(of: scenePhase) { _, phase in
+      if phase == .active { readAccess = PHPhotoLibrary.authorizationStatus(for: .readWrite) }
+    }
+  }
+
+  /// Changing photo access in Settings makes iOS kill the app, so Settings is offered only
+  /// while no batch would get lost with it.
+  private var offersReadAccess: Bool {
+    switch readAccess {
+    case .notDetermined: true
+    case .denied, .limited: session.summary.inProgress == 0
+    case .authorized, .restricted: false
+    @unknown default: false
+    }
+  }
+
+  private func accessChanged(to status: PHAuthorizationStatus) {
+    readAccess = status
+    session.updateQueuedSources(LibraryPhoto.preferred)
   }
 
   @ViewBuilder private var content: some View {
     if session.photos.isEmpty {
-      ContentUnavailableView(
-        "Noch keine Fotos",
-        systemImage: "photo.on.rectangle",
-        description: Text(
-          "Gerahmte Kopien landen in deiner Mediathek. Die Originale bleiben unverändert.")
-      )
+      VStack {
+        ContentUnavailableView(
+          "Noch keine Fotos",
+          systemImage: "photo.on.rectangle",
+          description: Text(
+            "Gerahmte Kopien landen in deiner Mediathek. Die Originale bleiben unverändert.")
+        )
+        if offersReadAccess {
+          ReadAccessOffer(status: readAccess, onChange: accessChanged).padding()
+        }
+      }
     } else {
       ScrollView {
         VStack(alignment: .leading, spacing: 12) {
           if let blocker = session.blocker { LibraryBlockerBanner(blocker: blocker) }
+          if offersReadAccess { ReadAccessOffer(status: readAccess, onChange: accessChanged) }
           StatusLine(summary: session.summary, isPaused: session.isPaused)
           LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)) {
             ForEach(session.photos) { PhotoTile(photo: $0) }
@@ -56,7 +84,8 @@ struct FramingScreen: View {
         maxSelectionCount: nil,
         selectionBehavior: .ordered,
         matching: .images,
-        preferredItemEncoding: .current
+        preferredItemEncoding: .current,
+        photoLibrary: .shared()
       ) {
         Label("Fotos auswählen", systemImage: "photo.badge.plus")
       }
@@ -150,6 +179,37 @@ private struct LibraryBlockerBanner: View {
     .frame(maxWidth: .infinity, alignment: .leading)
     .padding()
     .background(.yellow.opacity(0.15), in: .rect(cornerRadius: 12))
+  }
+}
+
+/// Read access lets a batch go on after the user leaves the app.
+private struct ReadAccessOffer: View {
+  let status: PHAuthorizationStatus
+  let onChange: (PHAuthorizationStatus) -> Void
+  @Environment(\.openURL) private var openURL
+
+  var body: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      Text("Weiterrahmen, wenn du die App verlässt").bold()
+      Text(
+        status == .limited
+          ? "Das klappt nur mit Fotos, die Passepartout sehen darf. Erlaube den Zugriff auf alle Fotos."
+          : "Dafür braucht Passepartout Zugriff auf deine Fotos. Ohne lädt die App Fotos nur, solange sie offen ist."
+      )
+      if status == .notDetermined {
+        Button("Zugriff erlauben") {
+          Task { onChange(await PHPhotoLibrary.requestAuthorization(for: .readWrite)) }
+        }
+      } else {
+        Button("Einstellungen öffnen") {
+          if let settings = URL(string: UIApplication.openSettingsURLString) { openURL(settings) }
+        }
+      }
+    }
+    .font(.subheadline)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding()
+    .background(.blue.opacity(0.1), in: .rect(cornerRadius: 12))
   }
 }
 

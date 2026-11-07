@@ -18,9 +18,13 @@ struct PassepartoutApp: App {
     WindowGroup {
       FramingScreen(session: session)
         .onChange(of: scenePhase) { _, phase in
-          guard phase == .active else { return }
-          session.recheckAccess()
-          keepAlive.appBecameActive()
+          switch phase {
+          case .active:
+            session.appBecameActive()
+            keepAlive.appBecameActive()
+          case .background: session.appMovedToBackground()
+          default: break
+          }
         }
     }
   }

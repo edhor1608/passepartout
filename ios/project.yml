@@ -37,6 +37,9 @@ targets:
         SWIFT_APPROACHABLE_CONCURRENCY: YES
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Passepartout
+        INFOPLIST_KEY_NSPhotoLibraryUsageDescription: >-
+          Mit Zugriff auf deine Fotos lädt Passepartout die Originale selbst und rahmt weiter, wenn
+          du die App verlässt.
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: >-
           Passepartout speichert jedes gerahmte Foto als neues Foto. Deine Originale bleiben
           unverändert.
