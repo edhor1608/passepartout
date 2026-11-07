@@ -89,7 +89,7 @@ struct FramingSessionTests {
       ])
   }
 
-  @Test func aDeniedLibraryKeepsPhotosQueuedUntilResume() async throws {
+  @Test func aDeniedLibraryKeepsPhotosQueuedUntilAccessIsCheckedAgain() async throws {
     await recorder.setBlocker(.denied)
     let session = FramingSession(library: recorder.library)
 
@@ -104,7 +104,7 @@ struct FramingSessionTests {
     #expect(events == ["access", "access"])
 
     await recorder.setBlocker(nil)
-    session.resume()
+    session.recheckAccess()
     await finish(session)
 
     #expect(session.blocker == nil)
@@ -134,7 +134,9 @@ struct FramingSessionTests {
       ])
   }
 
-  @Test func aPauseFinishesThePhotoInFlightAndKeepsTheRestForResume() async throws {
+  /// A stop in system UI pauses the batch. Coming back to the app checks access again, but only
+  /// "Fortsetzen" continues.
+  @Test func aPauseFinishesThePhotoInFlightAndHoldsTheRestUntilAnExplicitResume() async throws {
     let session = FramingSession(library: recorder.library)
     await recorder.onFirstSave { session.pause() }
 
@@ -142,12 +144,36 @@ struct FramingSessionTests {
     await finish(session)
 
     #expect(session.photos.map(\.state.label) == ["saved", "queued", "queued"])
+    #expect(session.isPaused)
+    #expect(!session.isRunning)
+
+    session.recheckAccess()
+
+    #expect(session.isPaused)
     #expect(!session.isRunning)
 
     session.resume()
     await finish(session)
 
     #expect(session.photos.map(\.state.label) == ["saved", "saved", "saved"])
+    #expect(!session.isPaused)
+  }
+
+  /// No "Fortsetzen" without photos to continue: a pause during the last photo, or after the
+  /// batch ended, holds nothing.
+  @Test func aPauseWithNothingQueuedLeavesNothingPaused() async throws {
+    let session = FramingSession(library: recorder.library)
+    await recorder.onFirstSave { session.pause() }
+
+    session.add([try photo("a")])
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["saved"])
+    #expect(!session.isPaused)
+
+    session.pause()
+
+    #expect(!session.isPaused)
   }
 
   @Test func addingAfterAFinishedBatchKeepsOnlyFailuresWorthRetrying() async throws {

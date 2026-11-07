@@ -11,8 +11,11 @@ import Synchronization
 @Observable
 public final class FramingSession {
   public private(set) var photos: [Photo] = []
-  /// Set while the library refuses adds. Queued photos wait for `resume()`.
+  /// Set while the library refuses adds. Queued photos wait for `recheckAccess()`.
   public private(set) var blocker: LibraryBlocker?
+  /// Set by `pause()` during a run. The photo in flight still finishes, and queued photos wait
+  /// for `resume()`, `add` or `retryFailed`. Clears itself once no photo is left queued.
+  public private(set) var isPaused = false
   public var isRunning: Bool { runner != nil }
   public var summary: Summary { Summary(photos) }
 
@@ -20,7 +23,6 @@ public final class FramingSession {
   private let library: PhotoLibrary
   private let stallTimeout: Duration
   private var nextID = 0
-  private var isPaused = false
 
   /// `stallTimeout` is how long a transfer may report no progress before its photo fails.
   public init(library: PhotoLibrary = .system, stallTimeout: Duration = .seconds(60)) {
@@ -48,15 +50,24 @@ public final class FramingSession {
     continueQueue()
   }
 
-  /// Call when the app becomes active: asks the library again and continues queued work.
+  /// Continues a paused batch. Call it only on the user's tap, so a stop in system UI holds
+  /// until the user lifts it.
   public func resume() {
     continueQueue()
   }
 
   /// Lets the photo in flight finish and keeps the rest queued until the next `add`,
-  /// `retryFailed` or `resume`. For when iOS takes the app's background time away.
+  /// `retryFailed` or `resume`. For when iOS or the user stops the batch's background task.
   public func pause() {
+    guard isRunning else { return }
     isPaused = true
+  }
+
+  /// Call when the app becomes active: asks the library again while it refuses adds, since the
+  /// user may have allowed them in Settings. A pause stays.
+  public func recheckAccess() {
+    guard blocker != nil else { return }
+    continueQueue()
   }
 
   /// Lifts a pause and starts the runner unless one is already going.
@@ -72,9 +83,11 @@ public final class FramingSession {
   private func drain() async {
     blocker = await library.requestAddAccess()
     guard blocker == nil else { return }
-    while !isPaused, let photo = photos.first(where: { $0.state == .queued }) {
+    while let photo = photos.first(where: { $0.state == .queued }) {
+      guard !isPaused else { return }
       await process(photo)
     }
+    isPaused = false
   }
 
   private func process(_ photo: Photo) async {

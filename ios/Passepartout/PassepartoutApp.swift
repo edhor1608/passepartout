@@ -19,7 +19,7 @@ struct PassepartoutApp: App {
       FramingScreen(session: session)
         .onChange(of: scenePhase) { _, phase in
           guard phase == .active else { return }
-          session.resume()
+          session.recheckAccess()
           keepAlive.appBecameActive()
         }
     }

@@ -4,7 +4,8 @@ import SwiftUI
 import UIKit
 
 /// The only screen. Every control shows only when it does something: "Fotos auswählen" always,
-/// retry while retryable failures exist, "Einstellungen öffnen" while adds are denied.
+/// "Fortsetzen" while a batch is paused, else retry while retryable failures exist and nothing
+/// runs, "Einstellungen öffnen" while adds are denied.
 struct FramingScreen: View {
   let session: FramingSession
   @State private var picked: [PhotosPickerItem] = []
@@ -34,7 +35,7 @@ struct FramingScreen: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 12) {
           if let blocker = session.blocker { LibraryBlockerBanner(blocker: blocker) }
-          StatusLine(summary: session.summary)
+          StatusLine(summary: session.summary, isPaused: session.isPaused)
           LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)) {
             ForEach(session.photos) { PhotoTile(photo: $0) }
           }
@@ -46,7 +47,10 @@ struct FramingScreen: View {
 
   private var actions: some View {
     HStack {
-      if session.summary.retryable > 0, !session.isRunning {
+      if session.isPaused {
+        Button("Fortsetzen") { session.resume() }
+          .buttonStyle(.bordered)
+      } else if session.summary.retryable > 0, !session.isRunning {
         Button("Erneut versuchen (\(session.summary.retryable))") { session.retryFailed() }
           .buttonStyle(.bordered)
       }
@@ -67,9 +71,10 @@ struct FramingScreen: View {
 
 private struct StatusLine: View {
   let summary: Summary
+  let isPaused: Bool
 
   var body: some View {
-    Text(summary.statusText)
+    Text(isPaused ? "Pausiert · \(summary.statusText)" : summary.statusText)
       .font(.subheadline)
       .foregroundStyle(.secondary)
   }
