@@ -296,8 +296,8 @@ struct FramingSessionTests {
 
   @Test(.timeLimit(.minutes(1)))
   func aSlowDownloadThatKeepsMovingShowsItsProgressAndFinishes() async throws {
-    let session = FramingSession(library: recorder.library, stallTimeout: .milliseconds(600))
-    let slow = SlowSource(file: try photo("a"), steps: 4, interval: .milliseconds(375))
+    let session = FramingSession(library: recorder.library, stallTimeout: .seconds(1))
+    let slow = SlowSource(file: try photo("a"), steps: 8, interval: .milliseconds(500))
     var fractions: [Double] = []
     var unitsWhileLoading: [Int64] = []
     let sampler = Task { @MainActor in
