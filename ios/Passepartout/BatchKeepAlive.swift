@@ -23,8 +23,6 @@ final class BatchKeepAlive {
   private var task: BGContinuedProcessingTask?
   private var isAwaitingTask = false
   private var backgroundTime: UIBackgroundTaskIdentifier = .invalid
-  /// Photos already finished when the task started, so its progress counts only this run.
-  private var finishedBefore = 0
 
   init(session: FramingSession) {
     self.session = session
@@ -96,9 +94,7 @@ final class BatchKeepAlive {
       Task { @MainActor in self?.taskExpired(identifier) }
     }
     task = started
-    let summary = session.summary
-    finishedBefore = summary.total - summary.inProgress
-    report(summary)
+    report(session.summary)
     endBackgroundTime()
   }
 
@@ -118,8 +114,8 @@ final class BatchKeepAlive {
 
   private func report(_ summary: Summary) {
     guard let task else { return }
-    task.progress.totalUnitCount = Int64(summary.total - finishedBefore)
-    task.progress.completedUnitCount = Int64(summary.total - summary.inProgress - finishedBefore)
+    task.progress.totalUnitCount = summary.totalUnits
+    task.progress.completedUnitCount = summary.completedUnits
     task.updateTitle(Self.title, subtitle: summary.statusText)
   }
 

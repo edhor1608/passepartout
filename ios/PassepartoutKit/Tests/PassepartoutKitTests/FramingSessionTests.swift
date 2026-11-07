@@ -52,6 +52,7 @@ struct FramingSessionTests {
     await finish(session)
 
     #expect(session.photos.map(\.state.label) == ["saved", "failed(unreadable)", "saved"])
+    #expect(session.summary.completedUnits == session.summary.totalUnits)
     let saved = await recorder.saved
     #expect(saved == ["a-passepartout.jpg", "c-passepartout.jpg"])
   }
@@ -181,14 +182,20 @@ struct FramingSessionTests {
     #expect(!session.isRunning)
   }
 
+  /// The tile shows the download's fraction, and the batch progress iOS shows moves with it
+  /// although no photo has finished yet.
   @Test(.timeLimit(.minutes(1)))
   func aSlowDownloadThatKeepsMovingShowsItsProgressAndFinishes() async throws {
     let session = FramingSession(library: recorder.library, stallTimeout: .milliseconds(600))
     let slow = SlowSource(file: try photo("a"), steps: 4, interval: .milliseconds(375))
     var fractions: [Double] = []
+    var unitsWhileLoading: [Int64] = []
     let sampler = Task { @MainActor in
       while !Task.isCancelled {
-        if case .loading(let fraction?) = session.photos.first?.state { fractions.append(fraction) }
+        if case .loading(let fraction) = session.photos.first?.state {
+          if let fraction { fractions.append(fraction) }
+          unitsWhileLoading.append(session.summary.completedUnits)
+        }
         try? await Task.sleep(for: .milliseconds(20))
       }
     }
@@ -199,6 +206,10 @@ struct FramingSessionTests {
 
     #expect(session.photos.map(\.state.label) == ["saved"])
     #expect(fractions.contains { $0 > 0 && $0 < 1 }, "\(fractions)")
+    #expect(Set(unitsWhileLoading).count >= 3, "\(unitsWhileLoading)")
+    #expect(unitsWhileLoading == unitsWhileLoading.sorted(), "\(unitsWhileLoading)")
+    #expect(unitsWhileLoading.allSatisfy { $0 < 100 }, "\(unitsWhileLoading)")
+    #expect(session.summary.completedUnits == session.summary.totalUnits)
   }
 
   @Test(

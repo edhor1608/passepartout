@@ -162,6 +162,19 @@ public struct Photo: Identifiable, Sendable {
     public var failure: PhotoFailure? {
       if case .failed(let failure) = self { failure } else { nil }
     }
+
+    /// This photo's share of a batch's progress, out of 100. The download gets most of it,
+    /// since an iCloud original on slow Wi-Fi takes minutes and framing takes about a second.
+    var completedUnits: Int64 {
+      switch self {
+      case .queued: 0
+      case .loading(let fraction?) where fraction > 0: Int64(80 * min(fraction, 1))
+      case .loading: 0
+      case .framing: 80
+      case .saving: 90
+      case .saved, .failed: 100
+      }
+    }
   }
 
   public let id: Int
@@ -198,6 +211,10 @@ public struct Summary: Equatable, Sendable {
   public let saved: Int
   public let failed: Int
   public let retryable: Int
+  /// Progress in hundredths of a photo: 100 for each finished photo, saved or failed, and part
+  /// of 100 for the photo in flight, so a long download moves it before any photo finishes.
+  public let completedUnits: Int64
+  public var totalUnits: Int64 { Int64(total) * 100 }
   public var inProgress: Int { total - saved - failed }
 
   init(_ photos: [Photo]) {
@@ -205,6 +222,7 @@ public struct Summary: Equatable, Sendable {
     saved = photos.count { $0.state.preview != nil }
     failed = photos.count { $0.state.failure != nil }
     retryable = photos.count { $0.state.failure?.isRetryable == true }
+    completedUnits = photos.reduce(0) { $0 + $1.state.completedUnits }
   }
 }
 
