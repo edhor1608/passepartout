@@ -4,22 +4,13 @@ import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 
-/// A finished passepartout image, ready to add to the Photos library.
 struct FramedPhoto: Sendable {
-  /// Baseline JPEG at quality 1.0 with an embedded sRGB profile. Its only other metadata is JFIF
-  /// and ImageIO's own Exif ColorSpace and pixel dimensions, none of it from the source.
   let jpeg: Data
   let preview: CGImage
 }
 
-/// Decode, orient, tone-map to SDR, convert to sRGB, crop and Lanczos-resample to the layout,
-/// composite onto white, encode. Peak footprint measured in a fresh macOS process: about 160 MB
-/// for a 48 MP JPEG or HEIC, 240 MB for a 24 MP JPEG, 360 MB for a 16000x3000 HEIC and 520 MB
-/// for the same panorama as JPEG, which ImageIO decodes in full. So the session runs one photo
-/// at a time.
 @concurrent
 func framePhoto(_ source: SourceFile, borderPx: Int) async throws(PhotoFailure) -> FramedPhoto {
-  // ImageIO and vImage autorelease their buffers; draining per photo keeps a batch at one peak.
   let result = autoreleasepool {
     Result { () throws(PhotoFailure) in try frame(source.url, borderPx: borderPx) }
   }
@@ -46,7 +37,6 @@ private func frame(_ url: URL, borderPx: Int) throws(PhotoFailure) -> FramedPhot
   return FramedPhoto(jpeg: jpeg, preview: try makePreview(jpeg))
 }
 
-/// The primary image of a file, with its size after EXIF orientation. No pixels decoded yet.
 private struct OpenedImage {
   let source: CGImageSource
   let index: Int
@@ -88,17 +78,12 @@ private func frameLayout(_ image: OpenedImage, borderPx: Int) throws(PhotoFailur
     case .invalidInput: throw .unreadable
     }
   }
-  // The TS layout rounds the render rect of extreme ratios such as 1x5 down to zero pixels,
-  // and vImage traps on an empty buffer.
   guard layout.renderWidth > 0, layout.renderHeight > 0 else { throw .tooSmall }
   return layout
 }
 
-/// Twice the long edge the render needs, capped at the source, rounded down to a JPEG DCT step
-/// (the long edge halved up to three times) when that keeps at least 1.5x. ImageIO decodes a JPEG
-/// at a step without a full decode, so a 48 MP JPEG at 4032 instead of 4092 px peaks at 160
-/// instead of 430 MB. On a 6000 px zone plate, Lanczos after a 2x decode is within noise of a full
-/// decode (passband 89.9 vs 90.3) and after a 1.5x decode close to it (89.0).
+/// ImageIO decodes a JPEG at a DCT step, its long edge halved up to three times, without a
+/// full decode.
 func decodeLongEdge(sourceWidth: Int, sourceHeight: Int, layout: FrameLayout) -> Int {
   let cropWidth = layout.sourceCrop?.width ?? sourceWidth
   let cropHeight = layout.sourceCrop?.height ?? sourceHeight
@@ -131,8 +116,6 @@ private func decodeOriented(_ image: OpenedImage, longEdge: Int) throws(PhotoFai
   return decoded
 }
 
-/// Maps the layout crop from oriented-source pixels to decoded pixels. Edges round
-/// independently, so the error stays within half a decoded pixel (0.33 output px at 1.5x).
 private func cropInDecodedPixels(_ crop: PixelRect?, image: OpenedImage, decoded: CGImage)
   -> PixelRect
 {
@@ -149,9 +132,8 @@ private func cropInDecodedPixels(_ crop: PixelRect?, image: OpenedImage, decoded
   return PixelRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
 }
 
-/// Draws the crop of the decoded image into 8-bit premultiplied sRGB, the one colour conversion,
-/// then Lanczos-scales it to exactly the render size. Core Graphics reads every pixel format
-/// ImageIO returns; `vImage_Buffer(cgImage:format:)` rejects the packed 10-bit format of HDR HEIC.
+/// Core Graphics reads every pixel format ImageIO returns; `vImage_Buffer(cgImage:format:)`
+/// rejects the packed 10-bit format of HDR HEIC.
 private func resample(
   _ decoded: CGImage, crop: PixelRect, width: Int, height: Int, colorSpace: CGColorSpace
 ) throws(PhotoFailure) -> CGImage {
@@ -171,8 +153,6 @@ private func resample(
       colorSpace: colorSpace,
       bitmapInfo: CGBitmapInfo(rawValue: alpha))
   else { throw .renderFailed }
-  // The crop counts y from the top and Core Graphics from the bottom, so this offset puts the
-  // crop's top edge on the context's top row.
   converted.draw(
     decoded,
     in: CGRect(
@@ -213,7 +193,6 @@ private func composeOnWhite(_ render: CGImage, layout: FrameLayout, colorSpace: 
 
   context.setFillColor(CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 1))
   context.fill(CGRect(x: 0, y: 0, width: layout.outputWidth, height: layout.outputHeight))
-  // The layout counts y from the top; Core Graphics counts it from the bottom.
   let flippedY = layout.outputHeight - layout.renderOffsetY - layout.renderHeight
   context.draw(
     render,
@@ -237,8 +216,6 @@ private func encodeJPEG(_ canvas: CGImage) throws(PhotoFailure) -> Data {
   return data as Data
 }
 
-/// Every saved photo keeps its preview for the rest of the batch, about 0.4 MB at 360 px. A grid
-/// tile is about 115 pt wide, so 360 px stays sharp at 3x.
 private func makePreview(_ jpeg: Data) throws(PhotoFailure) -> CGImage {
   let options: [CFString: Any] = [
     kCGImageSourceCreateThumbnailFromImageAlways: true,

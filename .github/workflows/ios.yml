@@ -20,21 +20,17 @@ on:
 
 jobs:
   check:
-    # Xcode 26 or newer: Swift 6.2 (@concurrent, default actor isolation) and the iOS 26 SDK.
     runs-on: macos-26
-    # macOS minutes are expensive, and a simulator test can hang instead of failing.
     timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # The runner's default Xcode, never a beta. The log shows which one ran.
       - name: Show Xcode
         run: xcodebuild -version
 
       - name: Install xcodegen
         run: brew install xcodegen
 
-      # The existing Bun CI checks that the layout parity fixture is fresh.
       - name: Check
         run: make -C ios check

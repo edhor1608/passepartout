@@ -5,9 +5,6 @@ import {
   type PrepareImageLayout,
 } from "../src/domain/prepare_image_layout";
 
-// The iOS app ports computePrepareImageLayout to Swift. This test owns the shared fixture the
-// Swift port is checked against. Regenerate after a deliberate layout change:
-//   UPDATE_LAYOUT_PARITY=1 bun test tests/layout_parity.test.ts
 const FIXTURE_URL = new URL(
   "../ios/PassepartoutKit/Tests/PassepartoutKitTests/Resources/layout-parity.json",
   import.meta.url,
@@ -33,16 +30,13 @@ function buildInputs(): LayoutInput[] {
   };
   const borders = [0, 1, DEFAULT_PREPARE_IMAGE_BORDER_PX, 165];
 
-  // The golden cases of prepare_image_layout.test.ts.
   for (const [width, height, border] of GOLDEN_CASES) add(width, height, border);
 
-  // Shrink regime: every size up to 40x40 at the production border.
   for (let width = 1; width <= 40; width += 1) {
     for (let height = 1; height <= 40; height += 1)
       add(width, height, DEFAULT_PREPARE_IMAGE_BORDER_PX);
   }
 
-  // Variant and ratio boundaries at +-1 px around sizes where the layout changes behaviour.
   for (const base of [100, 1000, 1326, 1440, 2046, 4000]) {
     for (const border of borders) {
       for (const [ratioWidth, ratioHeight] of BOUNDARY_RATIOS) {
@@ -53,7 +47,6 @@ function buildInputs(): LayoutInput[] {
     }
   }
 
-  // Camera sizes, both orientations.
   for (const [width, height] of CAMERA_SIZES) {
     for (const border of borders) {
       add(width, height, border);
@@ -61,7 +54,6 @@ function buildInputs(): LayoutInput[] {
     }
   }
 
-  // Log-uniform sizes from a fixed LCG, so the set is identical on every runtime.
   const random = createLcg(0x2545f491);
   for (let index = 0; index < 1000; index += 1) {
     const size = (): number => Math.max(1, Math.round(Math.exp(random() * Math.log(20_000))));
@@ -71,7 +63,6 @@ function buildInputs(): LayoutInput[] {
     add(size(), size(), border ?? DEFAULT_PREPARE_IMAGE_BORDER_PX);
   }
 
-  // Invalid inputs, so the error contract is shared too.
   add(0, 100, DEFAULT_PREPARE_IMAGE_BORDER_PX);
   add(100, 0, DEFAULT_PREPARE_IMAGE_BORDER_PX);
   add(100, 100, -1);
@@ -125,7 +116,6 @@ function toParityCase(input: LayoutInput): ParityCase {
   }
 }
 
-/** One case per line, so a layout change shows up as a reviewable per-case diff. */
 function renderFixture(cases: ParityCase[]): string {
   const lines = cases.map((parityCase) => `    ${JSON.stringify(parityCase)}`).join(",\n");
   return `{\n  "defaultBorderPx": ${DEFAULT_PREPARE_IMAGE_BORDER_PX},\n  "cases": [\n${lines}\n  ]\n}\n`;

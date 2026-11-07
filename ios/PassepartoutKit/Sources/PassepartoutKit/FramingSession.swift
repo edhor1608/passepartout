@@ -5,8 +5,8 @@ import Synchronization
 
 /// Picked photos in, framed copies in the library out.
 ///
-/// The only writer of photo state. One serial runner frames and saves photos in pick order,
-/// so the library order matches the pick and at most one decode is in memory.
+/// One serial runner frames and saves photos in pick order, so the library order matches the
+/// pick and at most one decode is in memory.
 @MainActor
 @Observable
 public final class FramingSession {
@@ -70,7 +70,6 @@ public final class FramingSession {
     continueQueue()
   }
 
-  /// Lifts a pause and starts the runner unless one is already going.
   private func continueQueue() {
     isPaused = false
     guard runner == nil, photos.contains(where: { $0.state == .queued }) else { return }
@@ -108,8 +107,6 @@ public final class FramingSession {
     }
   }
 
-  /// The picker keeps a stalled iCloud download pending without a deadline, which would hold up
-  /// every photo behind it. A watchdog cancels the transfer once it stops moving.
   private func load(_ photo: Photo) async throws(PhotoFailure) -> SourceFile {
     let result = await withCheckedContinuation { continuation in
       let handover = Handover(continuation)
@@ -123,8 +120,6 @@ public final class FramingSession {
     }
   }
 
-  /// Counts polls rather than clock time, so time spent suspended in the background is not a
-  /// stall.
   private func watch(_ progress: Progress, of id: Photo.ID, until handover: Handover) async {
     let poll = min(.milliseconds(500), stallTimeout / 4)
     var fraction = progress.fractionCompleted
@@ -176,8 +171,6 @@ public struct Photo: Identifiable, Sendable {
       if case .failed(let failure) = self { failure } else { nil }
     }
 
-    /// This photo's share of a batch's progress, out of 100. The download gets most of it,
-    /// since an iCloud original on slow Wi-Fi takes minutes and framing takes about a second.
     var completedUnits: Int64 {
       switch self {
       case .queued: 0
@@ -218,7 +211,6 @@ public enum PhotoFailure: Error, Equatable, Sendable {
   }
 }
 
-/// Counts derived from `photos` on every read, so there is no second copy to keep in sync.
 public struct Summary: Equatable, Sendable {
   public let total: Int
   public let saved: Int
@@ -239,8 +231,6 @@ public struct Summary: Equatable, Sendable {
   }
 }
 
-/// Resumes the load with whichever comes first, the transfer's completion or the watchdog. A
-/// completion that comes later is dropped, which releases its file and so deletes the copy.
 private final class Handover: Sendable {
   private let continuation: Mutex<CheckedContinuation<Result<SourceFile?, any Error>, Never>?>
 
@@ -250,7 +240,6 @@ private final class Handover: Sendable {
 
   var isFinished: Bool { continuation.withLock { $0 == nil } }
 
-  /// `false` when the load was already resumed.
   @discardableResult
   func finish(_ result: Result<SourceFile?, any Error>) -> Bool {
     guard let continuation = continuation.withLock({ $0.take() }) else { return false }
@@ -261,7 +250,6 @@ private final class Handover: Sendable {
 
 private struct TransferStalled: Error {}
 
-/// A full disk as Foundation or POSIX reports it, also when the picker wraps it in its own error.
 private func isOutOfSpace(_ error: any Error) -> Bool {
   switch error {
   case let error as CocoaError where error.code == .fileWriteOutOfSpace: true

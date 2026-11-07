@@ -1,4 +1,3 @@
-# iOS app commands: `make -C ios <target>`. `make check` is the gate before a PR.
 SHELL := /bin/bash
 BUILD := $(CURDIR)/.build
 DERIVED := $(BUILD)/DerivedData
@@ -10,12 +9,9 @@ APP := $(DERIVED)/Build/Products/Debug-iphonesimulator/Passepartout.app
 project:
 	xcodegen generate --spec project.yml --quiet
 
-# Every kit test on the Mac host. Seconds; the inner loop.
 test:
 	swift test --package-path PassepartoutKit --scratch-path $(BUILD)/SwiftPM
 
-# The same tests on the iOS simulator: ImageIO codecs and colour handling as shipped. Runs on
-# SIM_ID=<udid>, else on the simulator pick-simulator.awk chooses from simctl's device list.
 # pipefail is set here because macOS ships GNU make 3.81, which ignores .SHELLFLAGS.
 test-ios:
 	set -o pipefail; sim="$(SIM_ID)"; [ -n "$$sim" ] || sim=$$(xcrun simctl list devices available \
@@ -26,13 +22,11 @@ test-ios:
 	    -destination "platform=iOS Simulator,id=$$sim" -derivedDataPath $(DERIVED) \
 	    2>&1 | grep -E 'error:|✘|Test run with|\*\* TEST'
 
-# Unsigned simulator build of the app.
 build: project
 	xcodebuild build -project Passepartout.xcodeproj -scheme Passepartout -quiet \
 	  -destination 'generic/platform=iOS Simulator' -derivedDataPath $(DERIVED) \
 	  CODE_SIGNING_ALLOWED=NO
 
-# Signed build for a real iPhone: automatic signing with the team in project.yml.
 build-device: project
 	xcodebuild build -project Passepartout.xcodeproj -scheme Passepartout -quiet \
 	  -destination 'generic/platform=iOS' -derivedDataPath $(DERIVED) -allowProvisioningUpdates
@@ -45,7 +39,6 @@ format:
 
 check: lint test test-ios build
 
-# Install and launch on the booted simulator.
 run: build
 	xcrun simctl install booted $(APP)
 	xcrun simctl launch booted me.edhor.passepartout

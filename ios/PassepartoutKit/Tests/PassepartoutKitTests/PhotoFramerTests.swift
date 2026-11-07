@@ -6,15 +6,13 @@ import UniformTypeIdentifiers
 
 @testable import PassepartoutKit
 
-// Serialized: on the simulator, HEIC encodes deadlock once as many run at once as there are CPU
-// cores, and the large sources need about 200 MB each.
+// The iOS simulator deadlocks once as many HEIC encodes run at once as it has CPU cores.
 @Suite(.serialized)
 struct PhotoFramerTests {
   enum Corner: CaseIterable {
     case topLeft, topRight, bottomRight, bottomLeft
   }
 
-  /// Where a marker stored in the top-left corner is displayed under each EXIF orientation.
   static let displayedCorner: [Int: Corner] = [
     1: .topLeft, 2: .topRight, 3: .bottomRight, 4: .bottomLeft,
     5: .topLeft, 6: .topRight, 7: .bottomRight, 8: .bottomLeft,
@@ -89,8 +87,6 @@ struct PhotoFramerTests {
     #expect(output[output.width - 1, output.height - 1] == .white)
   }
 
-  /// Camera JPEGs and HEICs carry a small embedded thumbnail that ImageIO hands back for any
-  /// size request unless told otherwise. Framed from it, 8 px stripes would blur into flat grey.
   @Test(arguments: [UTType.jpeg, .heic])
   func framesTheFullImageNotItsEmbeddedThumbnail(type: UTType) async throws {
     let directory = try TestDirectory()
@@ -141,7 +137,6 @@ struct PhotoFramerTests {
 
     let jpeg = try await framed(try directory.write(source, as: .png)).jpeg
 
-    // `Pixels` converts to sRGB itself, so it would also pass a correctly tagged P3 JPEG.
     let encoded = try #require(CGImageSourceCreateWithData(jpeg as CFData, nil))
     let image = try #require(CGImageSourceCreateImageAtIndex(encoded, 0, nil))
     #expect(image.colorSpace?.name == CGColorSpace.sRGB)
@@ -149,12 +144,8 @@ struct PhotoFramerTests {
     #expect(output[output.width / 2, output.height / 2].isClose(to: target, within: 2))
   }
 
-  /// The fixture is a 600x400 ISO HDR HEIC encoded on macOS: sRGB gray (128, 128, 128) with a
-  /// strip four times brighter than white on the right. It is pre-encoded because the iOS
-  /// simulator's HEIC encoder writes linear values for this request. It proves that a 10-bit
-  /// HEIC decodes, not the tone mapping: drawn into 8-bit sRGB, PQ, HLG and gain-map HEICs give
-  /// the same pixels with and without `kCGImageSourceDecodeToSDR` on macOS.
   @Test func decodesA10BitHEIC() async throws {
+    // Encoded on macOS: the iOS simulator's HEIC encoder writes linear values for ISO HDR.
     let url = try #require(Bundle.module.url(forResource: "hdr-10bit", withExtension: "heic"))
     let source = try #require(CGImageSourceCreateWithURL(url as CFURL, nil))
     let depth = try properties(source)["Depth"] as? Int
@@ -229,9 +220,6 @@ struct PhotoFramerTests {
     #expect(try Pixels(photo.preview)[0, 0] == .white)
   }
 
-  /// A landscape 48 MP JPEG decodes at half size, a DCT step at 1.97x the render. Upright, its
-  /// half size is above 2x and its quarter below 1.5x, and every step of 6000 px is below 1.5x,
-  /// so both keep 2x. Sources smaller than 2x decode at their own size.
   @Test(arguments: [
     (8064, 6048, 4032), (6048, 8064, 3536), (6000, 4000, 4094), (3000, 2000, 3000),
     (1200, 900, 1200),
@@ -248,7 +236,6 @@ struct PhotoFramerTests {
     await #expect(throws: PhotoFailure.unreadable) { try await framed(url) }
   }
 
-  /// 3x2 leaves no room for the border. 1x5 fits a canvas but scales to zero pixels wide.
   @Test(arguments: [(3, 2), (1, 5)])
   func rejectsASourceTooSmallForTheBorder(width: Int, height: Int) async throws {
     let directory = try TestDirectory()

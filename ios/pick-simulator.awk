@@ -1,7 +1,3 @@
-# Reads `xcrun simctl list devices available` and prints the UDID of a booted iPhone simulator,
-# else of the first iPhone on the newest iOS runtime. Only runtimes from the iOS 26 deployment
-# target up to `sdk`, the SDK version of this Xcode, count. Prints an empty line when there is
-# none. Used by `make test-ios`.
 function version(text, parts) { split(text, parts, "."); return parts[1] * 100 + parts[2] }
 /^-- iOS / { runtime = version($3); next }
 /^-- / { runtime = 0; next }

@@ -1,6 +1,3 @@
-// The boundary to the Photos system: picker input, temp-file ownership, add-only output.
-// Photos types are parsed into kit types here; the session never sees PhotoKit.
-
 import CoreTransferable
 import Foundation
 import Photos
@@ -34,7 +31,6 @@ extension PhotosPickerItem: PhotoSource {
 /// file, so every exit from processing a photo cleans up, thrown errors included.
 public final class SourceFile: Sendable {
   let url: URL
-  /// "IMG_1234-passepartout.jpg", so the copy is easy to match with its original.
   let suggestedOutputName: String
 
   private static let directory = FileManager.default.temporaryDirectory.appending(
@@ -76,7 +72,6 @@ public enum LibraryBlocker: Equatable, Sendable {
   /// Parental controls or device management. Settings cannot change it.
   case restricted
 
-  /// `nil` when adds are allowed. A status newer than this code blocks until the code knows it.
   static func blocking(_ status: PHAuthorizationStatus) -> LibraryBlocker? {
     switch status {
     case .authorized, .limited: nil

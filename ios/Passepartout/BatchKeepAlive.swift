@@ -4,23 +4,11 @@ import PassepartoutKit
 import UIKit
 import os
 
-/// The one place that decides how a running batch gets time from iOS.
-///
-/// Auto-lock is off while a batch runs, because locking suspends the app. Each run asks for a
-/// continued-processing task, which keeps the app running in the background and shows the
-/// progress in system UI. Background time from `beginBackgroundTask` holds the app until the task
-/// launches. If iOS declines the task, that background time lasts about 30 s, after which iOS
-/// suspends the process and the same runner continues on return. When the task expires, the photo
-/// in flight finishes and the batch stays paused until the user continues it in the app. A kill
-/// loses the queue; saved photos stay saved.
 @MainActor
 final class BatchKeepAlive {
-  /// What holds the running batch. `nil` while no batch runs or after its task expired.
   private enum Grant {
-    /// Submitted, not launched yet. Background time holds the app meanwhile.
     case awaiting(identifier: String)
     case task(BGContinuedProcessingTask)
-    /// Only background time, until iOS suspends the app.
     case declined
   }
 
@@ -33,16 +21,11 @@ final class BatchKeepAlive {
   private var grant: Grant?
   private var backgroundTime: UIBackgroundTaskIdentifier = .invalid
 
-  /// Follows the session for the app's lifetime, so a scene that iOS disconnects cannot leave
-  /// auto-lock off or a finished task open. Observation runs without SwiftUI, so it keeps
-  /// following the session while the app is in the background.
   init(session: FramingSession) {
     self.session = session
     Task { await followSession() }
   }
 
-  /// Each change only triggers a look at the session as it is now. A value that arrives late
-  /// could otherwise ask for a new task right after one expired.
   private func followSession() async {
     let changes = Observations {
       (self.session.isRunning, self.session.isPaused, self.session.summary)
@@ -57,8 +40,6 @@ final class BatchKeepAlive {
     }
   }
 
-  /// Asks iOS again if it declined the task, and renews the background time that waits for a
-  /// task that has not launched yet.
   func appBecameActive() {
     guard session.isRunning, !session.isPaused else { return }
     switch grant {
@@ -127,8 +108,7 @@ final class BatchKeepAlive {
     endBackgroundTime()
   }
 
-  /// A stop in system UI expires the task the same way iOS does, with no reason given. So the
-  /// batch pauses either way, and only the user continues it, which asks for a new task.
+  /// A stop in system UI expires the task the same way iOS does, with no reason given.
   private func taskExpired(_ identifier: String) {
     guard case .task(let task)? = grant, task.identifier == identifier else { return }
     Self.log.info("continued processing expired: \(identifier, privacy: .public)")

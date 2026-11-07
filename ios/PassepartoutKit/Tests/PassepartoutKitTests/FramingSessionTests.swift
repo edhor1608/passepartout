@@ -5,8 +5,6 @@ import Testing
 
 @testable import PassepartoutKit
 
-/// The session through its public surface, with synthetic files as picked photos and a
-/// recording library. The real `framePhoto` runs on small images.
 @MainActor
 struct FramingSessionTests {
   let directory: TestDirectory
@@ -134,8 +132,6 @@ struct FramingSessionTests {
       ])
   }
 
-  /// A stop in system UI pauses the batch. Coming back to the app checks access again, but only
-  /// "Fortsetzen" continues.
   @Test func aPauseFinishesThePhotoInFlightAndHoldsTheRestUntilAnExplicitResume() async throws {
     let session = FramingSession(library: recorder.library)
     await recorder.onFirstSave { session.pause() }
@@ -159,8 +155,6 @@ struct FramingSessionTests {
     #expect(!session.isPaused)
   }
 
-  /// No "Fortsetzen" without photos to continue: a pause during the last photo, or after the
-  /// batch ended, holds nothing.
   @Test func aPauseWithNothingQueuedLeavesNothingPaused() async throws {
     let session = FramingSession(library: recorder.library)
     await recorder.onFirstSave { session.pause() }
@@ -208,8 +202,6 @@ struct FramingSessionTests {
     #expect(!session.isRunning)
   }
 
-  /// The tile shows the download's fraction, and the batch progress iOS shows moves with it
-  /// although no photo has finished yet.
   @Test(.timeLimit(.minutes(1)))
   func aSlowDownloadThatKeepsMovingShowsItsProgressAndFinishes() async throws {
     let session = FramingSession(library: recorder.library, stallTimeout: .milliseconds(600))
@@ -310,11 +302,9 @@ struct LibraryBlockerTests {
   }
 }
 
-/// A synthetic file as a picked photo.
 struct FixtureSource: PhotoSource {
   let url: URL
   let recorder: Recorder
-  /// Loads that throw before one succeeds, like an iCloud photo while offline.
   var failedLoads = 0
 
   func loadOriginal(
@@ -342,7 +332,6 @@ struct FixtureSource: PhotoSource {
   }
 }
 
-/// A handover that fails with `error`, like a copy into a full disk.
 struct FailingSource: PhotoSource {
   let error: any Error
 
@@ -354,8 +343,6 @@ struct FailingSource: PhotoSource {
   }
 }
 
-/// A download that never moves, like an iCloud original on a dead connection. The test can
-/// complete it after the session gave up on it.
 final class StalledSource: PhotoSource {
   let progress = Progress(totalUnitCount: 100)
   private let completion = Mutex<(@Sendable (Result<SourceFile?, any Error>) -> Void)?>(nil)
@@ -367,8 +354,6 @@ final class StalledSource: PhotoSource {
     return progress
   }
 
-  /// Hands over a copy of `url` the way the picker might after a cancel. Returns where the copy
-  /// was.
   func completeLate(copying url: URL) throws -> URL {
     let file = try SourceFile(copying: url)
     let copy = file.url
@@ -377,8 +362,6 @@ final class StalledSource: PhotoSource {
   }
 }
 
-/// A download that moves one step per interval. Each pause is shorter than the stall timeout,
-/// all of them together are longer.
 struct SlowSource: PhotoSource {
   let file: FixtureSource
   let steps: Int64
@@ -403,7 +386,6 @@ struct SlowSource: PhotoSource {
   }
 }
 
-/// What the session asked of its sources and its library, in order.
 actor Recorder {
   private(set) var events: [String] = []
   private(set) var saved: [String] = []
@@ -430,7 +412,6 @@ actor Recorder {
     firstSaveHook = hook
   }
 
-  /// Returns how often the event happened before.
   func log(_ event: String) -> Int {
     defer { events.append(event) }
     return events.count { $0 == event }

@@ -3,8 +3,6 @@ import Testing
 
 @testable import PassepartoutKit
 
-/// tests/layout_parity.test.ts (Bun) generates the fixture from the TypeScript layout and fails
-/// when it is stale. This suite fails when the Swift port disagrees with it.
 struct FrameLayoutParityTests {
   struct Fixture: Decodable {
     struct Case: Decodable {

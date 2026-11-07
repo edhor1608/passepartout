@@ -1,5 +1,3 @@
-# Source of truth for the Xcode project. The generated Passepartout.xcodeproj is gitignored;
-# `make project` regenerates it. All logic and tests live in the PassepartoutKit package.
 name: Passepartout
 options:
   bundleIdPrefix: me.edhor
@@ -28,10 +26,7 @@ targets:
     info:
       path: Passepartout/Info.plist
       properties:
-        # One continued-processing task per batch, so each needs its own identifier.
         BGTaskSchedulerPermittedIdentifiers: [$(PRODUCT_BUNDLE_IDENTIFIER).framing.*]
-        # Apple's headers do not say whether continued processing needs this mode. Declaring it
-        # costs nothing, and a missing mode would silently cap a batch at ~30 s in the background.
         UIBackgroundModes: [processing]
     settings:
       base:

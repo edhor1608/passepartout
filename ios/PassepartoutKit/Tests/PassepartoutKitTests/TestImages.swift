@@ -35,7 +35,6 @@ struct RGB: Equatable, CustomStringConvertible {
   }
 }
 
-/// Draws a synthetic image. The closure draws with a top-left origin, like the layout.
 func makeImage(
   width: Int, height: Int, colorSpace name: CFString = CGColorSpace.sRGB, alpha: Bool = false,
   draw: (CGContext) -> Void
@@ -59,7 +58,6 @@ extension CGContext {
   }
 }
 
-/// A temporary directory for one test's source files, deleted with the object.
 final class TestDirectory {
   let url: URL
 
@@ -113,7 +111,6 @@ final class TestDirectory {
   }
 }
 
-/// Decoded sRGB pixels of an image, addressed from the top-left.
 struct Pixels {
   let width: Int
   let height: Int

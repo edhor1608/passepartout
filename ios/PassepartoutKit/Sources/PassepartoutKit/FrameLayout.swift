@@ -1,10 +1,3 @@
-// Port of src/domain/prepare_image_layout.ts, held equal to it by the generated parity fixture
-// (FrameLayoutParityTests). Names follow the TS so the two files diff function by function.
-// Every TS division is a Double division and every `Math.round` is `jsRound`: both languages
-// compute in IEEE-754 doubles, so the same operations give the same bits.
-
-/// The full-size border in pixels. Must equal the TS `DEFAULT_PREPARE_IMAGE_BORDER_PX`, which
-/// the parity fixture carries.
 let defaultBorderPx = 57
 
 struct PixelRect: Equatable, Sendable, Decodable {
@@ -16,7 +9,6 @@ struct PixelRect: Equatable, Sendable, Decodable {
 
 enum FrameLayoutError: String, Error, Equatable, Sendable, Decodable {
   case invalidInput
-  /// No same-ratio canvas fits the border without upscaling the source.
   case sourceTooSmall
 }
 
@@ -36,12 +28,10 @@ struct FrameLayout: Equatable, Sendable, Decodable {
   let renderHeight: Int
   let renderOffsetX: Int
   let renderOffsetY: Int
-  /// The region of the oriented source that fills the render rect. `nil` is the whole source.
   let sourceCrop: PixelRect?
 }
 
 extension FrameLayout {
-  /// `computePrepareImageLayout`. Source dimensions are after EXIF orientation.
   init(sourceWidth: Int, sourceHeight: Int, borderPx: Int) throws(FrameLayoutError) {
     guard sourceWidth > 0, sourceHeight > 0, borderPx >= 0 else { throw .invalidInput }
     let source = SourceSize(width: sourceWidth, height: sourceHeight)

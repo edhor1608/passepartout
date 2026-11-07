@@ -3,9 +3,6 @@ import PhotosUI
 import SwiftUI
 import UIKit
 
-/// The only screen. Every control shows only when it does something: "Fotos auswählen" always,
-/// "Fortsetzen" while a batch is paused, else retry while retryable failures exist and nothing
-/// runs, "Einstellungen öffnen" while adds are denied.
 struct FramingScreen: View {
   let session: FramingSession
   @State private var picked: [PhotosPickerItem] = []
@@ -81,7 +78,6 @@ private struct StatusLine: View {
 }
 
 extension Summary {
-  /// "3 von 12 gespeichert" while photos wait or run, "12 Fotos gespeichert" when done.
   var statusText: String {
     if inProgress > 0 { return "\(saved) von \(total) gespeichert" }
     let savedText = saved == 1 ? "1 Foto gespeichert" : "\(saved) Fotos gespeichert"
@@ -89,7 +85,6 @@ extension Summary {
   }
 }
 
-/// The framed preview on a grey backdrop, so its white border reads, with the photo's state.
 private struct PhotoTile: View {
   let photo: Photo
 
