@@ -10,6 +10,8 @@ bun run prepare-image <input> --out <file-path-or-directory> [--border-px <integ
 
 The command accepts PNG, JPEG, and TIFF images or a directory of those images, places each image on a white canvas, and exports high-quality baseline sRGB JPEGs for manual Instagram app upload.
 
+The iPhone app in `ios/` applies the same layout to photos from the Photos library. See [iOS App](#ios-app).
+
 ## Compatibility
 
 Add compatibility code only for a documented consumer or an explicit
@@ -55,6 +57,24 @@ bun run prepare-image --help
 - `src/domain/prepare_image_layout.ts`: pure target, border, crop, and contain math.
 - `src/domain/output_path.ts`: `.jpg` normalization, parent directory creation, and suffixing.
 - `src/domain/media_process.ts`: packaged FFmpeg/ffprobe process boundary.
+
+## iOS App
+
+`ios/` holds a SwiftUI iPhone app that frames photos picked from the Photos library and saves each result as a new photo. Its layout is a Swift port of `src/domain/prepare_image_layout.ts`. `tests/layout_parity.test.ts` generates the fixture the port must match. After a deliberate layout change, regenerate it with `UPDATE_LAYOUT_PARITY=1 bun test tests/layout_parity.test.ts`.
+
+The app needs Xcode 26 or newer and `xcodegen` (`brew install xcodegen`). The kit tests run on the Mac host, so `check` and `test` also need macOS 26 or newer.
+
+```bash
+make -C ios check         # swift-format lint, kit tests on the Mac and the simulator, app build
+make -C ios test          # kit tests on the Mac host only
+make -C ios run           # build, install, and launch on the booted simulator
+make -C ios build-device  # signed build for a real iPhone
+make -C ios format        # apply swift-format
+```
+
+- `ios/PassepartoutKit/`: all logic and tests: layout port, photo framer, session, Photos bridge.
+- `ios/Passepartout/`: the SwiftUI app shell.
+- `ios/project.yml`: the xcodegen spec. The generated `ios/Passepartout.xcodeproj` is gitignored.
 
 ## Branch Knowledge
 

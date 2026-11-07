@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "lineLength": 100,
+  "indentation": { "spaces": 2 },
+  "rules": {
+    "NeverForceUnwrap": true,
+    "NeverUseForceTry": true,
+    "NeverUseImplicitlyUnwrappedOptionals": true,
+    "AlwaysUseLiteralForEmptyCollectionInit": true,
+    "OmitExplicitReturns": true,
+    "UseEarlyExits": true
+  }
+}

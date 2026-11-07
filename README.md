@@ -79,6 +79,20 @@ The integration test fixture helpers call system `ffmpeg` and `ffprobe`, so loca
 - `src/domain/media_process.ts`: FFmpeg/ffprobe process boundary.
 - `tests/integration/prepare_image.integration.test.ts`: CLI and FFmpeg integration coverage.
 
+## iOS App
+
+`ios/` contains Passepartout for iPhone. Pick photos from the Photos library, and the app saves a framed copy of each one as a new photo, dated when it is saved. The originals stay unchanged. It uses the CLI's layout and `57px` border, held equal by a shared test fixture. It reads every format Photos stores, including HEIC and RAW, and needs permission to add photos. If you also allow access to all photos, a batch keeps running while you switch to another app, and iOS shows its progress. Without that access, the app loads photos only while it is open. If iOS ends this background work, or you stop it in the system UI, the photo in progress finishes and the batch pauses. Tap **Fortsetzen** in the app to continue with the rest. If iOS does not give the batch background work at all, iOS suspends the app about 30 seconds after you leave it, and the batch continues when you return.
+
+The app runs on iPhone with iOS 26 or newer. To install it on your iPhone:
+
+1. Install Xcode 26 or newer and xcodegen: `brew install xcodegen`.
+2. Generate the Xcode project: `make -C ios project`.
+3. Open `ios/Passepartout.xcodeproj`, connect the iPhone, and select it as the run destination.
+4. Click **Run**. Xcode signs the app with automatic signing for team `385HM7FDCL`.
+5. If the iPhone asks for it, turn on **Developer Mode** in **Settings > Privacy & Security**, then run again.
+
+Before a PR, run `make -C ios check`. It lints, runs the kit tests on the Mac and on the simulator, and builds the app.
+
 ## Docs
 
 - `docs/v1_split_plan.md`: product contract and split plan.

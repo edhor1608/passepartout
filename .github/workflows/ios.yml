@@ -1,0 +1,36 @@
+name: iOS
+
+on:
+  pull_request:
+    paths:
+      - "ios/**"
+      - "src/domain/prepare_image_layout.ts"
+      - "src/domain/prepare_image.ts"
+      - "tests/layout_parity.test.ts"
+      - ".github/workflows/ios.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "ios/**"
+      - "src/domain/prepare_image_layout.ts"
+      - "src/domain/prepare_image.ts"
+      - "tests/layout_parity.test.ts"
+      - ".github/workflows/ios.yml"
+
+jobs:
+  check:
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Xcode
+        run: xcodebuild -version
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Check
+        run: make -C ios check

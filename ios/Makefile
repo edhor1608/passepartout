@@ -1,0 +1,44 @@
+SHELL := /bin/bash
+BUILD := $(CURDIR)/.build
+DERIVED := $(BUILD)/DerivedData
+SWIFT_SOURCES := PassepartoutKit/Package.swift PassepartoutKit/Sources PassepartoutKit/Tests Passepartout
+APP := $(DERIVED)/Build/Products/Debug-iphonesimulator/Passepartout.app
+
+.PHONY: project test test-ios build build-device lint format check run
+
+project:
+	xcodegen generate --spec project.yml --quiet
+
+test:
+	swift test --package-path PassepartoutKit --scratch-path $(BUILD)/SwiftPM
+
+# pipefail is set here because macOS ships GNU make 3.81, which ignores .SHELLFLAGS.
+test-ios:
+	set -o pipefail; sim="$(SIM_ID)"; [ -n "$$sim" ] || sim=$$(xcrun simctl list devices available \
+	  | awk -v sdk="$$(xcrun --sdk iphonesimulator --show-sdk-version)" -f pick-simulator.awk); \
+	  [ -n "$$sim" ] || { echo "error: no iPhone simulator; pass SIM_ID=<udid>" >&2; exit 1; }; \
+	  echo "simulator $$sim"; \
+	  cd PassepartoutKit && xcodebuild test -scheme PassepartoutKit \
+	    -destination "platform=iOS Simulator,id=$$sim" -derivedDataPath $(DERIVED) \
+	    2>&1 | grep -E 'error:|✘|Test run with|\*\* TEST'
+
+build: project
+	xcodebuild build -project Passepartout.xcodeproj -scheme Passepartout -quiet \
+	  -destination 'generic/platform=iOS Simulator' -derivedDataPath $(DERIVED) \
+	  CODE_SIGNING_ALLOWED=NO
+
+build-device: project
+	xcodebuild build -project Passepartout.xcodeproj -scheme Passepartout -quiet \
+	  -destination 'generic/platform=iOS' -derivedDataPath $(DERIVED) -allowProvisioningUpdates
+
+lint:
+	xcrun swift-format lint --strict --recursive --parallel $(SWIFT_SOURCES)
+
+format:
+	xcrun swift-format format --in-place --recursive --parallel $(SWIFT_SOURCES)
+
+check: lint test test-ios build
+
+run: build
+	xcrun simctl install booted $(APP)
+	xcrun simctl launch booted me.edhor.passepartout
