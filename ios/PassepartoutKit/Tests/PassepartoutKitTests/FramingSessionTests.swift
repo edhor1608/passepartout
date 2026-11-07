@@ -155,6 +155,30 @@ struct FramingSessionTests {
     #expect(!session.isPaused)
   }
 
+  @Test func checkingAccessAgainDoesNotLiftAPause() async throws {
+    await recorder.setBlocker(.denied)
+    let session = FramingSession(library: recorder.library)
+
+    session.add([try photo("a")])
+    session.pause()
+    await finish(session)
+
+    #expect(session.blocker == .denied)
+    #expect(session.isPaused)
+
+    await recorder.setBlocker(nil)
+    session.recheckAccess()
+    await finish(session)
+
+    #expect(session.isPaused)
+    #expect(session.photos.map(\.state.label) == ["queued"])
+
+    session.resume()
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["saved"])
+  }
+
   @Test func aPauseWithNothingQueuedLeavesNothingPaused() async throws {
     let session = FramingSession(library: recorder.library)
     await recorder.onFirstSave { session.pause() }

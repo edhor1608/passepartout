@@ -66,7 +66,7 @@ public final class FramingSession {
   /// Call when the app becomes active: asks the library again while it refuses adds, since the
   /// user may have allowed them in Settings. A pause stays.
   public func recheckAccess() {
-    guard blocker != nil else { return }
+    guard blocker != nil, !isPaused else { return }
     continueQueue()
   }
 
