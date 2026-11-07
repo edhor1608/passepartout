@@ -21,7 +21,8 @@ final class BatchKeepAlive {
 
   private let session: FramingSession
   private var task: BGContinuedProcessingTask?
-  private var isAwaitingTask = false
+  /// The submitted request whose task has not launched yet.
+  private var awaitedIdentifier: String?
   private var backgroundTime: UIBackgroundTaskIdentifier = .invalid
 
   /// Follows the session for the app's lifetime, so a scene that iOS disconnects cannot leave
@@ -52,7 +53,10 @@ final class BatchKeepAlive {
 
   private func holdTime() {
     UIApplication.shared.isIdleTimerDisabled = true
-    guard task == nil, !isAwaitingTask else { return }
+    guard task == nil else { return }
+    // Covers the wait for the launch, and is all a run gets if iOS declines or never launches it.
+    beginBackgroundTime()
+    guard awaitedIdentifier == nil else { return }
     let identifier = "\(Self.identifierPrefix).\(UUID().uuidString)"
     let request = BGContinuedProcessingTaskRequest(
       identifier: identifier, title: Self.title, subtitle: session.summary.statusText)
@@ -66,29 +70,33 @@ final class BatchKeepAlive {
     do {
       guard registered else { throw BGTaskScheduler.Error(.notPermitted) }
       try BGTaskScheduler.shared.submit(request)
-      isAwaitingTask = true
+      awaitedIdentifier = identifier
       Self.log.info("continued processing submitted: \(identifier, privacy: .public)")
     } catch {
       Self.log.info("continued processing declined: \(error, privacy: .public)")
-      beginBackgroundTime()
     }
   }
 
   private func releaseTime() {
     Self.log.info("batch time released")
     UIApplication.shared.isIdleTimerDisabled = false
+    if let awaitedIdentifier {
+      BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: awaitedIdentifier)
+      self.awaitedIdentifier = nil
+    }
     task?.setTaskCompleted(success: true)
     task = nil
     endBackgroundTime()
   }
 
   private func taskStarted(_ started: BGTask) {
-    isAwaitingTask = false
-    guard let started = started as? BGContinuedProcessingTask, session.isRunning, task == nil
+    guard let started = started as? BGContinuedProcessingTask,
+      started.identifier == awaitedIdentifier, session.isRunning
     else {
       started.setTaskCompleted(success: true)
       return
     }
+    awaitedIdentifier = nil
     Self.log.info("continued processing started: \(started.identifier, privacy: .public)")
     let identifier = started.identifier
     // iOS does not say which queue runs this; a main-actor closure would trap off the main queue.
