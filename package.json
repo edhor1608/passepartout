@@ -13,7 +13,6 @@
     "test": "bun test --timeout 30000",
     "test:unit": "bun test tests/*.test.ts",
     "test:fast": "bun run test:unit && bun test --timeout 30000 tests/integration/prepare_image.integration.test.ts",
-    "test:ci": "bun run check",
     "test:integration": "bun test --timeout 30000 tests/integration/prepare_image.integration.test.ts",
     "test:all": "bun test --timeout 30000"
   },
