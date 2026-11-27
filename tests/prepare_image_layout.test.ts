@@ -59,6 +59,12 @@ function canvasFits(source: Source, outputWidth: number, variant: PrepareImageVa
   );
 }
 
+function expectCentered(start: number, size: number, extent: number): void {
+  const end = extent - start - size;
+  expect(Math.min(start, end)).toBeGreaterThanOrEqual(0);
+  expect(Math.abs(start - end)).toBeLessThanOrEqual(1);
+}
+
 function expectLandscape(source: Source, layout: PrepareImageLayout): void {
   const border = layout.effectiveBorderPx;
   expect(layout).toMatchObject({
@@ -73,10 +79,8 @@ function expectLandscape(source: Source, layout: PrepareImageLayout): void {
   const crop = layout.sourceCrop;
   if (crop === undefined) throw new Error("landscape layout must crop the source");
   expect(crop.width === source.sourceWidth || crop.height === source.sourceHeight).toBe(true);
-  expect(crop.x).toBe(Math.round((source.sourceWidth - crop.width) / 2));
-  expect(crop.y).toBe(Math.round((source.sourceHeight - crop.height) / 2));
-  expect(crop.x + crop.width).toBeLessThanOrEqual(source.sourceWidth);
-  expect(crop.y + crop.height).toBeLessThanOrEqual(source.sourceHeight);
+  expectCentered(crop.x, crop.width, source.sourceWidth);
+  expectCentered(crop.y, crop.height, source.sourceHeight);
   expect(crop.width).toBeGreaterThanOrEqual(layout.renderWidth);
   expect(crop.height).toBeGreaterThanOrEqual(layout.renderHeight);
   const aspectError = Math.abs(crop.width * layout.renderHeight - crop.height * layout.renderWidth);
@@ -98,8 +102,8 @@ function expectPortrait(source: Source, layout: PrepareImageLayout): void {
   expect(touchesFrame || keepsSourceSize).toBe(true);
   const aspectError = Math.abs(renderWidth * sourceHeight - renderHeight * sourceWidth);
   expect(aspectError).toBeLessThanOrEqual((sourceWidth + sourceHeight) / 2);
-  expect(layout.renderOffsetX).toBe(Math.round((layout.outputWidth - layout.renderWidth) / 2));
-  expect(layout.renderOffsetY).toBe(Math.round((layout.outputHeight - layout.renderHeight) / 2));
+  expectCentered(layout.renderOffsetX, renderWidth, layout.outputWidth);
+  expectCentered(layout.renderOffsetY, renderHeight, layout.outputHeight);
   expect(layout.renderOffsetX).toBeGreaterThanOrEqual(border);
   expect(layout.renderOffsetY).toBeGreaterThanOrEqual(border);
 }

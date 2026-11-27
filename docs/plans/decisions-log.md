@@ -980,4 +980,5 @@ A mutation run over `src/**/*.ts` (609 Stryker mutants plus 33 hand mutants, per
 ### Consequences
 
 - Removing `-map_metadata -1` keeps every test green, because FFmpeg 6.1 and 8.0 write no EXIF, XMP, or COM to JPEG output either way. The flag and the metadata test stay as a guard against FFmpeg changing that.
+- The JPEG quality test fails `-q:v 4` (35.93 dB PSNR against a 36.5 dB threshold) but passes `-q:v 2` and `3` (38.52 and 37.17 dB), and with FFmpeg 8.0's default mjpeg `qmin` of 2 `-q:v 1` writes the same bytes as `-q:v 2`.
 - The bundled FFmpeg fallback has no test. On Apple Silicon `ffprobe-static` 3.1.0 ships an x86_64 binary, so the fallback fails with `EBADARCH` without Rosetta.
