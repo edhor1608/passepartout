@@ -979,9 +979,9 @@ Four fixes in the iOS app's first PR (b7392d6, 61c4a18, e660a2a, 8cb42e4) were o
 
 ### Rationale
 
-TLA+ checks every interleaving within the bounds: two picks and three task requests, 626,656 states in about 12 s. The bug replays show that each property can fail, and they fail the check if the model stops catching a fixed bug.
+TLA+ checks every interleaving within the bounds: two picks and three task requests, 531,028 states in under a minute. The bug replays show that each property can fail, and they fail the check if the model stops catching a fixed bug.
 
 ### Consequences
 
 - A change to `FramingSession`, `BatchKeepAlive`, the scene-phase handler or the session calls in `FramingScreen` needs the model updated in the same change. The `verify-batch-queue` skill describes how.
-- Open finding: a task expiry handled after the runner ended, but before `followSession()` released the task, calls `pause()` while nothing runs. The pause is lost, and the next activation continues the queue. The check expects this violation of `StopHolds` until the code is fixed.
+- The model found a fourth lost stop: a task expiry handled after the runner ended, but before `followSession()` released the task, called `pause()` while nothing ran. `pause()` now also pauses while photos are queued, and only `resume`, `add` and `retryFailed` lift a pause.
