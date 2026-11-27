@@ -182,7 +182,6 @@ private struct LibraryBlockerBanner: View {
   }
 }
 
-/// Read access lets a batch go on after the user leaves the app.
 private struct ReadAccessOffer: View {
   let status: PHAuthorizationStatus
   let onChange: (PHAuthorizationStatus) -> Void

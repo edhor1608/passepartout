@@ -163,9 +163,6 @@ private func scaleBorder(_ borderPx: Int, _ scale: Double) -> Int {
   return max(1, jsRound(Double(borderPx) * scale))
 }
 
-/// JavaScript `Math.round`: ties go toward +infinity. Swift's `.rounded()` ties away from zero,
-/// which differs for negative halves. `value - floor` is exact in Double, unlike `value + 0.5`,
-/// which rounds 0.49999999999999994 up to 1.
 func jsRound(_ value: Double) -> Int {
   let floor = value.rounded(.down)
   return Int(value - floor >= 0.5 ? floor + 1 : floor)
