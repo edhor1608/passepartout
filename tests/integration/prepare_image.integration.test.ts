@@ -1,5 +1,14 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  readlinkSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { runPrepareImageCli } from "../helpers/cli";
@@ -187,14 +196,12 @@ describe("prepare-image cli", () => {
     createFixture(firstInput, "48x32", "red");
     createFixture(secondInput, "30x40", "blue");
     writeFileSync(join(batchInputDir, "notes.txt"), "skip");
+    const stagingRoot = mkdtempSync(join(outDir, "staging-root-"));
 
-    const result = await runPrepareImageCli([
-      batchInputDir,
-      "--out",
-      batchOutDir,
-      "--border-px",
-      "0",
-    ]);
+    const result = await runPrepareImageCli(
+      [batchInputDir, "--out", batchOutDir, "--border-px", "0"],
+      { TMPDIR: stagingRoot },
+    );
 
     const firstOut = join(batchOutDir, "a-portrait.jpg");
     const secondOut = join(batchOutDir, "b-landscape.jpg");
@@ -203,6 +210,62 @@ describe("prepare-image cli", () => {
     expect(result.stderr).toBe("");
     expect(probeImage(firstOut)).toMatchObject({ codec_name: "mjpeg", height: 40, width: 30 });
     expect(probeImage(secondOut)).toMatchObject({ codec_name: "mjpeg", height: 32, width: 48 });
+    expect(readdirSync(batchOutDir).sort()).toEqual(["a-portrait.jpg", "b-landscape.jpg"]);
+    expect(readdirSync(stagingRoot)).toEqual([]);
+  });
+
+  test("writes no exports when an image in a directory cannot be read", async () => {
+    const batchInputDir = mkdtempSync(join(inputDir, "unreadable-batch-"));
+    const batchOutDir = join(outDir, "unreadable-batch-output");
+    createFixture(join(batchInputDir, "a-readable.png"), "48x32", "red");
+    writeFileSync(join(batchInputDir, "b-unreadable.jpg"), "not an image");
+    const stagingRoot = mkdtempSync(join(outDir, "staging-root-"));
+
+    const result = await runPrepareImageCli([batchInputDir, "--out", batchOutDir], {
+      TMPDIR: stagingRoot,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toStartWith(`${join(batchInputDir, "b-unreadable.jpg")}: ffprobe`);
+    expect(readdirSync(batchOutDir)).toEqual([]);
+    expect(readdirSync(stagingRoot)).toEqual([]);
+  });
+
+  test("removes placed exports when a later export cannot be placed", async () => {
+    const batchInputDir = mkdtempSync(join(inputDir, "unplaceable-batch-"));
+    const batchOutDir = join(outDir, "unplaceable-batch-output");
+    createFixture(join(batchInputDir, "a.png"), "48x32", "red");
+    createFixture(join(batchInputDir, "b.png"), "48x32", "blue");
+    mkdirSync(join(batchOutDir, "b"), { recursive: true });
+    const stagingRoot = mkdtempSync(join(outDir, "staging-root-"));
+
+    const result = await runPrepareImageCli([batchInputDir, "--out", batchOutDir], {
+      TMPDIR: stagingRoot,
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toStartWith(`${join(batchInputDir, "b.png")}: `);
+    expect(readdirSync(batchOutDir)).toEqual(["b"]);
+    expect(readdirSync(stagingRoot)).toEqual([]);
+  });
+
+  test("never replaces or removes a file in the way of an export", async () => {
+    const batchInputDir = mkdtempSync(join(inputDir, "blocked-batch-"));
+    const batchOutDir = mkdtempSync(join(outDir, "blocked-batch-output-"));
+    const blocker = join(batchOutDir, "b.jpg");
+    createFixture(join(batchInputDir, "a.png"), "48x32", "red");
+    createFixture(join(batchInputDir, "b.png"), "48x32", "blue");
+    // A dangling link is free by name but taken at copy time, like a file created mid-run.
+    symlinkSync("missing-target.jpg", blocker);
+
+    const result = await runPrepareImageCli([batchInputDir, "--out", batchOutDir]);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toStartWith(`${join(batchInputDir, "b.png")}: `);
+    expect(readdirSync(batchOutDir)).toEqual(["b.jpg"]);
+    expect(readlinkSync(blocker)).toBe("missing-target.jpg");
   });
 
   test("uses 57px as the default border on full-size landscape exports", async () => {

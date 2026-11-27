@@ -1,6 +1,10 @@
 import { mkdirSync, readdirSync, statSync } from "node:fs";
 import { join, parse, resolve } from "node:path";
-import { DEFAULT_PREPARE_IMAGE_BORDER_PX, prepareImage } from "../domain/prepare_image";
+import {
+  DEFAULT_PREPARE_IMAGE_BORDER_PX,
+  prepareImage,
+  prepareImagesIntoDirectory,
+} from "../domain/prepare_image";
 
 const USAGE =
   "Usage: bun run prepare-image <input> --out <file-path-or-directory> [--border-px <integer>]";
@@ -112,12 +116,9 @@ function prepareInput(parsed: ParsedArgs): string[] {
     throw new Error("No supported images found in directory");
   }
 
-  return inputPaths.map((sourcePath) => {
-    const outputBase = join(outputPath, parse(sourcePath).name);
-    return prepareImage({
-      borderPx: parsed.borderPx,
-      inputPath: sourcePath,
-      outputPath: outputBase,
-    }).outputPath;
+  return prepareImagesIntoDirectory({
+    borderPx: parsed.borderPx,
+    outputDirectory: outputPath,
+    sourcePaths: inputPaths,
   });
 }

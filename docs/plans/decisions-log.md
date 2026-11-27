@@ -966,3 +966,35 @@ The generated 3049-case fixture fails a build on drift in either direction. The 
 - The batch queue lives in memory, with no persisted copy. If iOS kills the app mid-batch, saved photos stay saved and the rest are lost. Picking the same photos again duplicates the saved ones.
 - A picker transfer whose progress has not moved for 60 s is cancelled and fails as retryable, so one iCloud original on a bad connection cannot hold up the local photos behind it.
 - A TypeScript layout change fails the Bun test until the fixture is regenerated, then fails `make -C ios check` until the Swift port matches.
+
+## 2026-11-27: Write a directory run completely or not at all
+
+### Context
+
+A directory run wrote each export into the output directory as soon as it was rendered. When a
+later image failed, the earlier exports stayed, and the command printed only the error, so the
+user could not tell which files belonged to the failed run.
+
+### Decision
+
+Render every image of a directory run into a staging directory under the system temp directory.
+Copy the exports to their final names only after all renders succeed, and remove the copied
+exports if a later copy fails. The error names the source image that failed.
+
+### Rationale
+
+Staging outside the output directory keeps the output directory clean when a run is interrupted
+during rendering, which is the long phase. An exclusive copy (`COPYFILE_EXCL`) never replaces an
+existing file and works on APFS, exFAT, and FAT32. A hard link fails on FAT32 and exFAT, the usual file
+systems of SD cards and USB sticks, and Bun 1.3 leaves a staging directory there half removed
+because macOS deletes the `._` companion files first.
+
+### Consequences
+
+- A failed directory run leaves no exports, so it can be repeated without duplicates such as
+  `photo-1.jpg`.
+- The temp directory's volume must hold every export of the run until the copy. When it runs out
+  of space, the error names the source image being rendered.
+- A run interrupted while rendering leaves its staging directory in the temp directory. A run
+  interrupted while copying can leave the exports copied so far.
+- File input still writes its single export directly.
