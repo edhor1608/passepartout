@@ -966,3 +966,19 @@ The generated 3049-case fixture fails a build on drift in either direction. The 
 - The batch queue lives in memory, with no persisted copy. If iOS kills the app mid-batch, saved photos stay saved and the rest are lost. Picking the same photos again duplicates the saved ones.
 - A picker transfer whose progress has not moved for 60 s is cancelled and fails as retryable, so one iCloud original on a bad connection cannot hold up the local photos behind it.
 - A TypeScript layout change fails the Bun test until the fixture is regenerated, then fails `make -C ios check` until the Swift port matches.
+
+## 2026-11-28: Keep tests by mutation evidence
+
+### Context
+
+A mutation run over `src/**/*.ts` (609 Stryker mutants plus 33 hand mutants, per-test kill data) showed that the six layout example tests and two output-path unit tests killed no mutant that another test missed. It also showed user-visible gaps: EXIF orientation 5, 7, and 8, little-endian EXIF, EXIF after other segments, landscape center crop, custom `--border-px`, JPEG quality, and directory input with `.jpeg`, `.tif`, and `.tiff`.
+
+### Decision
+
+`tests/prepare_image_layout.test.ts` checks the layout rules from `CONTEXT.md` as invariants over 2023 sources instead of six pinned layouts. Integration tests cover each gap above. The parity fixture stays as the Swift contract, and the output-path tests that guard no-overwrite and directory rejection stay.
+
+### Consequences
+
+- Removing `-map_metadata -1` keeps every test green, because FFmpeg 6.1 and 8.0 write no EXIF, XMP, or COM to JPEG output either way. The flag and the metadata test stay as a guard against FFmpeg changing that.
+- The JPEG quality test fails `-q:v 4` (35.93 dB PSNR against a 36.5 dB threshold) but passes `-q:v 2` and `3` (38.52 and 37.17 dB), and with FFmpeg 8.0's default mjpeg `qmin` of 2 `-q:v 1` writes the same bytes as `-q:v 2`.
+- The bundled FFmpeg fallback has no test. On Apple Silicon `ffprobe-static` 3.1.0 ships an x86_64 binary, so the fallback fails with `EBADARCH` without Rosetta.
