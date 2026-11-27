@@ -38,3 +38,12 @@ Behaviour-preserving refactor, so no red phase. The only test edit is the `decod
 - Speed, CPU time from `clock()` because the host ran at load average 300 from other agents' TLC runs: one
   12-photo layout took 36 ms in a debug build with `Range` iteration in the search, 4.8 ms with integer loops.
   `make -C ios run` builds Debug, so the slider stays inside a 60 fps frame in the simulator.
+
+### Unit 3: renderer (`readOriginal`, `renderCollage`)
+
+- Red, against stubs (`readOriginal` returns a 1 x 1 size and a full-size preview, `renderCollage` returns an empty
+  white canvas): `--filter CollageRenderer`: 8 tests, 7 failed with 60 issues. `readingAFileImageIOCannotReadFails`
+  passes against the stub, which opens the file too. `writesABaselineSRGBJPEGWithoutSourceMetadata` fails only on
+  its Display P3 pixel probe, since an empty canvas carries no metadata either.
+- Green: `--filter 'CollageRenderer|FrameLayoutParity|PhotoFramer'`: 23 tests in 3 suites passed. The parity and
+  framer suites cover the move of `centeredCoverCrop` to `PixelSize`.

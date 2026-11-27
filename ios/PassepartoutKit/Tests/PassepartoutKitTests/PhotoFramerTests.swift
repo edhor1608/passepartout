@@ -275,18 +275,6 @@ struct PhotoFramerTests {
         return "\(prefix):\(name)"
       })
   }
-
-  /// The first SOFn marker: 0xC0 is baseline, 0xC2 progressive.
-  private func firstFrameMarker(_ jpeg: Data) -> UInt8? {
-    let bytes = [UInt8](jpeg)
-    var index = 2
-    while index + 3 < bytes.count, bytes[index] == 0xFF {
-      let marker = bytes[index + 1]
-      if (0xC0...0xCF).contains(marker), ![0xC4, 0xC8, 0xCC].contains(marker) { return marker }
-      index += 2 + (Int(bytes[index + 2]) << 8 | Int(bytes[index + 3]))
-    }
-    return nil
-  }
 }
 
 extension Pixels {
