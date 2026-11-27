@@ -53,7 +53,7 @@ bun run prepare-image --help
 ## Architecture Map
 
 - `src/cli/prepare_image.ts`: command parsing and stdout/stderr behavior.
-- `src/domain/prepare_image.ts`: source probing, layout selection, and FFmpeg export.
+- `src/domain/prepare_image.ts`: source probing, layout selection, FFmpeg export, and all-or-nothing directory runs.
 - `src/domain/prepare_image_layout.ts`: pure target, border, crop, and contain math.
 - `src/domain/output_path.ts`: `.jpg` normalization, parent directory creation, and suffixing.
 - `src/domain/media_process.ts`: packaged FFmpeg/ffprobe process boundary.

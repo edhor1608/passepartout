@@ -10,7 +10,7 @@ When `<input>` is a directory, `--out` is treated as an output directory. The CL
 
 ## Rationale
 
-The single-image `prepareImage` domain function remains the source of truth for layout and FFmpeg export. Directory mode is only CLI orchestration around that function, so the product surface grows without duplicating image logic.
+The single-image `prepareImage` domain function remains the source of truth for layout and FFmpeg export. Directory mode renders every image with that function and adds only staging and placement, so the product surface grows without duplicating image logic. A failed directory run writes no exports; see the 2026-11-27 entry in `decisions-log.md`.
 
 ## Validation
 
@@ -18,5 +18,5 @@ The single-image `prepareImage` domain function remains the source of truth for 
 
 ## Lessons learned
 
-- Batch mode can stay boring by making file mode and directory mode share the same export path.
+- Batch mode can stay boring by making file mode and directory mode share the same render path.
 - Sorted output gives deterministic stdout and predictable processing without adding extra options.

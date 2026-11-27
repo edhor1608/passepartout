@@ -55,7 +55,7 @@ bun run prepare-image /full/path/input.jpg --out /full/path/exports/photo --bord
 ## Output Rules
 
 - File inputs print one output path.
-- Directory inputs process top-level PNG, JPEG, and TIFF files in filename order and print one output path per export.
+- Directory inputs process top-level PNG, JPEG, and TIFF files in filename order and print one output path per export. If one image fails, the run writes no exports.
 - Existing outputs are suffixed as `photo-1.jpg`, `photo-2.jpg`, and so on.
 - Landscape inputs use centered cover fitting into an equal-border inner frame.
 - Portrait and square inputs use contain fitting so the full source image remains visible.
@@ -73,7 +73,7 @@ The integration test fixture helpers call system `ffmpeg` and `ffprobe`, so loca
 ## Project Structure
 
 - `src/cli/prepare_image.ts`: command parsing, file-vs-directory orchestration, and stdout/stderr behavior.
-- `src/domain/prepare_image.ts`: source probing, layout selection, and FFmpeg export.
+- `src/domain/prepare_image.ts`: source probing, layout selection, FFmpeg export, and all-or-nothing directory runs.
 - `src/domain/prepare_image_layout.ts`: pure target, border, crop, and contain math.
 - `src/domain/output_path.ts`: `.jpg` normalization, parent directory creation, and suffixing.
 - `src/domain/media_process.ts`: FFmpeg/ffprobe process boundary.

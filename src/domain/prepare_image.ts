@@ -1,5 +1,14 @@
-import { closeSync, openSync, readSync } from "node:fs";
-import { resolve } from "node:path";
+import {
+  closeSync,
+  constants,
+  copyFileSync,
+  mkdtempSync,
+  openSync,
+  readSync,
+  rmSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join, parse, resolve } from "node:path";
 import { computePrepareImageLayout, type PrepareImageLayout } from "./prepare_image_layout";
 import { runFfmpeg, runFfprobe } from "./media_process";
 import { resolvePrepareImageOutputPath } from "./output_path";
@@ -10,6 +19,12 @@ type PrepareImageInput = {
   inputPath: string;
   outputPath: string;
   borderPx?: number;
+};
+
+type PrepareImagesIntoDirectoryInput = {
+  sourcePaths: readonly string[];
+  outputDirectory: string;
+  borderPx: number;
 };
 
 type PrepareImageOutput = {
@@ -59,6 +74,73 @@ export function prepareImage(input: PrepareImageInput): PrepareImageOutput {
   }
 
   return { layout, outputPath };
+}
+
+/** Exports every source or none: a failed run removes the exports it already placed. */
+export function prepareImagesIntoDirectory(input: PrepareImagesIntoDirectoryInput): string[] {
+  const stagingDirectory = mkdtempSync(join(tmpdir(), "passepartout-staging-"));
+  const placedPaths: string[] = [];
+
+  try {
+    const stagedImages = input.sourcePaths.map((sourcePath, index) =>
+      attributeToSource(sourcePath, () => ({
+        sourcePath,
+        stagedPath: prepareImage({
+          borderPx: input.borderPx,
+          inputPath: sourcePath,
+          outputPath: join(stagingDirectory, String(index)),
+        }).outputPath,
+      })),
+    );
+
+    for (const image of stagedImages) {
+      attributeToSource(image.sourcePath, () => {
+        const outputPath = resolvePrepareImageOutputPath(
+          join(input.outputDirectory, parse(image.sourcePath).name),
+        );
+        placeWithoutReplacing(image.stagedPath, outputPath);
+        placedPaths.push(outputPath);
+      });
+    }
+
+    return placedPaths;
+  } catch (error) {
+    for (const placedPath of placedPaths) {
+      removeBestEffort(placedPath);
+    }
+    throw error;
+  } finally {
+    removeBestEffort(stagingDirectory);
+  }
+}
+
+function placeWithoutReplacing(stagedPath: string, outputPath: string): void {
+  try {
+    copyFileSync(stagedPath, outputPath, constants.COPYFILE_EXCL);
+  } catch (error) {
+    // A failed copy can leave a partial file, but a file that already existed belongs to someone else.
+    if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) {
+      removeBestEffort(outputPath);
+    }
+    throw error;
+  }
+}
+
+function removeBestEffort(path: string): void {
+  try {
+    rmSync(path, { force: true, recursive: true });
+  } catch {
+    // A failed cleanup must not replace the error or the result the run reports.
+  }
+}
+
+function attributeToSource<T>(sourcePath: string, step: () => T): T {
+  try {
+    return step();
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    throw new Error(`${sourcePath}: ${reason}`, { cause: error });
+  }
 }
 
 function inspectSourceDimensions(path: string): SourceDimensions {
