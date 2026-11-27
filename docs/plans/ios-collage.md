@@ -22,3 +22,19 @@ Behaviour-preserving refactor, so no red phase. The only test edit is the `decod
   (`settings.shape == .square`), `aStoredSpacingIsClamped` (3 of 3). The two default tests pass against the stub by
   construction.
 - Green: `--filter CollageSettings`: 8 tests in 2 suites passed.
+
+### Unit 2: `CollageDocument` and `CollageLayout`
+
+- Red, against stubs (a layout with no cells, a document that takes any photo count, ignores `settings.shape` and
+  whose edits do nothing): `--filter 'CollageDocument|CollageLayout'`: 17 tests, 14 failed with 1467 issues.
+  `acceptsOneToTwelvePhotos` passes against the stub by construction.
+- The red run showed two hollow tests: `cellsKeepThePhotoShape` and `theRowSplitChangesAtMostOnce…` passed on an
+  empty layout. Both now first assert the cell count. Re-run: all 9 layout tests failed with 1705 issues.
+- First green attempt: 4 failures in `cellsKeepThePhotoShape` at spacing 149 and 150, for example a 77 x 190 cell for
+  a 2:5 photo (1.3 % off). A 1 % bound is wrong for cells under 100 px. The test now states the real guarantee:
+  the exact row height lies in `height..<height + 1` and each width rounds to a whole pixel
+  (`cellsKeepThePhotoShapeUpToWholePixels`).
+- Green: `--filter 'CollageDocument|CollageLayout'`: 17 tests in 2 suites passed.
+- Speed, CPU time from `clock()` because the host ran at load average 300 from other agents' TLC runs: one
+  12-photo layout took 36 ms in a debug build with `Range` iteration in the search, 4.8 ms with integer loops.
+  `make -C ios run` builds Debug, so the slider stays inside a 60 fps frame in the simulator.
