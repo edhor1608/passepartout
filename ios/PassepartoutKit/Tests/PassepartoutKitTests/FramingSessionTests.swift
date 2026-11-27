@@ -376,14 +376,15 @@ struct FramingSessionTests {
   private func finish(_ session: FramingSession) async {
     await session.runner?.value
   }
+}
 
-  /// Polls until `condition` holds, for at most five seconds.
-  private func waitUntil(_ condition: () -> Bool) async throws {
-    let deadline = ContinuousClock.now + .seconds(5)
-    while !condition() {
-      try #require(ContinuousClock.now < deadline, "condition not met within five seconds")
-      try await Task.sleep(for: .milliseconds(5))
-    }
+/// Polls until `condition` holds, for at most five seconds.
+@MainActor
+func waitUntil(_ condition: () -> Bool) async throws {
+  let deadline = ContinuousClock.now + .seconds(5)
+  while !condition() {
+    try #require(ContinuousClock.now < deadline, "condition not met within five seconds")
+    try await Task.sleep(for: .milliseconds(5))
   }
 }
 
@@ -506,6 +507,7 @@ actor Recorder {
   private(set) var events: [String] = []
   private(set) var saved: [String] = []
   private(set) var copies: [URL] = []
+  private(set) var jpegs: [Data] = []
   private var blocker: LibraryBlocker?
   private var saveFailures: [String: Int] = [:]
   private var firstSaveHook: (@MainActor @Sendable () -> Void)?
@@ -513,7 +515,7 @@ actor Recorder {
   nonisolated var library: PhotoLibrary {
     PhotoLibrary(
       requestAddAccess: { await self.requestAccess() },
-      add: { _, filename in try await self.save(filename) })
+      add: { jpeg, filename in try await self.save(filename, jpeg: jpeg) })
   }
 
   func setBlocker(_ blocker: LibraryBlocker?) {
@@ -542,11 +544,12 @@ actor Recorder {
     return blocker
   }
 
-  private func save(_ filename: String) async throws {
+  private func save(_ filename: String, jpeg: Data) async throws {
     if log("save \(filename)") < saveFailures[filename, default: 0] {
       throw CocoaError(.fileWriteUnknown)
     }
     saved.append(filename)
+    jpegs.append(jpeg)
     if let hook = firstSaveHook {
       firstSaveHook = nil
       await hook()

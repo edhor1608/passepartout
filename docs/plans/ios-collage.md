@@ -47,3 +47,10 @@ Behaviour-preserving refactor, so no red phase. The only test edit is the `decod
   its Display P3 pixel probe, since an empty canvas carries no metadata either.
 - Green: `--filter 'CollageRenderer|FrameLayoutParity|PhotoFramer'`: 23 tests in 3 suites passed. The parity and
   framer suites cover the move of `centeredCoverCrop` to `PixelSize`.
+
+### Unit 4: `CollageSession`
+
+- Red, against a stub whose calls do nothing: `--filter CollageSession`: 25 tests, 24 failed with 44 issues.
+  `closingThePickerWithoutAPickReturnsToStart` passes against the stub, which never leaves `start`.
+- Green: `--filter CollageSession`: 25 tests passed. Five repeated runs of `--filter 'CollageSession|FramingSession'`:
+  44 tests in 3 suites passed each time. `make -C ios test`: 92 tests in 10 suites passed.
