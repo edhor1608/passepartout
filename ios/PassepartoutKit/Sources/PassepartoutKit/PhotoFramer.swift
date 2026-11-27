@@ -132,8 +132,6 @@ private func cropInDecodedPixels(_ crop: PixelRect?, image: OpenedImage, decoded
   return PixelRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
 }
 
-/// Core Graphics reads every pixel format ImageIO returns; `vImage_Buffer(cgImage:format:)`
-/// rejects the packed 10-bit format of HDR HEIC.
 private func resample(
   _ decoded: CGImage, crop: PixelRect, width: Int, height: Int, colorSpace: CGColorSpace
 ) throws(PhotoFailure) -> CGImage {
@@ -153,6 +151,8 @@ private func resample(
       colorSpace: colorSpace,
       bitmapInfo: CGBitmapInfo(rawValue: alpha))
   else { throw .renderFailed }
+  // vImage_Buffer(cgImage:format:) rejects the packed 10-bit format of HDR HEIC, and Core
+  // Graphics reads every format ImageIO returns, so the crop is drawn before vImage scales it.
   converted.draw(
     decoded,
     in: CGRect(

@@ -5,10 +5,7 @@ import PhotosUI
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// One picked photo that can hand over its original: `LibraryPhoto` or `PhotosPickerItem` in the
-/// app, synthetic files in tests.
 public protocol PhotoSource: Sendable {
-  /// Whether loading may start or continue while the app is in the background.
   var loadsInBackground: Bool { get }
 
   /// Starts the handover and returns its progress. `completion` gets `nil` when the item carries
@@ -35,8 +32,6 @@ extension PhotosPickerItem: PhotoSource {
   }
 }
 
-/// A picked photo read straight from the library, which keeps working in the background and
-/// reports real iCloud download progress. Needs read access to the photo.
 public struct LibraryPhoto: PhotoSource {
   let localIdentifier: String
 
@@ -59,8 +54,6 @@ public struct LibraryPhoto: PhotoSource {
     }
   }
 
-  /// Writes the current rendition, edits included, like the picker's `.current` encoding: the
-  /// rendered full-size photo of an edited asset, the stored photo otherwise.
   public func loadOriginal(
     completion: @escaping @Sendable (Result<SourceFile?, any Error>) -> Void
   ) -> Progress {
@@ -80,9 +73,9 @@ public struct LibraryPhoto: PhotoSource {
     }
     // An edited asset's rendition is named FullSizeRender, so the name comes from the original.
     let name = (stored ?? rendition).originalFilename
-    let destination: URL
+    let destination: SourceFile.Slot
     do {
-      destination = try SourceFile.newURL(
+      destination = try SourceFile.newSlot(
         pathExtension: (rendition.originalFilename as NSString).pathExtension)
     } catch {
       completion(.failure(error))
@@ -92,11 +85,11 @@ public struct LibraryPhoto: PhotoSource {
     options.isNetworkAccessAllowed = true
     options.progressHandler = { fraction in progress.completedUnitCount = Int64(fraction * 1000) }
     PHAssetResourceManager.default().writeData(
-      for: rendition, toFile: destination, options: options
+      for: rendition, toFile: destination.url, options: options
     ) {
       error in
       if let error {
-        try? FileManager.default.removeItem(at: destination)
+        try? FileManager.default.removeItem(at: destination.url)
         completion(.failure(error))
       } else {
         completion(.success(SourceFile(owning: destination, originalName: name)))
@@ -106,8 +99,6 @@ public struct LibraryPhoto: PhotoSource {
   }
 }
 
-/// A copy of one picked original in `tmp/PickedOriginals/`. Releasing the object deletes the
-/// file, so every exit from processing a photo cleans up, thrown errors included.
 public final class SourceFile: Sendable {
   let url: URL
   let suggestedOutputName: String
@@ -115,22 +106,27 @@ public final class SourceFile: Sendable {
   private static let directory = FileManager.default.temporaryDirectory.appending(
     path: "PickedOriginals", directoryHint: .isDirectory)
 
-  /// Takes over a file at a URL from `newURL(pathExtension:)`.
-  init(owning url: URL, originalName: String) {
-    self.url = url
+  struct Slot {
+    let url: URL
+    fileprivate init(_ url: URL) { self.url = url }
+  }
+
+  init(owning slot: Slot, originalName: String) {
+    self.url = slot.url
     suggestedOutputName = (originalName as NSString).deletingPathExtension + "-passepartout.jpg"
   }
 
   /// The picker's file is only valid inside its import closure, so it is copied out.
   convenience init(copying received: URL) throws {
-    let copy = try Self.newURL(pathExtension: received.pathExtension)
-    try FileManager.default.copyItem(at: received, to: copy)
+    let copy = try Self.newSlot(pathExtension: received.pathExtension)
+    try FileManager.default.copyItem(at: received, to: copy.url)
     self.init(owning: copy, originalName: received.lastPathComponent)
   }
 
-  static func newURL(pathExtension: String) throws -> URL {
+  static func newSlot(pathExtension: String) throws -> Slot {
     try FileManager.default.createDirectory(at: Self.directory, withIntermediateDirectories: true)
-    return Self.directory.appending(path: UUID().uuidString).appendingPathExtension(pathExtension)
+    return Slot(
+      Self.directory.appending(path: UUID().uuidString).appendingPathExtension(pathExtension))
   }
 
   deinit {
@@ -152,11 +148,8 @@ extension SourceFile: Transferable {
   }
 }
 
-/// Why the library refuses adds.
 public enum LibraryBlocker: Equatable, Sendable {
-  /// The user declined. Settings can change it.
   case denied
-  /// Parental controls or device management. Settings cannot change it.
   case restricted
 
   static func blocking(_ status: PHAuthorizationStatus) -> LibraryBlocker? {
@@ -169,7 +162,6 @@ public enum LibraryBlocker: Equatable, Sendable {
   }
 }
 
-/// Add-only access to the Photos library, as two closures so tests can replace it.
 public struct PhotoLibrary: Sendable {
   public var requestAddAccess: @Sendable () async -> LibraryBlocker?
   public var add: @Sendable (_ jpeg: Data, _ filename: String) async throws -> Void
@@ -182,9 +174,9 @@ public struct PhotoLibrary: Sendable {
     self.add = add
   }
 
-  /// One `performChanges` per photo, so each save is atomic and a failure stays with its photo.
-  /// The JPEG bytes land unchanged, and Photos dates the new asset "now", which puts the copies
-  /// at the top of Recents where Instagram's picker opens.
+  /// `addResource(with:data:options:)` stores the framed JPEG bytes without a new encode. Photos
+  /// dates each new asset "now", which puts the copies at the top of Recents, where Instagram's
+  /// picker opens.
   public static let system = PhotoLibrary(
     requestAddAccess: {
       LibraryBlocker.blocking(await PHPhotoLibrary.requestAuthorization(for: .addOnly))
