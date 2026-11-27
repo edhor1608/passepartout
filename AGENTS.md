@@ -50,6 +50,16 @@ bun run prepare-image --help
 - `bun run test:fast`: unit plus v1 integration tests.
 - `bun run test:all`: every Bun test with an explicit 30 second timeout.
 
+## Originals and Real Photos
+
+Automated tests use generated fixtures. You may read Jonas's local photos without asking when real camera data or composition matters, and you may write test exports next to them.
+
+- Never edit, rename, move, delete, or commit an original.
+- Before a test export next to an original, pick a unique `--out` base name and check that its `.jpg` path does not exist. Take the written path from stdout.
+- Delete a test export only when stdout printed exactly the path you checked. Leave a suffixed or unexpected path in place and report it.
+- Never select files to delete by glob, name pattern, suffix range, or directory scan.
+- Never commit personal photos or exports made from them.
+
 ## Architecture Map
 
 - `src/cli/prepare_image.ts`: command parsing and stdout/stderr behavior.
@@ -57,6 +67,10 @@ bun run prepare-image --help
 - `src/domain/prepare_image_layout.ts`: pure target, border, crop, and contain math.
 - `src/domain/output_path.ts`: `.jpg` normalization, parent directory creation, and suffixing.
 - `src/domain/media_process.ts`: packaged FFmpeg/ffprobe process boundary.
+
+## Known Gaps
+
+- **Wide-gamut originals are not converted to sRGB.** The FFmpeg graph keeps the pixel values and drops the ICC profile, so viewers read the export as sRGB. A Display P3 PNG whose red is sRGB `(252, 0, 0)` exports as `(230, 51, 33)` without a profile, a visibly duller red. iPhone photos are usually Display P3. Do not report sRGB conversion as working until a test proves it.
 
 ## iOS App
 
