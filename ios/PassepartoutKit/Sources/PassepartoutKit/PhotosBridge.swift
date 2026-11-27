@@ -73,9 +73,9 @@ public struct LibraryPhoto: PhotoSource {
     }
     // An edited asset's rendition is named FullSizeRender, so the name comes from the original.
     let name = (stored ?? rendition).originalFilename
-    let destination: URL
+    let destination: SourceFile.Slot
     do {
-      destination = try SourceFile.newURL(
+      destination = try SourceFile.newSlot(
         pathExtension: (rendition.originalFilename as NSString).pathExtension)
     } catch {
       completion(.failure(error))
@@ -85,11 +85,11 @@ public struct LibraryPhoto: PhotoSource {
     options.isNetworkAccessAllowed = true
     options.progressHandler = { fraction in progress.completedUnitCount = Int64(fraction * 1000) }
     PHAssetResourceManager.default().writeData(
-      for: rendition, toFile: destination, options: options
+      for: rendition, toFile: destination.url, options: options
     ) {
       error in
       if let error {
-        try? FileManager.default.removeItem(at: destination)
+        try? FileManager.default.removeItem(at: destination.url)
         completion(.failure(error))
       } else {
         completion(.success(SourceFile(owning: destination, originalName: name)))
@@ -106,21 +106,27 @@ public final class SourceFile: Sendable {
   private static let directory = FileManager.default.temporaryDirectory.appending(
     path: "PickedOriginals", directoryHint: .isDirectory)
 
-  init(owning url: URL, originalName: String) {
-    self.url = url
+  struct Slot {
+    let url: URL
+    fileprivate init(_ url: URL) { self.url = url }
+  }
+
+  init(owning slot: Slot, originalName: String) {
+    self.url = slot.url
     suggestedOutputName = (originalName as NSString).deletingPathExtension + "-passepartout.jpg"
   }
 
   /// The picker's file is only valid inside its import closure, so it is copied out.
   convenience init(copying received: URL) throws {
-    let copy = try Self.newURL(pathExtension: received.pathExtension)
-    try FileManager.default.copyItem(at: received, to: copy)
+    let copy = try Self.newSlot(pathExtension: received.pathExtension)
+    try FileManager.default.copyItem(at: received, to: copy.url)
     self.init(owning: copy, originalName: received.lastPathComponent)
   }
 
-  static func newURL(pathExtension: String) throws -> URL {
+  static func newSlot(pathExtension: String) throws -> Slot {
     try FileManager.default.createDirectory(at: Self.directory, withIntermediateDirectories: true)
-    return Self.directory.appending(path: UUID().uuidString).appendingPathExtension(pathExtension)
+    return Slot(
+      Self.directory.appending(path: UUID().uuidString).appendingPathExtension(pathExtension))
   }
 
   deinit {
@@ -168,6 +174,8 @@ public struct PhotoLibrary: Sendable {
     self.add = add
   }
 
+  /// Photos dates each new asset "now", which puts the copies at the top of Recents, where
+  /// Instagram's picker opens.
   public static let system = PhotoLibrary(
     requestAddAccess: {
       LibraryBlocker.blocking(await PHPhotoLibrary.requestAuthorization(for: .addOnly))

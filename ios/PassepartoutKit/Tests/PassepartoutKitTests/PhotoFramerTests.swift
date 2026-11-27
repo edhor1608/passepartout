@@ -210,7 +210,7 @@ struct PhotoFramerTests {
   @Test func encodesABaselineJPEG() async throws {
     let directory = try TestDirectory()
     let jpeg = try await framed(try directory.solidImage(width: 600, height: 400)).jpeg
-    #expect(firstFrameMarker(jpeg) == 0xC0)
+    #expect(firstFrameMarker(jpeg) == StartOfFrame.baseline)
   }
 
   @Test func previewIsASmallCopyOfTheOutput() async throws {
@@ -274,12 +274,16 @@ struct PhotoFramerTests {
       })
   }
 
-  private func firstFrameMarker(_ jpeg: Data) -> UInt8? {
+  private enum StartOfFrame: UInt8 {
+    case baseline = 0xC0, extendedSequential, progressive, lossless
+  }
+
+  private func firstFrameMarker(_ jpeg: Data) -> StartOfFrame? {
     let bytes = [UInt8](jpeg)
     var index = 2
     while index + 3 < bytes.count, bytes[index] == 0xFF {
       let marker = bytes[index + 1]
-      if (0xC0...0xCF).contains(marker), ![0xC4, 0xC8, 0xCC].contains(marker) { return marker }
+      if let frame = StartOfFrame(rawValue: marker) { return frame }
       index += 2 + (Int(bytes[index + 2]) << 8 | Int(bytes[index + 3]))
     }
     return nil

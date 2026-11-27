@@ -123,8 +123,9 @@ private func createPortraitLayout(_ source: SourceSize, _ dimensions: Dimensions
     1,
     Double(dimensions.innerWidth) / Double(source.width),
     Double(dimensions.innerHeight) / Double(source.height))
-  let renderWidth = min(dimensions.innerWidth, jsRound(Double(source.width) * renderScale))
-  let renderHeight = min(dimensions.innerHeight, jsRound(Double(source.height) * renderScale))
+  let renderWidth = min(dimensions.innerWidth, Int((Double(source.width) * renderScale).rounded()))
+  let renderHeight = min(
+    dimensions.innerHeight, Int((Double(source.height) * renderScale).rounded()))
 
   return FrameLayout(
     variant: .portrait,
@@ -135,8 +136,8 @@ private func createPortraitLayout(_ source: SourceSize, _ dimensions: Dimensions
     innerHeight: dimensions.innerHeight,
     renderWidth: renderWidth,
     renderHeight: renderHeight,
-    renderOffsetX: jsRound(Double(dimensions.outputWidth - renderWidth) / 2),
-    renderOffsetY: jsRound(Double(dimensions.outputHeight - renderHeight) / 2),
+    renderOffsetX: Int((Double(dimensions.outputWidth - renderWidth) / 2).rounded()),
+    renderOffsetY: Int((Double(dimensions.outputHeight - renderHeight) / 2).rounded()),
     sourceCrop: nil
   )
 }
@@ -148,22 +149,19 @@ private func computeCenteredCoverCrop(_ source: SourceSize, frameWidth: Int, fra
   let frameRatio = Double(frameWidth) / Double(frameHeight)
 
   if sourceRatio > frameRatio {
-    let width = jsRound(Double(source.height) * frameRatio)
+    let width = Int((Double(source.height) * frameRatio).rounded())
     return PixelRect(
-      x: jsRound(Double(source.width - width) / 2), y: 0, width: width, height: source.height)
+      x: Int((Double(source.width - width) / 2).rounded()), y: 0, width: width,
+      height: source.height)
   }
 
-  let height = jsRound(Double(source.width) / frameRatio)
+  let height = Int((Double(source.width) / frameRatio).rounded())
   return PixelRect(
-    x: 0, y: jsRound(Double(source.height - height) / 2), width: source.width, height: height)
+    x: 0, y: Int((Double(source.height - height) / 2).rounded()), width: source.width,
+    height: height)
 }
 
 private func scaleBorder(_ borderPx: Int, _ scale: Double) -> Int {
   if borderPx == 0 { return 0 }
-  return max(1, jsRound(Double(borderPx) * scale))
-}
-
-func jsRound(_ value: Double) -> Int {
-  let floor = value.rounded(.down)
-  return Int(value - floor >= 0.5 ? floor + 1 : floor)
+  return max(1, Int((Double(borderPx) * scale).rounded()))
 }

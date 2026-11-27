@@ -43,11 +43,4 @@ struct FrameLayoutParityTests {
   @Test func defaultBorderMatchesTheCLI() throws {
     #expect(defaultBorderPx == (try Self.loadFixture()).defaultBorderPx)
   }
-
-  @Test(arguments: [
-    (0.5, 1), (1.5, 2), (2.5, 3), (-0.5, 0), (-1.5, -1), (0.49999999999999994, 0),
-  ])
-  func jsRoundTiesTowardPositiveInfinity(value: Double, expected: Int) {
-    #expect(jsRound(value) == expected)
-  }
 }
