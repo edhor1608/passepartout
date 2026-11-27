@@ -7,7 +7,7 @@ description: Model-checks the iOS batch queue (FramingSession, BatchKeepAlive) w
 
 `ios/formal/BatchQueue.tla` models every order in which FramingSession and BatchKeepAlive can run against the scene phase, the user's taps, Photos and BGTaskScheduler. `ios/formal/check.sh` model-checks it with TLC. A pass covers the model within its bounds, not the app.
 
-**Sync commit: `d7f437d`.** The model was last confirmed to describe the covered code at this commit.
+**Sync commit: `78f8f6f`.** The model was last confirmed to describe the covered code at this commit.
 
 ## Properties
 
@@ -16,7 +16,7 @@ Each property is one TLA+ definition at the end of `BatchQueue.tla`.
 | Property                      | Promise                                                                                                                                      | Harm when broken                                   |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
 | `PauseHolds`                  | A task expiry that arrives while the runner runs pauses the batch. No photo starts loading until Fortsetzen, Erneut versuchen or a new pick. | A stop in system UI does not hold.                 |
-| `StopHolds`                   | The same for every task expiry the keep-alive accepts, also one that arrives after the runner ended.                                         | Same.                                              |
+| `StopHolds`                   | The same for every task expiry, also one that arrives after the runner ended or after `releaseTime()` completed the task.                    | Same.                                              |
 | `ReleasedWhenIdle`            | Once the batch stopped and `followSession()` saw it, no request awaits launch, iOS runs no task, background time ended.                      | A grant leaks; a later batch gets no task or time. |
 | `BackgroundTimeWhileAwaiting` | A running batch in the background with an unlaunched request holds background time.                                                          | iOS suspends the app before the task launches.     |
 | `LastReportComplete`          | The last progress a held task gets before `releaseTime()` completes it counts every finished photo.                                          | System UI ends one photo short.                    |
@@ -35,20 +35,20 @@ One TLA+ action per stretch of main-actor code between two awaits, plus one per 
 A change touches the model when it adds or moves an `await`, changes a guard or the order of statements in a covered function, writes `photos`, `isPaused`, `runner`, `grant` or `backgroundTime` from new code, or adds a caller of a covered function. Formatting, comments, log lines and UI text do not. List the candidates with:
 
 ```bash
-git diff d7f437d -- ios/PassepartoutKit/Sources/PassepartoutKit/FramingSession.swift ios/Passepartout/BatchKeepAlive.swift ios/Passepartout/PassepartoutApp.swift ios/Passepartout/FramingScreen.swift
+git diff 78f8f6f -- ios/PassepartoutKit/Sources/PassepartoutKit/FramingSession.swift ios/Passepartout/BatchKeepAlive.swift ios/Passepartout/PassepartoutApp.swift ios/Passepartout/FramingScreen.swift
 ```
 
 ## Run
 
 ```bash
-make -C ios formal               # every run, under a minute; needs Java 11+ and curl
+make -C ios formal               # every run, about 2 min of CPU; needs Java 11+ and curl
 ios/formal/check.sh <run>        # one run, with its counterexample
 ```
 
 The script downloads `tla2tools.jar` v1.7.4 once into `~/.cache/tla2tools`, pinned by sha256. Each line of output is one run:
 
 - `current` checks the code as it is against every property except the known findings in `KNOWN_FINDINGS`, and must hold. There are none today.
-- Every other run sets the `Bug` constant to re-enable one fixed defect and must break the property that guards it: `ExpiryKeepsRunning` (b7392d6), `ActivationLiftsPause` (61c4a18), `AwaitingUnheld` and `AwaitingNeverCleared` (e660a2a), `ReportAfterRelease` (8cb42e4), `ForegroundLoadInBackground` (70e6b9a), `AddDropsRetryable` (b4d191a), `PauseNeedsRunner` (d7f437d, found by this model).
+- Every other run sets the `Bug` constant to re-enable one fixed defect and must break the property that guards it: `ExpiryKeepsRunning` (b7392d6), `ActivationLiftsPause` (61c4a18), `AwaitingUnheld` and `AwaitingNeverCleared` (e660a2a), `ReportAfterRelease` (8cb42e4), `ForegroundLoadInBackground` (70e6b9a), `AddDropsRetryable` (b4d191a), `PauseNeedsRunner` (d7f437d) and `ReleasedStopDropped` (78f8f6f), both found by this model.
 
 A counterexample prints one line per step: the action and the variables it changed.
 
@@ -68,9 +68,10 @@ A counterexample prints one line per step: the action and the variables it chang
 
 ## Bounds and assumptions
 
-- Two picks of one photo each (`MaxAdds = 2`) and three accepted task requests (`MaxRequests = 3`): 531,028 states.
+- Two picks of one photo each (`MaxAdds = 2`) and three accepted task requests (`MaxRequests = 3`): 1,346,965 states.
 - Framing and saving are one step, since only progress units tell them apart. Unreadable and too-small photos count as saved.
 - The scene phase and `applicationState` change together. Activation can also follow an inactive phase in front.
 - iOS accepts a task request only while the app is on screen. It may launch a request late or never, and may expire a running task at any time.
 - `requestAddAccess` may answer either way on every call.
+- A pick, Fortsetzen or Erneut versuchen while an expiry is still on its way to the main actor overrides that stop. The model then allows the batch to run; the app may still pause it, which errs toward holding the stop.
 - Out of scope: background time running out, suspension and kills by iOS, the photo pipeline in `PhotoFramer.swift`, `PhotosBridge.swift`, and the in-flight fraction in progress reports.
