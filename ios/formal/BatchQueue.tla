@@ -32,17 +32,16 @@ VARIABLES
   expiring,        \* expired tasks whose taskExpired(_:) has not run yet
   added,           \* picks so far, bounded by MaxAdds
   readAccessAsked, \* ReadAccessOffer answered; it shows once while undetermined
-  released,        \* BatchKeepAlive.releasedTask; 0 while nil
-  overridden,      \* history: the user lifted a pause while an expiry was on its way
+  overridden,      \* history: expiries on their way when the user picked, resumed or retried
   stop,            \* history: a task expiry the user has not overridden; "running" if it
-                   \* came while the runner ran, "idle" if after it ended, "released" if
+                   \* came while the runner ran, "idle" if after it ended, "late" if
                    \* releaseTime() had completed the task first
   shortReport      \* history: a held task completed with a stale last report
 
 session == <<photos, isPaused, blocker, inBg, runner, handover>>
 vars == <<photos, isPaused, blocker, inBg, runner, handover, grant, bgTime, obsPending,
           reported, nextId, submitted, launching, running, expiring, added, readAccessAsked,
-          stop, released, overridden, shortReport>>
+          stop, overridden, shortReport>>
 
 NoGrant == [kind |-> "none", id |-> 0]
 Grant(kind, id) == [kind |-> kind, id |-> id]
@@ -65,7 +64,8 @@ Notify == obsPending' = (obsPending \/ Tracked' # Tracked)
 NotifyOnWrite == obsPending' \in IF Tracked' # Tracked THEN {TRUE} ELSE {obsPending, TRUE}
 
 \* A user call (add, retryFailed, resume) lifts the pause, then FramingSession.continueQueue()
-\* runs with photos set to p. Callers that must keep a pause take the UNCHANGED branch instead.
+\* runs with photos set to p. Activate and GrantReadAccess reach it only while not paused, which
+\* is the guard continueQueue() itself has.
 ContinueQueue(p) ==
   /\ photos' = p
   /\ isPaused' = FALSE
@@ -116,14 +116,13 @@ ReleaseTime(lastReport) ==
   IF Bug = "AwaitingNeverCleared" /\ grant.kind = "awaiting" THEN
     \* e660a2a: the end of a batch neither cancelled nor forgot the awaited request
     /\ bgTime' = FALSE
-    /\ UNCHANGED <<grant, submitted, running, shortReport, released, overridden>>
+    /\ UNCHANGED <<grant, submitted, running, shortReport, overridden>>
   ELSE
     /\ grant' = NoGrant
     /\ bgTime' = FALSE
     /\ submitted' = IF grant.kind = "awaiting" THEN submitted \ {grant.id} ELSE submitted
     /\ running' = IF grant.kind = "task" THEN running \ {grant.id} ELSE running
     /\ shortReport' = (shortReport \/ (grant.kind = "task" /\ lastReport # Finished))
-    /\ released' = IF grant.kind = "task" THEN grant.id ELSE released
     /\ UNCHANGED overridden
 
 \* One pass of the for-await loop in BatchKeepAlive.followSession()
@@ -140,7 +139,7 @@ Observe ==
      ELSE
        /\ IF ~isPaused THEN HoldTime ELSE UNCHANGED <<grant, bgTime, submitted, nextId>>
        /\ reported' = IF grant.kind = "task" THEN Finished ELSE reported
-       /\ UNCHANGED <<running, shortReport, released, overridden>>
+       /\ UNCHANGED <<running, shortReport, overridden>>
   /\ UNCHANGED <<session, launching, expiring, added, readAccessAsked, stop>>
 
 \* iOS launches a submitted request, or never does
@@ -149,7 +148,7 @@ TaskLaunches ==
     /\ submitted' = submitted \ {id}
     /\ launching' = launching \cup {id}
     /\ UNCHANGED <<session, grant, bgTime, reported, nextId, running, expiring, added,
-                   readAccessAsked, stop, released, overridden, shortReport>>
+                   readAccessAsked, stop, overridden, shortReport>>
   /\ Notify
 
 \* BatchKeepAlive.taskStarted(_:), the launch handler registered on the main queue
@@ -162,7 +161,7 @@ TaskStarted ==
          /\ reported' = Finished
          /\ bgTime' = FALSE
        ELSE UNCHANGED <<grant, running, reported, bgTime>>
-    /\ UNCHANGED <<session, nextId, submitted, expiring, added, readAccessAsked, stop, released, overridden,
+    /\ UNCHANGED <<session, nextId, submitted, expiring, added, readAccessAsked, stop, overridden,
                    shortReport>>
   /\ Notify
 
@@ -173,7 +172,7 @@ TaskExpires ==
     /\ running' = running \ {id}
     /\ expiring' = expiring \cup {id}
     /\ UNCHANGED <<session, grant, bgTime, reported, nextId, submitted, launching, added,
-                   readAccessAsked, stop, released, overridden, shortReport>>
+                   readAccessAsked, stop, overridden, shortReport>>
   /\ Notify
 
 \* BatchKeepAlive.taskExpired(_:), which calls FramingSession.pause()
@@ -181,7 +180,7 @@ TaskExpired ==
   \E id \in expiring :
     /\ expiring' = expiring \ {id}
     /\ IF grant = Grant("task", id) THEN
-         /\ stop' = IF overridden THEN stop ELSE IF IsRunning THEN "running" ELSE "idle"
+         /\ stop' = IF id \in overridden THEN stop ELSE IF IsRunning THEN "running" ELSE "idle"
          /\ IF Bug = "ExpiryKeepsRunning" /\ ~inBg THEN
               \* b7392d6: on screen, expiry asked for a new task and did not pause
               /\ RequestTime(TRUE)
@@ -192,16 +191,15 @@ TaskExpired ==
                               (Bug # "PauseNeedsRunner" /\ \E i \in DOMAIN photos : photos[i].st = "queued"))
               /\ bgTime' = TRUE
               /\ UNCHANGED <<submitted, nextId>>
-       ELSE IF id = released THEN
+       ELSE
          \* the expiry landed after releaseTime() completed the task
-         /\ stop' = IF overridden THEN stop ELSE "released"
+         /\ stop' = IF id \in overridden THEN stop ELSE "late"
          /\ isPaused' = IF Bug = "ReleasedStopDropped" THEN isPaused
                         ELSE isPaused \/ IsRunning \/ \E i \in DOMAIN photos : photos[i].st = "queued"
          /\ UNCHANGED <<grant, bgTime, submitted, nextId>>
-       ELSE UNCHANGED <<grant, bgTime, isPaused, submitted, nextId, stop>>
+    /\ overridden' = overridden \ {id}
     /\ UNCHANGED <<photos, blocker, inBg, runner, handover, reported, launching, running,
-                   added, readAccessAsked, shortReport, released>>
-  /\ overridden' = (overridden /\ expiring' # {})
+                   added, readAccessAsked, shortReport>>
   /\ Notify
 
 \* drain(): `blocker = await library.requestAddAccess()` returns
@@ -212,7 +210,7 @@ AccessAnswered ==
        /\ IF refused THEN runner' = "none" /\ UNCHANGED <<photos, isPaused, handover>>
           ELSE DrainLoop(photos)
   /\ UNCHANGED <<inBg, grant, bgTime, reported, nextId, submitted, launching, running,
-                 expiring, added, readAccessAsked, stop, released, overridden, shortReport>>
+                 expiring, added, readAccessAsked, stop, overridden, shortReport>>
   /\ Notify
 
 \* The Handover finishes: loadOriginal's completion, or watch() giving up on a stalled transfer
@@ -220,7 +218,7 @@ LoadEnds ==
   /\ handover = "pending"
   /\ handover' \in {"ok", "failed"}
   /\ UNCHANGED <<photos, isPaused, blocker, inBg, runner, grant, bgTime, reported, nextId,
-                 submitted, launching, running, expiring, added, readAccessAsked, stop, released, overridden,
+                 submitted, launching, running, expiring, added, readAccessAsked, stop, overridden,
                  shortReport>>
   /\ Notify
 
@@ -230,7 +228,7 @@ LoadProgresses ==
   /\ ~obsPending
   /\ obsPending' = TRUE
   /\ UNCHANGED <<session, grant, bgTime, reported, nextId, submitted, launching, running,
-                 expiring, added, readAccessAsked, stop, released, overridden, shortReport>>
+                 expiring, added, readAccessAsked, stop, overridden, shortReport>>
 
 \* load() resumes after the Handover finished, then process() and drain() go on
 LoadResumes ==
@@ -244,7 +242,7 @@ LoadResumes ==
        [] handover = "failed" -> DrainLoop(WithState(InFlight, "retry"))
        [] handover = "background" -> DrainLoop(WithState(InFlight, "queued"))
   /\ UNCHANGED <<blocker, inBg, grant, bgTime, reported, nextId, submitted, launching, running,
-                 expiring, added, readAccessAsked, stop, released, overridden, shortReport>>
+                 expiring, added, readAccessAsked, stop, overridden, shortReport>>
   /\ Notify
 
 \* process(): framePhoto and library.add return, the photo is saved or failed, drain() goes on
@@ -252,7 +250,7 @@ ProcessEnds ==
   /\ runner = "processing"
   /\ \E outcome \in {"saved", "retry"} : DrainLoop(WithState(InFlight, outcome))
   /\ UNCHANGED <<blocker, inBg, grant, bgTime, reported, nextId, submitted, launching, running,
-                 expiring, added, readAccessAsked, stop, released, overridden, shortReport>>
+                 expiring, added, readAccessAsked, stop, overridden, shortReport>>
   /\ Notify
 
 \* "Fotos auswählen": the PhotosPicker in FramingScreen -> FramingSession.add(_:)
@@ -267,9 +265,9 @@ Add ==
        IN  ContinueQueue(Append(kept, [id |-> added + 1, st |-> "queued", fg |-> fg]))
   /\ added' = added + 1
   /\ stop' = "none"
-  /\ overridden' = (expiring # {})
+  /\ overridden' = expiring
   /\ UNCHANGED <<blocker, inBg, handover, grant, bgTime, reported, nextId, submitted, launching,
-                 running, expiring, readAccessAsked, shortReport, released>>
+                 running, expiring, readAccessAsked, shortReport>>
   /\ Notify
 
 \* "Fortsetzen" -> FramingSession.resume()
@@ -278,9 +276,9 @@ Resume ==
   /\ isPaused
   /\ ContinueQueue(photos)
   /\ stop' = "none"
-  /\ overridden' = (expiring # {})
+  /\ overridden' = expiring
   /\ UNCHANGED <<blocker, inBg, handover, grant, bgTime, reported, nextId, submitted, launching,
-                 running, expiring, added, readAccessAsked, shortReport, released>>
+                 running, expiring, added, readAccessAsked, shortReport>>
   /\ Notify
 
 \* "Erneut versuchen" -> FramingSession.retryFailed()
@@ -293,9 +291,9 @@ RetryFailed ==
                       IF photos[i].st = "retry" THEN [photos[i] EXCEPT !.st = "queued"]
                       ELSE photos[i]])
   /\ stop' = "none"
-  /\ overridden' = (expiring # {})
+  /\ overridden' = expiring
   /\ UNCHANGED <<blocker, inBg, handover, grant, bgTime, reported, nextId, submitted, launching,
-                 running, expiring, added, readAccessAsked, shortReport, released>>
+                 running, expiring, added, readAccessAsked, shortReport>>
   /\ Notify
 
 \* "Zugriff erlauben" -> FramingScreen.accessChanged(to:) ->
@@ -310,7 +308,7 @@ GrantReadAccess ==
        IN  IF isPaused THEN photos' = p /\ UNCHANGED <<isPaused, runner>>
            ELSE ContinueQueue(p)
   /\ UNCHANGED <<blocker, inBg, handover, grant, bgTime, reported, nextId, submitted, launching,
-                 running, expiring, added, stop, released, overridden, shortReport>>
+                 running, expiring, added, stop, overridden, shortReport>>
   /\ NotifyOnWrite
 
 \* scenePhase .background -> FramingSession.appMovedToBackground()
@@ -322,7 +320,7 @@ MoveToBackground ==
                     /\ runner = "loading" /\ handover = "pending" /\ photos[InFlight].fg
                  THEN "background" ELSE handover
   /\ UNCHANGED <<photos, isPaused, blocker, runner, grant, bgTime, reported, nextId, submitted,
-                 launching, running, expiring, added, readAccessAsked, stop, released, overridden, shortReport>>
+                 launching, running, expiring, added, readAccessAsked, stop, overridden, shortReport>>
   /\ Notify
 
 \* Whether FramingSession.appBecameActive() reaches continueQueue()
@@ -343,7 +341,7 @@ Activate ==
          [] OTHER -> UNCHANGED <<grant, bgTime, submitted, nextId>>
      ELSE UNCHANGED <<grant, bgTime, submitted, nextId>>
   /\ UNCHANGED <<blocker, handover, reported, launching, running, expiring, added,
-                 readAccessAsked, stop, released, overridden, shortReport>>
+                 readAccessAsked, stop, overridden, shortReport>>
   /\ IF ActivationContinues THEN NotifyOnWrite ELSE Notify
 
 Init ==
@@ -364,8 +362,7 @@ Init ==
   /\ expiring = {}
   /\ added = 0
   /\ readAccessAsked = FALSE
-  /\ released = 0
-  /\ overridden = FALSE
+  /\ overridden = {}
   /\ stop = "none"
   /\ shortReport = FALSE
 
@@ -388,9 +385,8 @@ TypeOK ==
   /\ (handover # "none") = (runner = "loading")
   /\ grant.kind = "task" => grant.id \in running \cup expiring
   /\ InProgress = 0 => ~IsRunning
-  /\ stop \in {"none", "running", "idle", "released"}
-  /\ released \in 0..MaxRequests
-  /\ overridden \in BOOLEAN
+  /\ stop \in {"none", "running", "idle", "late"}
+  /\ overridden \subseteq 1..MaxRequests
 
 (***************************************************************************)
 (* Properties. Each holds for Bug = "none". check.sh shows that each       *)
