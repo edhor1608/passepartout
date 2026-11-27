@@ -13,8 +13,9 @@ public final class FramingSession {
   public private(set) var photos: [Photo] = []
   /// Set while the library refuses adds. Queued photos wait for `appBecameActive()`.
   public private(set) var blocker: LibraryBlocker?
-  /// Set by `pause()` during a run. The photo in flight still finishes, and queued photos wait
-  /// for `resume()`, `add` or `retryFailed`. Clears itself once no photo is left queued.
+  /// Set by `pause()`. The photo in flight still finishes, and queued photos wait for the user's
+  /// `resume()`, `add` or `retryFailed`, the only calls that lift it. Clears itself once no photo
+  /// is left queued.
   public private(set) var isPaused = false
   public var isRunning: Bool { runner != nil }
   public var summary: Summary { Summary(photos) }
@@ -47,6 +48,7 @@ public final class FramingSession {
       photos.append(Photo(id: nextID, state: .queued, source: source))
       nextID += 1
     }
+    isPaused = false
     continueQueue()
   }
 
@@ -55,28 +57,31 @@ public final class FramingSession {
     for index in photos.indices where photos[index].state.failure?.isRetryable == true {
       photos[index].state = .queued
     }
+    isPaused = false
     continueQueue()
   }
 
   /// Replaces the sources of queued photos, for when library access changed, and continues the
-  /// queue unless it is paused. `update` gets and returns the sources in queue order.
+  /// queue. `update` gets and returns the sources in queue order.
   public func updateQueuedSources(_ update: ([any PhotoSource]) -> [any PhotoSource]) {
     let queued = photos.indices.filter { photos[$0].state == .queued }
     let sources = update(queued.map { photos[$0].source })
     for (index, source) in zip(queued, sources) { photos[index].source = source }
-    if !isPaused { continueQueue() }
+    continueQueue()
   }
 
   /// Continues a paused batch. Call it only on the user's tap, so a stop in system UI holds
   /// until the user lifts it.
   public func resume() {
+    isPaused = false
     continueQueue()
   }
 
   /// Lets the photo in flight finish and keeps the rest queued until the next `add`,
-  /// `retryFailed` or `resume`. For when iOS or the user stops the batch's background task.
+  /// `retryFailed` or `resume`. For when iOS or the user stops the batch's background task, which
+  /// can arrive after the runner stopped for a blocker or the background with photos still queued.
   public func pause() {
-    guard isRunning else { return }
+    guard isRunning || photos.contains(where: { $0.state == .queued }) else { return }
     isPaused = true
   }
 
@@ -85,7 +90,6 @@ public final class FramingSession {
   /// pause stays.
   public func appBecameActive() {
     isInBackground = false
-    guard !isPaused else { return }
     continueQueue()
   }
 
@@ -100,8 +104,7 @@ public final class FramingSession {
   }
 
   private func continueQueue() {
-    isPaused = false
-    guard runner == nil, photos.contains(where: { $0.state == .queued }) else { return }
+    guard !isPaused, runner == nil, photos.contains(where: { $0.state == .queued }) else { return }
     runner = Task {
       await drain()
       runner = nil

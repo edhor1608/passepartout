@@ -12,7 +12,7 @@ CONSTANTS MaxAdds, MaxRequests, Bug
 
 ASSUME Bug \in {"none", "ExpiryKeepsRunning", "ActivationLiftsPause", "AwaitingUnheld",
                 "AwaitingNeverCleared", "ReportAfterRelease", "ForegroundLoadInBackground",
-                "AddDropsRetryable"}
+                "AddDropsRetryable", "PauseNeedsRunner"}
 
 VARIABLES
   photos,          \* FramingSession.photos; fg: the source cannot load in the background
@@ -61,7 +61,8 @@ Notify == obsPending' = (obsPending \/ Tracked' # Tracked)
 \* isPaused, depending on the @Observable macro's equality check.
 NotifyOnWrite == obsPending' \in IF Tracked' # Tracked THEN {TRUE} ELSE {obsPending, TRUE}
 
-\* FramingSession.continueQueue(), after the caller set photos to p
+\* A user call (add, retryFailed, resume) lifts the pause, then FramingSession.continueQueue()
+\* runs with photos set to p. Callers that must keep a pause take the UNCHANGED branch instead.
 ContinueQueue(p) ==
   /\ photos' = p
   /\ isPaused' = FALSE
@@ -182,7 +183,8 @@ TaskExpired ==
               /\ UNCHANGED isPaused
             ELSE
               /\ grant' = NoGrant
-              /\ isPaused' = (isPaused \/ IsRunning)
+              /\ isPaused' = (isPaused \/ IsRunning \/
+                              (Bug # "PauseNeedsRunner" /\ \E i \in DOMAIN photos : photos[i].st = "queued"))
               /\ bgTime' = TRUE
               /\ UNCHANGED <<submitted, nextId>>
        ELSE UNCHANGED <<grant, bgTime, isPaused, submitted, nextId, stop>>

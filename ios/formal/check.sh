@@ -9,12 +9,11 @@ readonly TLA_SHA256=936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e05
 readonly BOUNDS='MaxAdds = 2 MaxRequests = 3'
 readonly INVARIANTS='TypeOK ReleasedWhenIdle BackgroundTimeWhileAwaiting LastReportComplete ForegroundLoadsInForeground'
 readonly ACTION_PROPERTIES='PauseHolds StopHolds RetryableKept'
-readonly KNOWN_FINDINGS='StopHolds'
+readonly KNOWN_FINDINGS=''
 
 # run|Bug constant|property the run must break, empty when it must pass|commit that fixed it
 readonly RUNS=(
   "current|none||"
-  "StopAfterRunnerEnded|none|StopHolds|open finding"
   "ExpiryKeepsRunning|ExpiryKeepsRunning|PauseHolds|b7392d6"
   "ActivationLiftsPause|ActivationLiftsPause|PauseHolds|61c4a18"
   "AwaitingUnheld|AwaitingUnheld|BackgroundTimeWhileAwaiting|e660a2a"
@@ -22,6 +21,7 @@ readonly RUNS=(
   "ReportAfterRelease|ReportAfterRelease|LastReportComplete|8cb42e4"
   "ForegroundLoadInBackground|ForegroundLoadInBackground|ForegroundLoadsInForeground|70e6b9a"
   "AddDropsRetryable|AddDropsRetryable|RetryableKept|b4d191a"
+  "PauseNeedsRunner|PauseNeedsRunner|StopHolds|pause() with queued photos"
 )
 
 here=$(cd "$(dirname "$0")" && pwd)
