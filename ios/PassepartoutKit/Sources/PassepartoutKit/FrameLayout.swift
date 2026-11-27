@@ -1,8 +1,8 @@
 let defaultBorderPx = 57
 
-struct PixelSize: Equatable, Sendable {
-  let width: Int
-  let height: Int
+public struct PixelSize: Equatable, Sendable {
+  public let width: Int
+  public let height: Int
 }
 
 struct PixelRect: Equatable, Sendable, Decodable {

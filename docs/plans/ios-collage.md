@@ -12,3 +12,13 @@ Behaviour-preserving refactor, so no red phase. The only test edit is the `decod
 
 - Before: `make -C ios test`: 34 tests in 4 suites passed.
 - After: `make -C ios test`: 34 tests in 4 suites passed.
+
+### Unit 1: `CollageSettings` and `CollageSettingsStore`
+
+- Red, against stubs (every canvas 1440x1920, spacing not clamped, a store that keeps nothing):
+  `--filter CollageSettings`: 8 tests in 2 suites failed with 20 issues. Failing:
+  `everyCanvasHasItsInstagramSize` (3 of 4 canvases), `spacingIsClampedToItsRange` (-5, 999),
+  `everyValueRoundTrips` (8 of 8), `readsTheStoredCanvasNames` (3 of 4), `aBrokenValueFallsBackForItsFieldOnly`
+  (`settings.shape == .square`), `aStoredSpacingIsClamped` (3 of 3). The two default tests pass against the stub by
+  construction.
+- Green: `--filter CollageSettings`: 8 tests in 2 suites passed.
