@@ -48,7 +48,7 @@ ios/formal/check.sh <run>        # one run, with its counterexample
 The script downloads `tla2tools.jar` v1.7.4 once into `~/.cache/tla2tools`, pinned by sha256. Each line of output is one run:
 
 - `current` checks the code as it is against every property except the known findings in `KNOWN_FINDINGS`, and must hold. There are none today.
-- Every other run sets the `Bug` constant to re-enable one fixed defect and must break the property that guards it: `ExpiryKeepsRunning` (b7392d6), `ActivationLiftsPause` (61c4a18), `AwaitingUnheld` and `AwaitingNeverCleared` (e660a2a), `ReportAfterRelease` (8cb42e4), `ForegroundLoadInBackground` (70e6b9a), `AddDropsRetryable` (b4d191a), `PauseNeedsRunner` (d7f437d) and `ReleasedStopDropped` (ae17711), both found by this model.
+- Every other run sets the `Bug` constant to re-enable one fixed defect and must break the property that guards it: `ExpiryKeepsRunning` (b7392d6), `ActivationLiftsPause` (61c4a18), `AwaitingUnheld` and `AwaitingNeverCleared` (e660a2a), `ReportAfterRelease` (8cb42e4), `ForegroundLoadInBackground` (70e6b9a), `AddDropsRetryable` (b4d191a), `PauseNeedsRunner` (d7f437d), `ReleasedStopDropped` (78f8f6f) and `LastReleasedOnly` (ae17711), found by this model and its reviews.
 
 A counterexample prints one line per step: the action and the variables it changed.
 
@@ -72,6 +72,7 @@ A counterexample prints one line per step: the action and the variables it chang
 - Framing and saving are one step, since only progress units tell them apart. Unreadable and too-small photos count as saved.
 - The scene phase and `applicationState` change together. Activation can also follow an inactive phase in front.
 - iOS accepts a task request only while the app is on screen. It may launch a request late or never, and may expire a running task at any time.
+- A task can expire only after `taskStarted` set its handler. A stop in system UI between the launch and the launch handler on the main queue is not modeled; what iOS does with a task that has no handler yet is not checked.
 - `requestAddAccess` may answer either way on every call.
 - A pick, Fortsetzen or Erneut versuchen while an expiry is still on its way to the main actor overrides that stop, tracked per task in `overridden`. The model then allows the batch to run; the app may still pause it, which errs toward holding the stop.
 - Out of scope: background time running out, suspension and kills by iOS, the photo pipeline in `PhotoFramer.swift`, `PhotosBridge.swift`, and the in-flight fraction in progress reports.

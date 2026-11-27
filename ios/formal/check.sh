@@ -22,7 +22,8 @@ readonly RUNS=(
   "ForegroundLoadInBackground|ForegroundLoadInBackground|ForegroundLoadsInForeground|70e6b9a"
   "AddDropsRetryable|AddDropsRetryable|RetryableKept|b4d191a"
   "PauseNeedsRunner|PauseNeedsRunner|StopHolds|d7f437d"
-  "ReleasedStopDropped|ReleasedStopDropped|StopHolds|ae17711"
+  "ReleasedStopDropped|ReleasedStopDropped|StopHolds|78f8f6f"
+  "LastReleasedOnly|LastReleasedOnly|StopHolds|ae17711"
 )
 
 here=$(cd "$(dirname "$0")" && pwd)
