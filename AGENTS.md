@@ -70,11 +70,13 @@ make -C ios test          # kit tests on the Mac host only
 make -C ios run           # build, install, and launch on the booted simulator
 make -C ios build-device  # signed build for a real iPhone
 make -C ios format        # apply swift-format
+make -C ios formal        # TLA+ model of the batch queue, needs Java 11+
 ```
 
 - `ios/PassepartoutKit/`: all logic and tests: layout port, photo framer, session, Photos bridge.
 - `ios/Passepartout/`: the SwiftUI app shell.
 - `ios/project.yml`: the xcodegen spec. The generated `ios/Passepartout.xcodeproj` is gitignored.
+- `ios/formal/`: TLA+ model of `FramingSession` and `BatchKeepAlive`. `.claude/skills/verify-batch-queue/SKILL.md` says when to rerun and update it.
 
 ## Branch Knowledge
 

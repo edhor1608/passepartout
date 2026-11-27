@@ -179,6 +179,30 @@ struct FramingSessionTests {
     #expect(session.photos.map(\.state.label) == ["saved"])
   }
 
+  @Test func aStopAfterTheRunnerEndedHoldsUntilAnExplicitResume() async throws {
+    await recorder.setBlocker(.denied)
+    let session = FramingSession(library: recorder.library)
+
+    session.add([try photo("a")])
+    await finish(session)
+    session.pause()
+
+    #expect(session.isPaused)
+
+    await recorder.setBlocker(nil)
+    session.appBecameActive()
+    session.updateQueuedSources { $0 }
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["queued"])
+
+    session.resume()
+    await finish(session)
+
+    #expect(session.photos.map(\.state.label) == ["saved"])
+    #expect(!session.isPaused)
+  }
+
   @Test func photosThatNeedTheAppWaitForItInPickOrder() async throws {
     let session = FramingSession(library: recorder.library)
 

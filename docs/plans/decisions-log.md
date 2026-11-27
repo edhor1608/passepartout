@@ -966,3 +966,22 @@ The generated 3049-case fixture fails a build on drift in either direction. The 
 - The batch queue lives in memory, with no persisted copy. If iOS kills the app mid-batch, saved photos stay saved and the rest are lost. Picking the same photos again duplicates the saved ones.
 - A picker transfer whose progress has not moved for 60 s is cancelled and fails as retryable, so one iCloud original on a bad connection cannot hold up the local photos behind it.
 - A TypeScript layout change fails the Bun test until the fixture is regenerated, then fails `make -C ios check` until the Swift port matches.
+
+## 2026-11-24: Model-check the iOS batch queue with TLA+
+
+### Context
+
+Four fixes in the iOS app's first PR (b7392d6, 61c4a18, e660a2a, 8cb42e4) were ordering bugs between `FramingSession`, `BatchKeepAlive`, scene-phase events and `BGTaskScheduler` callbacks. Each needs an iOS event to land between two main-actor jobs, which unit tests do not reach.
+
+### Decision
+
+`ios/formal/BatchQueue.tla` models both classes with one action per stretch of main-actor code between two awaits, plus one per iOS or user event. `ios/formal/check.sh` runs TLC v1.7.4, pinned by sha256. The current code must keep every property except known findings. Each fixed bug, re-enabled through the model's `Bug` constant, must break the property that guards it. The `Formal` workflow runs the script when a modeled file changes.
+
+### Rationale
+
+TLA+ checks every interleaving within the bounds: two picks and three task requests, 1,174,529 states in about 2 min of CPU. The bug replays show that each property can fail, and they fail the check if the model stops catching a fixed bug.
+
+### Consequences
+
+- A change to `FramingSession`, `BatchKeepAlive`, the scene-phase handler or the session calls in `FramingScreen` needs the model updated in the same change. The `verify-batch-queue` skill describes how.
+- The model found a fourth lost stop: a task expiry handled after the runner ended, but before `followSession()` released the task, called `pause()` while nothing ran. `pause()` now also pauses while photos are queued, and only `resume`, `add` and `retryFailed` lift a pause. If `followSession()` released the task first, its expiry was dropped; `BatchKeepAlive` now pauses on every expiry of a task it no longer holds, since only tasks it kept get the handler.

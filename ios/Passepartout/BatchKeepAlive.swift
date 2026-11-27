@@ -135,7 +135,12 @@ final class BatchKeepAlive {
 
   /// A stop in system UI expires the task the same way iOS does, with no reason given.
   private func taskExpired(_ identifier: String) {
-    guard case .task(let task)? = grant, task.identifier == identifier else { return }
+    guard case .task(let task)? = grant, task.identifier == identifier else {
+      // Only tasks that taskStarted kept get this handler, so this one was already released,
+      // and the stop must still hold.
+      session.pause()
+      return
+    }
     Self.log.info("continued processing expired: \(identifier, privacy: .public)")
     task.setTaskCompleted(success: false)
     grant = nil

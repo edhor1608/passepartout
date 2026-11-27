@@ -4,7 +4,7 @@ DERIVED := $(BUILD)/DerivedData
 SWIFT_SOURCES := PassepartoutKit/Package.swift PassepartoutKit/Sources PassepartoutKit/Tests Passepartout
 APP := $(DERIVED)/Build/Products/Debug-iphonesimulator/Passepartout.app
 
-.PHONY: project test test-ios build build-device lint format check run
+.PHONY: project test test-ios build build-device lint format check run formal
 
 project:
 	xcodegen generate --spec project.yml --quiet
@@ -42,3 +42,6 @@ check: lint test test-ios build
 run: build
 	xcrun simctl install booted $(APP)
 	xcrun simctl launch booted me.edhor.passepartout
+
+formal:
+	formal/check.sh
