@@ -174,8 +174,9 @@ public struct PhotoLibrary: Sendable {
     self.add = add
   }
 
-  /// Photos dates each new asset "now", which puts the copies at the top of Recents, where
-  /// Instagram's picker opens.
+  /// `addResource(with:data:options:)` stores the framed JPEG bytes without a new encode. Photos
+  /// dates each new asset "now", which puts the copies at the top of Recents, where Instagram's
+  /// picker opens.
   public static let system = PhotoLibrary(
     requestAddAccess: {
       LibraryBlocker.blocking(await PHPhotoLibrary.requestAuthorization(for: .addOnly))

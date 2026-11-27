@@ -278,11 +278,14 @@ struct PhotoFramerTests {
     case baseline = 0xC0, extendedSequential, progressive, lossless
   }
 
+  private let startOfScan: UInt8 = 0xDA
+
   private func firstFrameMarker(_ jpeg: Data) -> StartOfFrame? {
     let bytes = [UInt8](jpeg)
     var index = 2
     while index + 3 < bytes.count, bytes[index] == 0xFF {
       let marker = bytes[index + 1]
+      if marker == startOfScan { return nil }
       if let frame = StartOfFrame(rawValue: marker) { return frame }
       index += 2 + (Int(bytes[index + 2]) << 8 | Int(bytes[index + 3]))
     }

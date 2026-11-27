@@ -151,6 +151,8 @@ private func resample(
       colorSpace: colorSpace,
       bitmapInfo: CGBitmapInfo(rawValue: alpha))
   else { throw .renderFailed }
+  // vImage_Buffer(cgImage:format:) rejects the packed 10-bit format of HDR HEIC, and Core
+  // Graphics reads every format ImageIO returns, so the crop is drawn before vImage scales it.
   converted.draw(
     decoded,
     in: CGRect(
