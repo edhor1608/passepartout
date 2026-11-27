@@ -1,10 +1,17 @@
 let defaultBorderPx = 57
 
+struct PixelSize: Equatable, Sendable {
+  let width: Int
+  let height: Int
+}
+
 struct PixelRect: Equatable, Sendable, Decodable {
   let x: Int
   let y: Int
   let width: Int
   let height: Int
+
+  var size: PixelSize { PixelSize(width: width, height: height) }
 }
 
 enum FrameLayoutError: String, Error, Equatable, Sendable, Decodable {

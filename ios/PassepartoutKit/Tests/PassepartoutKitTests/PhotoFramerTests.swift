@@ -227,7 +227,9 @@ struct PhotoFramerTests {
   func decodesAtAJPEGStepWhenItKeepsEnoughDetail(width: Int, height: Int, longEdge: Int) throws {
     let layout = try FrameLayout(
       sourceWidth: width, sourceHeight: height, borderPx: defaultBorderPx)
-    #expect(decodeLongEdge(sourceWidth: width, sourceHeight: height, layout: layout) == longEdge)
+    let render = PixelSize(width: layout.renderWidth, height: layout.renderHeight)
+    let source = PixelSize(width: width, height: height)
+    #expect(decodeLongEdge(source: source, crop: layout.sourceCrop, size: render) == longEdge)
   }
 
   @Test func rejectsAFileImageIOCannotRead() async throws {
