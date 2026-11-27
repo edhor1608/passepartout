@@ -54,3 +54,12 @@ Behaviour-preserving refactor, so no red phase. The only test edit is the `decod
   `closingThePickerWithoutAPickReturnsToStart` passes against the stub, which never leaves `start`.
 - Green: `--filter CollageSession`: 25 tests passed. Five repeated runs of `--filter 'CollageSession|FramingSession'`:
   44 tests in 3 suites passed each time. `make -C ios test`: 92 tests in 10 suites passed.
+
+### Unit 5: app shell
+
+No red phase: the shell holds no rule, and every rule it calls is covered by the kit tests above.
+
+- `make -C ios build`: succeeded without warnings (warnings are errors).
+- Simulator iPhone 17 Pro, iOS 26.5: the app starts. Smoke run of the one seam that depends on system UI: "Collage"
+  opens the system picker with "Wähle bis zu 12 Fotos aus", four picked photos open the editor cover in pick order
+  as rows `[2, 2]`, "Abbrechen" returns to the start screen.

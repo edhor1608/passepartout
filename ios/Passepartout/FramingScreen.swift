@@ -6,7 +6,9 @@ import UIKit
 
 struct FramingScreen: View {
   let session: FramingSession
+  let collage: CollageSession
   @State private var picked: [PhotosPickerItem] = []
+  @State private var pickedForCollage: [PhotosPickerItem] = []
   @State private var readAccess = PHPhotoLibrary.authorizationStatus(for: .readWrite)
   @Environment(\.scenePhase) private var scenePhase
 
@@ -23,6 +25,27 @@ struct FramingScreen: View {
     }
     .onChange(of: scenePhase) { _, phase in
       if phase == .active { readAccess = PHPhotoLibrary.authorizationStatus(for: .readWrite) }
+    }
+    .photosPicker(
+      isPresented: Binding(
+        get: { collage.phase.isPicking },
+        set: { isPresented in if !isPresented { collage.pick([]) } }),
+      selection: $pickedForCollage,
+      maxSelectionCount: CollageDocument.maxPhotoCount,
+      selectionBehavior: .ordered,
+      matching: .images,
+      preferredItemEncoding: .current,
+      photoLibrary: .shared()
+    )
+    .onChange(of: pickedForCollage) { _, items in
+      guard !items.isEmpty else { return }
+      collage.pick(LibraryPhoto.preferred(items))
+      pickedForCollage = []
+    }
+    .fullScreenCover(
+      isPresented: Binding(get: { collage.phase.coversStartScreen }, set: { _ in })
+    ) {
+      CollageScreen(session: collage)
     }
   }
 
@@ -79,6 +102,8 @@ struct FramingScreen: View {
         Button("Erneut versuchen (\(session.summary.retryable))") { session.retryFailed() }
           .buttonStyle(.bordered)
       }
+      Button("Collage", systemImage: "square.grid.2x2") { collage.openPicker() }
+        .buttonStyle(.bordered)
       PhotosPicker(
         selection: $picked,
         maxSelectionCount: nil,
@@ -159,7 +184,7 @@ private struct PhotoTile: View {
   }
 }
 
-private struct LibraryBlockerBanner: View {
+struct LibraryBlockerBanner: View {
   let blocker: LibraryBlocker
   @Environment(\.openURL) private var openURL
 
