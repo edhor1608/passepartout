@@ -1,0 +1,38 @@
+name: Formal
+
+on:
+  pull_request:
+    paths:
+      - "ios/PassepartoutKit/Sources/PassepartoutKit/FramingSession.swift"
+      - "ios/Passepartout/BatchKeepAlive.swift"
+      - "ios/Passepartout/PassepartoutApp.swift"
+      - "ios/Passepartout/FramingScreen.swift"
+      - "ios/formal/**"
+      - ".github/workflows/formal.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "ios/PassepartoutKit/Sources/PassepartoutKit/FramingSession.swift"
+      - "ios/Passepartout/BatchKeepAlive.swift"
+      - "ios/Passepartout/PassepartoutApp.swift"
+      - "ios/Passepartout/FramingScreen.swift"
+      - "ios/formal/**"
+      - ".github/workflows/formal.yml"
+
+jobs:
+  batch-queue:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Model-check the batch queue
+        run: ios/formal/check.sh
