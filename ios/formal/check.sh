@@ -21,7 +21,8 @@ readonly RUNS=(
   "ReportAfterRelease|ReportAfterRelease|LastReportComplete|8cb42e4"
   "ForegroundLoadInBackground|ForegroundLoadInBackground|ForegroundLoadsInForeground|70e6b9a"
   "AddDropsRetryable|AddDropsRetryable|RetryableKept|b4d191a"
-  "PauseNeedsRunner|PauseNeedsRunner|StopHolds|pause() with queued photos"
+  "PauseNeedsRunner|PauseNeedsRunner|StopHolds|d7f437d"
+  "ReleasedStopDropped|ReleasedStopDropped|StopHolds|this fix"
 )
 
 here=$(cd "$(dirname "$0")" && pwd)

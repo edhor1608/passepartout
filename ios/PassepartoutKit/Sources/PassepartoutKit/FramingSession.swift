@@ -11,7 +11,8 @@ import Synchronization
 @Observable
 public final class FramingSession {
   public private(set) var photos: [Photo] = []
-  /// Set while the library refuses adds. Queued photos wait for `appBecameActive()`.
+  /// Set while the library refuses adds. Queued photos wait for `appBecameActive()`, or for
+  /// `resume()` while paused.
   public private(set) var blocker: LibraryBlocker?
   /// Set by `pause()`. The photo in flight still finishes, and queued photos wait for the user's
   /// `resume()`, `add` or `retryFailed`, the only calls that lift it. Clears itself once no photo

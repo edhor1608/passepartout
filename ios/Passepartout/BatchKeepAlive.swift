@@ -26,6 +26,8 @@ final class BatchKeepAlive {
   private let session: FramingSession
   private var grant: Grant?
   private var backgroundTime: UIBackgroundTaskIdentifier = .invalid
+  /// The task `releaseTime()` completed last. Its expiry can still be on the way.
+  private var releasedTask: String?
 
   init(session: FramingSession) {
     self.session = session
@@ -107,7 +109,9 @@ final class BatchKeepAlive {
     switch grant {
     case .awaiting(let identifier):
       BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: identifier)
-    case .task(let task): task.setTaskCompleted(success: true)
+    case .task(let task):
+      task.setTaskCompleted(success: true)
+      releasedTask = task.identifier
     case .declined, .photoInFlightOnly, nil: break
     }
     if grant != nil { Self.log.info("batch time released") }
@@ -135,7 +139,10 @@ final class BatchKeepAlive {
 
   /// A stop in system UI expires the task the same way iOS does, with no reason given.
   private func taskExpired(_ identifier: String) {
-    guard case .task(let task)? = grant, task.identifier == identifier else { return }
+    guard case .task(let task)? = grant, task.identifier == identifier else {
+      if identifier == releasedTask { session.pause() }
+      return
+    }
     Self.log.info("continued processing expired: \(identifier, privacy: .public)")
     task.setTaskCompleted(success: false)
     grant = nil
