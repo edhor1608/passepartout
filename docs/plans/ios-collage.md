@@ -126,8 +126,8 @@ Each unit's tests ran red against stubs before the code existed (`swift test --p
 
 The fix round then deleted two settings tests that restated other ones, which leaves 101 tests in 10 suites.
 
-`make -C ios check` last ran before the editor redesign: 95 tests in 10 suites passed on the Mac and on the
-iOS 26.5 simulator (34 before the collage).
+`make -C ios check` at the end of the editor redesign: swift-format lint clean, 101 tests in 10 suites passed on
+the Mac and on the iOS 26.5 simulator (34 before the collage), app build without warnings.
 
 23 hand mutants ran against the collage suites. Three survived at first and each got a test:
 `startingOverBeforeTheFirstLoadRanLoadsOnlyTheNewPick` (no run check in the load loop),
@@ -137,10 +137,17 @@ Two are equivalent: no minimum row height, and no rounding guard on the block he
 documents gave no cell under 1 px. Both guards stay, so "every cell is at least 1 px" holds by construction and not
 only because the score never picks a degenerate split.
 
-The editor redesign and the fix round after it ran `make -C ios lint test build` only: swift-format lint, the kit
-tests on the Mac host and the app build for the generic simulator destination. The fix round ran `make -C ios
-test` for each red and green phase and the three targets after each change to the app shell, the last time with
-101 tests passing. Neither ran a simulator.
+The editor ran by hand on two simulators, driven through agent-device:
+
+- iPhone Duo (iOS 27.1, 466 x 678 pt): drag a photo onto another's place reorders it, the target ring shows above
+  the lifted photo, letting go below the paper leaves the order pixel-identical, tap selects, "Foto n ✕" returns to
+  all photos, the three formats switch at once with the paper right under the bar, save shows "Gesichert", and the
+  next edit brings back "Sichern". Canvas, spacing and shape were preselected after a relaunch.
+- iPhone SE 3rd generation (iOS 26.5, 375 x 667 pt): with nine photos the editor fits one screen without scrolling,
+  the selected-photo row ("Foto 1 ✕", Original/Quadrat, trash) fits without truncation, and a drag from the last
+  place to the first reorders the collage.
+
+Not seen: VoiceOver, Reduce Motion and Dynamic Type above the default size.
 
 ## Lessons
 
@@ -151,7 +158,6 @@ test` for each red and green phase and the three targets after each change to th
 - iOS 26 draws a tick for every `step` of a `Slider`. The spacing slider has none and rounds in its binding.
 - State that is invisible at rest needs no reset. The dropped photo's raised z-index was cleared in an animation
   completion, which raced with the next drop. Photos at rest never overlap, so it stays raised.
-- A test count in the evidence must come from the run it names. The `check` line was raised to 101 tests without
-  a simulator run.
+- A test count in the evidence must come from the run it names.
 - Measure CPU time, not wall time, on a shared host. Integer loops in the split search made a debug-build 12-photo
   layout 7.6x faster (36 ms to 4.8 ms), which keeps the spacing slider smooth.
