@@ -75,6 +75,45 @@ struct CollageLayoutTests {
     #expect(rects(document) == [PixelRect(x: 57, y: 515, width: 2046, height: 409)])
   }
 
+  /// Four squares at 57 px: columns at x 57...692 and 749...1383, rows at y 57...691 and
+  /// 748...1382.
+  @Test(arguments: [
+    (100.0, 100.0, 0), (1000, 100, 1), (100, 1000, 2), (1000, 1000, 3),
+    // In the white between two photos and around them.
+    (700, 300, 0), (740, 300, 1), (300, 700, 0), (300, 740, 2), (10, 10, 0), (1430, 1430, 3),
+    // Outside the canvas, where a finger may end up.
+    (-80, 300, 0), (2000, 300, 1), (300, 2000, 2),
+  ])
+  func aDropLandsOnThePhotoUnderItOrTheNearestOne(x: Double, y: Double, index: Int) throws {
+    let document = try collage(
+      Array(repeating: (1000, 1000), count: 4), canvas: .square, spacing: 57)
+
+    #expect(document.layout.dropIndex(x: x, y: y) == index)
+  }
+
+  @Test func aDropAsFarFromTwoPhotosGoesToTheEarlierOne() throws {
+    let document = try collage(
+      Array(repeating: (1000, 1000), count: 4), canvas: .square, spacing: 57)
+
+    #expect(document.layout.dropIndex(x: 720.5, y: 300) == 0)
+    #expect(document.layout.dropIndex(x: 720.5, y: 719.5) == 0)
+  }
+
+  @Test(arguments: CollageCanvas.allCases, spacings)
+  func aDropOnTheMiddleOfAPhotoTakesItsPlace(canvas: CollageCanvas, spacing: Int) throws {
+    for count in 1...Self.realistic.count {
+      let layout = try collage(
+        Array(Self.realistic.prefix(count)), canvas: canvas, spacing: spacing
+      ).layout
+      for (index, cell) in layout.cells.enumerated() {
+        let rect = cell.rect
+        let x = Double(rect.x) + Double(rect.width) / 2
+        let y = Double(rect.y) + Double(rect.height) / 2
+        #expect(layout.dropIndex(x: x, y: y) == index, "\(count) photos, \(rect)")
+      }
+    }
+  }
+
   /// A row is a whole number of pixels high, so its exact height lies in `height..<height + 1`,
   /// and each width is that times the aspect, rounded to a whole pixel.
   @Test(arguments: CollageCanvas.allCases, spacings)
