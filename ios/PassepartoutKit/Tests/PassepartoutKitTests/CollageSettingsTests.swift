@@ -13,11 +13,14 @@ struct CollageSettingsTests {
   }
 
   @Test(arguments: [
-    (CollageCanvas.portrait3x4, 1440, 1920), (.portrait4x5, 1440, 1800), (.square, 1440, 1440),
-    (.landscape3x2, 2160, 1440),
+    (CollageCanvas.portrait3x4, 1440, 1920), (.square, 1440, 1440), (.landscape3x2, 2160, 1440),
   ])
   func everyCanvasHasItsInstagramSize(canvas: CollageCanvas, width: Int, height: Int) {
     #expect(canvas.size == PixelSize(width: width, height: height))
+  }
+
+  @Test func theFormatsAreThreeToFourSquareAndThreeToTwo() {
+    #expect(CollageCanvas.allCases == [.portrait3x4, .square, .landscape3x2])
   }
 
   @Test(arguments: [(-5, 0), (0, 0), (57, 57), (150, 150), (999, 150)])
@@ -57,13 +60,23 @@ final class CollageSettingsStoreTests {
   }
 
   @Test(arguments: [
-    ("3:4", CollageCanvas.portrait3x4), ("4:5", .portrait4x5), ("1:1", .square),
-    ("3:2", .landscape3x2),
+    ("3:4", CollageCanvas.portrait3x4), ("1:1", .square), ("3:2", .landscape3x2),
   ])
   func readsTheStoredCanvasNames(stored: String, canvas: CollageCanvas) {
     defaults.set(stored, forKey: "collage.canvas")
 
     #expect(store.load().canvas == canvas)
+  }
+
+  /// 4:5 was a format until the editor redesign. Its stored name is unknown now.
+  @Test func aStoredFourToFiveOpensTheNextCollageOnThreeToFour() {
+    defaults.set("4:5", forKey: "collage.canvas")
+    defaults.set(20, forKey: "collage.spacing")
+
+    let settings = store.load()
+
+    #expect(settings.canvas == .portrait3x4)
+    #expect(settings.spacing.px == 20)
   }
 
   @Test func aBrokenValueFallsBackForItsFieldOnly() {

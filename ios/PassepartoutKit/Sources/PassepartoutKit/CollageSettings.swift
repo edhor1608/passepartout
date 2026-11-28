@@ -4,14 +4,12 @@ import Foundation
 /// relies on.
 public enum CollageCanvas: CaseIterable, Sendable {
   case portrait3x4
-  case portrait4x5
   case square
   case landscape3x2
 
   public var size: PixelSize {
     switch self {
     case .portrait3x4: PixelSize(width: 1440, height: 1920)
-    case .portrait4x5: PixelSize(width: 1440, height: 1800)
     case .square: PixelSize(width: 1440, height: 1440)
     case .landscape3x2: PixelSize(width: 2160, height: 1440)
     }
@@ -88,7 +86,6 @@ extension CollageCanvas {
   fileprivate var storedName: String {
     switch self {
     case .portrait3x4: "3:4"
-    case .portrait4x5: "4:5"
     case .square: "1:1"
     case .landscape3x2: "3:2"
     }
