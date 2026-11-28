@@ -131,6 +131,8 @@ private struct CollageCanvasView: View {
         }
       }
       .coordinateSpace(.named(Self.space))
+      // Set on lift, so a drop, a drag let go beside the paper and one iOS cancels all keep it on top.
+      .onChange(of: drag?.id) { _, id in if let id { lastLifted = id } }
       // `disabled` alone is only documented to lock controls, and photos are no controls.
       .allowsHitTesting(isEnabled)
       .sensoryFeedback(.selection, trigger: drag?.target)
@@ -185,7 +187,6 @@ private struct CollageCanvasView: View {
         drag = Drag(id: cell.id, translation: value.translation, target: target(value))
       }
       .onEnded { value in
-        lastLifted = cell.id
         guard let index = target(value) else { return }
         withAnimation(.snappy) { move(cell.id, index) }
       }
