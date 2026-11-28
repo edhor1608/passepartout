@@ -1,7 +1,6 @@
 import CoreGraphics
 import Foundation
 import Observation
-import Synchronization
 
 /// Picked photos in, framed copies in the library out.
 ///
@@ -29,8 +28,8 @@ public final class FramingSession {
   private let stallTimeout: Duration
   private var nextID = 0
   private var isInBackground = false
-  /// The handover in flight when its source cannot load in the background.
-  private var foregroundLoad: (handover: Handover, progress: Progress)?
+  /// The transfer in flight when its source cannot load in the background.
+  private var foregroundLoad: OriginalTransfer?
 
   /// `stallTimeout` is how long a transfer may report no progress before its photo fails.
   public init(library: PhotoLibrary = .system, stallTimeout: Duration = .seconds(60)) {
@@ -94,9 +93,7 @@ public final class FramingSession {
   /// picker handover outlives its background time.
   public func appMovedToBackground() {
     isInBackground = true
-    if let load = foregroundLoad, load.handover.finish(.failure(MovedToBackground())) {
-      load.progress.cancel()
-    }
+    foregroundLoad?.abandon()
   }
 
   private func continueQueue() {
@@ -142,38 +139,12 @@ public final class FramingSession {
   /// Returns `nil` when the app moved to the background before a foreground-only source handed
   /// the original over.
   private func load(_ photo: Photo) async throws(PhotoFailure) -> SourceFile? {
-    let result = await withCheckedContinuation { continuation in
-      let handover = Handover(continuation)
-      let progress = photo.source.loadOriginal { handover.finish($0) }
-      if !photo.source.loadsInBackground { foregroundLoad = (handover, progress) }
-      Task { await watch(progress, of: photo.id, until: handover) }
+    let transfer = OriginalTransfer(photo.source, stallTimeout: stallTimeout) { fraction in
+      self.showLoading(photo.id, fraction: fraction)
     }
-    foregroundLoad = nil
-    switch result {
-    case .success(let file?): return file
-    case .success(nil): throw .unreadable
-    case .failure(let error) where error is MovedToBackground: return nil
-    case .failure(let error): throw isOutOfSpace(error) ? .storageFull : .notLoaded
-    }
-  }
-
-  private func watch(_ progress: Progress, of id: Photo.ID, until handover: Handover) async {
-    let poll = min(.milliseconds(500), stallTimeout / 4)
-    var fraction = progress.fractionCompleted
-    var unchanged = Duration.zero
-    while !handover.isFinished {
-      try? await Task.sleep(for: poll)
-      guard progress.fractionCompleted == fraction else {
-        fraction = progress.fractionCompleted
-        unchanged = .zero
-        showLoading(id, fraction: progress.isIndeterminate ? nil : fraction)
-        continue
-      }
-      unchanged += poll
-      if unchanged >= stallTimeout, handover.finish(.failure(TransferStalled())) {
-        progress.cancel()
-      }
-    }
+    if !transfer.loadsInBackground { foregroundLoad = transfer }
+    defer { foregroundLoad = nil }
+    return try await transfer.file()
   }
 
   private func showLoading(_ id: Photo.ID, fraction: Double?) {
@@ -272,34 +243,5 @@ public struct Summary: Equatable, Sendable {
     failed = photos.count { $0.state.failure != nil }
     retryable = photos.count { $0.state.failure?.isRetryable == true }
     completedUnits = photos.reduce(0) { $0 + $1.state.completedUnits }
-  }
-}
-
-private final class Handover: Sendable {
-  private let continuation: Mutex<CheckedContinuation<Result<SourceFile?, any Error>, Never>?>
-
-  init(_ continuation: CheckedContinuation<Result<SourceFile?, any Error>, Never>) {
-    self.continuation = Mutex(continuation)
-  }
-
-  var isFinished: Bool { continuation.withLock { $0 == nil } }
-
-  @discardableResult
-  func finish(_ result: Result<SourceFile?, any Error>) -> Bool {
-    guard let continuation = continuation.withLock({ $0.take() }) else { return false }
-    continuation.resume(returning: result)
-    return true
-  }
-}
-
-private struct TransferStalled: Error {}
-
-private struct MovedToBackground: Error {}
-
-private func isOutOfSpace(_ error: any Error) -> Bool {
-  switch error {
-  case let error as CocoaError where error.code == .fileWriteOutOfSpace: true
-  case let error as POSIXError where error.code == .ENOSPC: true
-  default: (error as NSError).underlyingErrors.contains(where: isOutOfSpace)
   }
 }

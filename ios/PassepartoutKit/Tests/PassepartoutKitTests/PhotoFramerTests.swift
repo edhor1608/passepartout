@@ -227,7 +227,9 @@ struct PhotoFramerTests {
   func decodesAtAJPEGStepWhenItKeepsEnoughDetail(width: Int, height: Int, longEdge: Int) throws {
     let layout = try FrameLayout(
       sourceWidth: width, sourceHeight: height, borderPx: defaultBorderPx)
-    #expect(decodeLongEdge(sourceWidth: width, sourceHeight: height, layout: layout) == longEdge)
+    let render = PixelSize(width: layout.renderWidth, height: layout.renderHeight)
+    let source = PixelSize(width: width, height: height)
+    #expect(decodeLongEdge(source: source, crop: layout.sourceCrop, size: render) == longEdge)
   }
 
   @Test func rejectsAFileImageIOCannotRead() async throws {
@@ -272,18 +274,6 @@ struct PhotoFramerTests {
         else { return nil }
         return "\(prefix):\(name)"
       })
-  }
-
-  /// The first SOFn marker: 0xC0 is baseline, 0xC2 progressive.
-  private func firstFrameMarker(_ jpeg: Data) -> UInt8? {
-    let bytes = [UInt8](jpeg)
-    var index = 2
-    while index + 3 < bytes.count, bytes[index] == 0xFF {
-      let marker = bytes[index + 1]
-      if (0xC0...0xCF).contains(marker), ![0xC4, 0xC8, 0xCC].contains(marker) { return marker }
-      index += 2 + (Int(bytes[index + 2]) << 8 | Int(bytes[index + 3]))
-    }
-    return nil
   }
 }
 

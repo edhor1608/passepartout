@@ -1,10 +1,18 @@
 let defaultBorderPx = 57
 
-struct PixelRect: Equatable, Sendable, Decodable {
-  let x: Int
-  let y: Int
-  let width: Int
-  let height: Int
+public struct PixelSize: Equatable, Sendable {
+  public let width: Int
+  public let height: Int
+}
+
+/// A rectangle in pixels with the origin at the top left.
+public struct PixelRect: Equatable, Sendable, Decodable {
+  public let x: Int
+  public let y: Int
+  public let width: Int
+  public let height: Int
+
+  public var size: PixelSize { PixelSize(width: width, height: height) }
 }
 
 enum FrameLayoutError: String, Error, Equatable, Sendable, Decodable {
@@ -34,7 +42,7 @@ struct FrameLayout: Equatable, Sendable, Decodable {
 extension FrameLayout {
   init(sourceWidth: Int, sourceHeight: Int, borderPx: Int) throws(FrameLayoutError) {
     guard sourceWidth > 0, sourceHeight > 0, borderPx >= 0 else { throw .invalidInput }
-    let source = SourceSize(width: sourceWidth, height: sourceHeight)
+    let source = PixelSize(width: sourceWidth, height: sourceHeight)
     let target = sourceWidth > sourceHeight ? Target.landscape : Target.portrait
 
     for outputWidth in stride(
@@ -75,11 +83,6 @@ extension FrameLayout {
   }
 }
 
-private struct SourceSize {
-  let width: Int
-  let height: Int
-}
-
 private struct Dimensions {
   let outputWidth: Int
   let outputHeight: Int
@@ -101,7 +104,7 @@ private struct Target {
   let ratioHeight: Int
 }
 
-private func createLandscapeLayout(_ source: SourceSize, _ dimensions: Dimensions) -> FrameLayout {
+private func createLandscapeLayout(_ source: PixelSize, _ dimensions: Dimensions) -> FrameLayout {
   FrameLayout(
     variant: .landscape,
     outputWidth: dimensions.outputWidth,
@@ -113,12 +116,12 @@ private func createLandscapeLayout(_ source: SourceSize, _ dimensions: Dimension
     renderHeight: dimensions.innerHeight,
     renderOffsetX: dimensions.effectiveBorderPx,
     renderOffsetY: dimensions.effectiveBorderPx,
-    sourceCrop: computeCenteredCoverCrop(
-      source, frameWidth: dimensions.innerWidth, frameHeight: dimensions.innerHeight)
+    sourceCrop: centeredCoverCrop(
+      of: source, filling: PixelSize(width: dimensions.innerWidth, height: dimensions.innerHeight))
   )
 }
 
-private func createPortraitLayout(_ source: SourceSize, _ dimensions: Dimensions) -> FrameLayout {
+private func createPortraitLayout(_ source: PixelSize, _ dimensions: Dimensions) -> FrameLayout {
   let renderScale = min(
     1,
     Double(dimensions.innerWidth) / Double(source.width),
@@ -141,11 +144,10 @@ private func createPortraitLayout(_ source: SourceSize, _ dimensions: Dimensions
   )
 }
 
-private func computeCenteredCoverCrop(_ source: SourceSize, frameWidth: Int, frameHeight: Int)
-  -> PixelRect
-{
+/// The largest centred part of `source` with the aspect ratio of `frame`.
+func centeredCoverCrop(of source: PixelSize, filling frame: PixelSize) -> PixelRect {
   let sourceRatio = Double(source.width) / Double(source.height)
-  let frameRatio = Double(frameWidth) / Double(frameHeight)
+  let frameRatio = Double(frame.width) / Double(frame.height)
 
   if sourceRatio > frameRatio {
     let width = jsRound(Double(source.height) * frameRatio)
