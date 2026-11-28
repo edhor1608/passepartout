@@ -29,6 +29,18 @@ must never move the screen.
   next collage opens. Order and single-photo shapes belong to one collage.
 - **"Erneut versuchen" reloads the same pick.** The saved file is named `Collage-passepartout.jpg`.
 - **The shell holds `beginBackgroundTask` while saving** (`SaveKeepAlive`); the kit stays UIKit-free.
+- **Three formats.** 3:4 (1440x1920), 1:1 (1440x1440) and 3:2 (2160x1440); 3:4 and 3:2 are the single-photo
+  targets of `CONTEXT.md`. 4:5 is gone. A stored `"4:5"` is an unknown name now and gives the field's default,
+  3:4, like any other unknown value, so there is no compatibility code.
+- **The editor is one screen that never scrolls.** "Abbrechen" and "Sichern" sit in the navigation bar, whose
+  centre shows "Sichert …" and "Gesichert". The stage takes the height that is left, with the format glyphs on it
+  directly above the paper. One inspector below holds the spacing and one shape row: it sets all photos while
+  none is selected and the selected photo otherwise. Text grows up to `accessibility1`.
+- **Reorder by dragging in the collage, committed on the drop.** The layout stays still while the finger is down
+  and the target photo is marked. A justified layout re-cuts its rows on every reorder, so a live reflow would
+  move the targets away. `CollageLayout.dropIndex(x:y:)` is the rule for the target: the photo containing the
+  point, else the nearest, ties to the earlier one. The drop calls `move(_:to:)`. VoiceOver reorders with the
+  actions "Nach vorne" and "Nach hinten".
 - **Extractions first.** `PhotoPixels.swift` (decode, crop, resample, white canvas, JPEG) and `OriginalTransfer.swift`
   (handover, stall timeout, abandon) came out of `PhotoFramer` and `FramingSession` before any collage code, so both
   modes share one quality path and one background-kill rule.
@@ -99,6 +111,7 @@ Each unit's tests ran red against stubs before the code existed (`swift test --p
 | Document and layout | 14 of 17 failed | 17 |
 | Renderer | 7 of 8 failed | 9 |
 | Session | 24 of 25 failed | 27 |
+| Three formats and the drop target (editor redesign) | 5 of 5 new tests failed | 100 in all suites |
 
 `make -C ios check`: 95 tests in 10 suites pass on the Mac and on the iOS 26.5 simulator (34 before).
 
@@ -110,11 +123,15 @@ Two are equivalent: no minimum row height, and no rounding guard on the block he
 documents gave no cell under 1 px. Both guards stay, so "every cell is at least 1 px" holds by construction and not
 only because the score never picks a degenerate split.
 
+The editor redesign ran `make -C ios lint test build` only. No simulator ran, so the drag, the haptics and the
+bar heights on iOS 26 are not yet seen on a device.
+
 ## Lessons
 
 - Run the red phase for real. Against an empty layout two tests passed, which would have stayed hollow.
 - A tolerance needs the unit of the guarantee. "Within 1 %" was wrong for 77 px cells; "whole pixels" is the rule.
 - Flat-colour test images cannot tell a full-resolution export from an upscaled preview. Use detail finer than the
   preview can hold.
+- iOS 26 draws a tick for every `step` of a `Slider`. The spacing slider has none and rounds in its binding.
 - Measure CPU time, not wall time, on a shared host. Integer loops in the split search made a debug-build 12-photo
   layout 7.6x faster (36 ms to 4.8 ms), which keeps the spacing slider smooth.
