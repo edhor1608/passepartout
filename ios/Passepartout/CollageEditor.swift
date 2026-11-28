@@ -83,10 +83,12 @@ struct CollageEditor: View {
         Button("Nach links", systemImage: "arrow.left") {
           session.edit { $0.move(photo.id, to: index - 1) }
         }
+        .labelStyle(.iconOnly)
         .disabled(index == 0)
         Button("Nach rechts", systemImage: "arrow.right") {
           session.edit { $0.move(photo.id, to: index + 1) }
         }
+        .labelStyle(.iconOnly)
         .disabled(index == document.photos.count - 1)
         Spacer()
         Button("Entfernen", systemImage: "trash", role: .destructive) {
@@ -95,6 +97,7 @@ struct CollageEditor: View {
         .disabled(!document.canRemove)
       }
       .buttonStyle(.bordered)
+      .lineLimit(1)
     }
   }
 
@@ -185,21 +188,25 @@ private struct ThumbnailStrip: View {
     ScrollView(.horizontal) {
       HStack(spacing: 8) {
         ForEach(Array(photos.enumerated()), id: \.element.id) { index, photo in
-          thumbnail(photo)
-            .overlay {
-              if selection == photo.id {
-                RoundedRectangle(cornerRadius: 6).strokeBorder(.tint, lineWidth: 3)
+          Button {
+            selection = selection == photo.id ? nil : photo.id
+          } label: {
+            thumbnail(photo)
+              .overlay {
+                if selection == photo.id {
+                  RoundedRectangle(cornerRadius: 6).strokeBorder(.tint, lineWidth: 3)
+                }
               }
-            }
-            .onTapGesture { selection = selection == photo.id ? nil : photo.id }
-            .draggable(String(photo.id)) { thumbnail(photo) }
-            .dropDestination(for: String.self) { ids, _ in
-              guard let id = ids.first.flatMap({ Int($0) }) else { return false }
-              move(id, index)
-              return true
-            }
-            .accessibilityLabel("Foto \(index + 1)")
-            .accessibilityAddTraits(selection == photo.id ? .isSelected : [])
+          }
+          .buttonStyle(.plain)
+          .draggable(String(photo.id)) { thumbnail(photo) }
+          .dropDestination(for: String.self) { ids, _ in
+            guard let id = ids.first.flatMap({ Int($0) }) else { return false }
+            move(id, index)
+            return true
+          }
+          .accessibilityLabel("Foto \(index + 1)")
+          .accessibilityAddTraits(selection == photo.id ? .isSelected : [])
         }
       }
       .padding(.vertical, 4)
