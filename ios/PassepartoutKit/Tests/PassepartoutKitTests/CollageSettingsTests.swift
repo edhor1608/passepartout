@@ -19,10 +19,6 @@ struct CollageSettingsTests {
     #expect(canvas.size == PixelSize(width: width, height: height))
   }
 
-  @Test func theFormatsAreThreeToFourSquareAndThreeToTwo() {
-    #expect(CollageCanvas.allCases == [.portrait3x4, .square, .landscape3x2])
-  }
-
   @Test(arguments: [(-5, 0), (0, 0), (57, 57), (150, 150), (999, 150)])
   func spacingIsClampedToItsRange(requested: Int, px: Int) {
     #expect(CollageSpacing(clamping: requested).px == px)
@@ -68,21 +64,8 @@ final class CollageSettingsStoreTests {
     #expect(store.load().canvas == canvas)
   }
 
-  /// 4:5 was a format until the editor redesign. Its stored name is unknown now.
-  @Test func aStoredFourToFiveOpensTheNextCollageOnThreeToFour() {
-    defaults.set("4:5", forKey: "collage.canvas")
-    defaults.set(20, forKey: "collage.spacing")
-
-    let settings = store.load()
-
-    #expect(settings.canvas == .portrait3x4)
-    #expect(settings.spacing.px == 20)
-    store.save(settings)
-    #expect(defaults.string(forKey: "collage.canvas") == "3:4")
-  }
-
   @Test func aBrokenValueFallsBackForItsFieldOnly() {
-    defaults.set("16:9", forKey: "collage.canvas")
+    defaults.set("4:5", forKey: "collage.canvas")
     defaults.set("abc", forKey: "collage.spacing")
     defaults.set("square", forKey: "collage.shape")
 
