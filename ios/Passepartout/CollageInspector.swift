@@ -38,6 +38,16 @@ struct CollageInspector: View {
         Text("Abstand")
       }
       .accessibilityValue("\(document.spacing.px) Pixel")
+      // Without a `step` VoiceOver would move the slider by a tenth of its range.
+      .accessibilityAdjustableAction { direction in
+        let step =
+          switch direction {
+          case .increment: 1
+          case .decrement: -1
+          @unknown default: 0
+          }
+        session.edit { $0.spacing = CollageSpacing(clamping: $0.spacing.px + step) }
+      }
       Text("\(CollageSpacing.range.upperBound) px")
         .hidden()
         .overlay(alignment: .trailing) { Text("\(document.spacing.px) px") }
@@ -84,13 +94,16 @@ struct CollageInspector: View {
       } label: {
         HStack(spacing: 4) {
           Text("Foto \(selected.number)")
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
           Image(systemName: "xmark.circle.fill")
             .foregroundStyle(.secondary)
         }
+        .frame(minHeight: 44)
+        .contentShape(.rect)
       }
       .buttonStyle(.plain)
       .foregroundStyle(.tint)
-      .fixedSize()
       .accessibilityLabel("Foto \(selected.number), zurück zu allen Fotos")
     } else {
       VStack(alignment: .leading, spacing: 0) {

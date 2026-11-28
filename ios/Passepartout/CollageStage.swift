@@ -6,6 +6,7 @@ struct CollageStage: View {
   let session: CollageSession
   let document: CollageDocument
   @Binding var selection: CollagePhoto.ID?
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
     VStack(spacing: 4) {
@@ -17,6 +18,9 @@ struct CollageStage: View {
       }
       // The free height goes below the paper, so the bar stays put when the format changes.
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+      // Every edit reflows the collage here, also a drop, whose reset transaction cannot read
+      // the environment. The lifted photo still follows the finger, which no animation drives.
+      .transaction { if reduceMotion { $0.animation = nil } }
     }
     .padding([.horizontal, .bottom], 12)
     .contentShape(.rect)
