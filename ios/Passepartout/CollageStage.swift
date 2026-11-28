@@ -86,8 +86,8 @@ private struct CollageCanvasView: View {
   private struct Drag: Equatable {
     let id: CollagePhoto.ID
     let translation: CGSize
-    /// The place in the order the photo takes when dropped now.
-    let target: Int
+    /// The place in the order the photo takes when dropped now, `nil` beside the paper.
+    let target: Int?
   }
 
   private static let space = "collage"
@@ -155,7 +155,7 @@ private struct CollageCanvasView: View {
   }
 
   private func dragging(_ cell: CollageLayout.Cell, scale: CGFloat) -> some Gesture {
-    func target(_ value: DragGesture.Value) -> Int {
+    func target(_ value: DragGesture.Value) -> Int? {
       layout.dropIndex(x: value.location.x / scale, y: value.location.y / scale)
     }
     return DragGesture(minimumDistance: 8, coordinateSpace: .named(Self.space))
@@ -163,9 +163,10 @@ private struct CollageCanvasView: View {
         drag = Drag(id: cell.id, translation: value.translation, target: target(value))
       }
       .onEnded { value in
+        guard let index = target(value) else { return }
         settling = cell.id
         withAnimation(.snappy) {
-          move(cell.id, target(value))
+          move(cell.id, index)
         } completion: {
           settling = nil
         }

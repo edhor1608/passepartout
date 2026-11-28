@@ -81,9 +81,12 @@ public struct CollageLayout: Sendable {
 
 extension CollageLayout {
   /// The place in the order a photo dropped at this point of the canvas takes: the cell that
-  /// contains the point, else the nearest one, and of equally near cells the earlier one. The
-  /// point may lie outside the canvas.
-  public func dropIndex(x: Double, y: Double) -> Int {
+  /// contains the point, else the nearest one, and of equally near cells the earlier one. `nil`
+  /// beside the canvas, where letting go calls the drag off.
+  public func dropIndex(x: Double, y: Double) -> Int? {
+    guard (0..<Double(canvas.width)).contains(x), (0..<Double(canvas.height)).contains(y) else {
+      return nil
+    }
     func squaredDistance(to rect: PixelRect) -> Double {
       let dx = max(Double(rect.x) - x, 0, x - Double(rect.x + rect.width))
       let dy = max(Double(rect.y) - y, 0, y - Double(rect.y + rect.height))

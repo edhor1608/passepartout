@@ -77,6 +77,8 @@ final class CollageSettingsStoreTests {
 
     #expect(settings.canvas == .portrait3x4)
     #expect(settings.spacing.px == 20)
+    store.save(settings)
+    #expect(defaults.string(forKey: "collage.canvas") == "3:4")
   }
 
   @Test func aBrokenValueFallsBackForItsFieldOnly() {

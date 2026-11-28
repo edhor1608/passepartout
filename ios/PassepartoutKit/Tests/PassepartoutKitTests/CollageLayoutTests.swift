@@ -81,14 +81,21 @@ struct CollageLayoutTests {
     (100.0, 100.0, 0), (1000, 100, 1), (100, 1000, 2), (1000, 1000, 3),
     // In the white between two photos and around them.
     (700, 300, 0), (740, 300, 1), (300, 700, 0), (300, 740, 2), (10, 10, 0), (1430, 1430, 3),
-    // Outside the canvas, where a finger may end up.
-    (-80, 300, 0), (2000, 300, 1), (300, 2000, 2),
   ])
   func aDropLandsOnThePhotoUnderItOrTheNearestOne(x: Double, y: Double, index: Int) throws {
     let document = try collage(
       Array(repeating: (1000, 1000), count: 4), canvas: .square, spacing: 57)
 
     #expect(document.layout.dropIndex(x: x, y: y) == index)
+  }
+
+  /// Letting go beside the paper is how a drag is called off.
+  @Test(arguments: [(-80.0, 300.0), (2000, 300), (300, 2000), (300, -1), (1440, 300)])
+  func aDropBesideTheCanvasTakesNoPlace(x: Double, y: Double) throws {
+    let document = try collage(
+      Array(repeating: (1000, 1000), count: 4), canvas: .square, spacing: 57)
+
+    #expect(document.layout.dropIndex(x: x, y: y) == nil)
   }
 
   @Test func aDropAsFarFromTwoPhotosGoesToTheEarlierOne() throws {

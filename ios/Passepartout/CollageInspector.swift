@@ -87,9 +87,19 @@ struct CollageInspector: View {
 
   @ViewBuilder private var scope: some View {
     if let selected {
-      Text("Foto \(selected.number)")
-        .foregroundStyle(.tint)
-        .fixedSize()
+      Button {
+        selection = nil
+      } label: {
+        HStack(spacing: 4) {
+          Text("Foto \(selected.number)")
+          Image(systemName: "xmark.circle.fill")
+            .foregroundStyle(.secondary)
+        }
+      }
+      .buttonStyle(.plain)
+      .foregroundStyle(.tint)
+      .fixedSize()
+      .accessibilityLabel("Foto \(selected.number), zurück zu allen Fotos")
     } else {
       VStack(alignment: .leading, spacing: 0) {
         Text("Alle Fotos")

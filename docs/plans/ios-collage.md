@@ -39,8 +39,11 @@ must never move the screen.
 - **Reorder by dragging in the collage, committed on the drop.** The layout stays still while the finger is down
   and the target photo is marked. A justified layout re-cuts its rows on every reorder, so a live reflow would
   move the targets away. `CollageLayout.dropIndex(x:y:)` is the rule for the target: the photo containing the
-  point, else the nearest, ties to the earlier one. The drop calls `move(_:to:)`. VoiceOver reorders with the
-  actions "Nach vorne" and "Nach hinten".
+  point, else the nearest, ties to the earlier one, and no target beside the paper, so letting go there calls the
+  drag off. The drop calls `move(_:to:)`. VoiceOver reorders with the actions "Nach vorne" and "Nach hinten".
+  This came out of a three-model design arena: the immediate drag with a marked target beat the system
+  long-press drag, which marks no target; the cancel-beside-the-paper rule and the "✕" that returns the shape
+  row to all photos came from the cross-judge and a losing candidate.
 - **Extractions first.** `PhotoPixels.swift` (decode, crop, resample, white canvas, JPEG) and `OriginalTransfer.swift`
   (handover, stall timeout, abandon) came out of `PhotoFramer` and `FramingSession` before any collage code, so both
   modes share one quality path and one background-kill rule.
@@ -112,8 +115,9 @@ Each unit's tests ran red against stubs before the code existed (`swift test --p
 | Renderer | 7 of 8 failed | 9 |
 | Session | 24 of 25 failed | 27 |
 | Three formats and the drop target (editor redesign) | 5 of 5 new tests failed | 100 in all suites |
+| No drop target beside the paper | the test did not compile against `Int` | 101 in all suites |
 
-`make -C ios check`: 95 tests in 10 suites pass on the Mac and on the iOS 26.5 simulator (34 before).
+`make -C ios check`: 101 tests in 10 suites pass on the Mac and on the iOS 26.5 simulator (34 before).
 
 23 hand mutants ran against the collage suites. Three survived at first and each got a test:
 `startingOverBeforeTheFirstLoadRanLoadsOnlyTheNewPick` (no run check in the load loop),
