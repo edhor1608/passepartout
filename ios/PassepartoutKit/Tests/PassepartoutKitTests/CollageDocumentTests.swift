@@ -62,13 +62,13 @@ struct CollageDocumentTests {
     var document = try collage([(600, 400), (400, 600), (500, 500)])
     document.setShape(.square, of: 1)
 
-    document.setShapeOfAll(.square)
+    document.setShape(.square, of: nil)
     #expect(document.photos.allSatisfy { $0.shape == .square })
     #expect(document.settings.shape == .square)
     #expect(document.uniformShape == .square)
 
     document.setShape(.original, of: 0)
-    document.setShapeOfAll(.original)
+    document.setShape(.original, of: nil)
     #expect(document.photos.allSatisfy { $0.shape == .original })
     #expect(document.settings.shape == .original)
     #expect(document.uniformShape == .original)
@@ -84,6 +84,18 @@ struct CollageDocumentTests {
     #expect(document.uniformShape == nil)
     let cell = try #require(document.layout.cells.first { $0.id == 1 })
     #expect(abs(cell.rect.width - cell.rect.height) <= 1, "\(cell.rect)")
+  }
+
+  @Test func theShapeOfNoPhotoIsTheOneAllPhotosShare() throws {
+    var document = try collage([(600, 400), (400, 600), (500, 500)])
+    #expect(document.shape(of: nil) == .original)
+
+    document.setShape(.square, of: 1)
+
+    #expect(document.shape(of: 1) == .square)
+    #expect(document.shape(of: 0) == .original)
+    #expect(document.shape(of: nil) == nil)
+    #expect(document.shape(of: 7) == nil)
   }
 
   @Test func unknownIdsChangeNothing() throws {

@@ -84,15 +84,22 @@ public struct CollageDocument: Equatable, Sendable {
     photos.insert(photo, at: min(max(index, 0), photos.count))
   }
 
-  public mutating func setShape(_ shape: CollageShape, of id: CollagePhoto.ID) {
-    guard let index = photos.firstIndex(where: { $0.id == id }) else { return }
-    photos[index].shape = shape
+  /// The shape of one photo, or of all photos for `nil`, which is `uniformShape`.
+  public func shape(of id: CollagePhoto.ID?) -> CollageShape? {
+    guard let id else { return uniformShape }
+    return photos.first { $0.id == id }?.shape
   }
 
-  /// Also sets `settings.shape`, which a new collage starts with.
-  public mutating func setShapeOfAll(_ shape: CollageShape) {
-    for index in photos.indices { photos[index].shape = shape }
-    settings.shape = shape
+  /// Sets the shape of one photo, or of all photos for `nil`. Only `nil` also sets
+  /// `settings.shape`, which a new collage starts with.
+  public mutating func setShape(_ shape: CollageShape, of id: CollagePhoto.ID?) {
+    guard let id else {
+      for index in photos.indices { photos[index].shape = shape }
+      settings.shape = shape
+      return
+    }
+    guard let index = photos.firstIndex(where: { $0.id == id }) else { return }
+    photos[index].shape = shape
   }
 
   /// Does nothing for the last photo.

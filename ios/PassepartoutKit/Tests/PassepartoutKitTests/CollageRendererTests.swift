@@ -53,7 +53,7 @@ struct CollageRendererTests {
     }
     var document = try await loadedCollage(
       [try directory.write(source, as: .jpeg)], canvas: .square, spacing: 57)
-    document.setShapeOfAll(.square)
+    document.setShape(.square, of: nil)
 
     let output = try Pixels(jpeg: try await renderCollage(document))
 

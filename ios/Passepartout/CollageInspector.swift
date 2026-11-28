@@ -54,19 +54,11 @@ struct CollageInspector: View {
       Picker(
         selected.map { "Form von Foto \($0.number)" } ?? "Form aller Fotos",
         selection: Binding(
-          get: { selected?.photo.shape ?? document.uniformShape },
+          get: { document.shape(of: selected?.photo.id) },
           set: { shape in
             guard let shape else { return }
             let id = selected?.photo.id
-            withAnimation(.snappy) {
-              session.edit { document in
-                if let id {
-                  document.setShape(shape, of: id)
-                } else {
-                  document.setShapeOfAll(shape)
-                }
-              }
-            }
+            withAnimation(.snappy) { session.edit { $0.setShape(shape, of: id) } }
           })
       ) {
         ForEach(CollageShape.allCases, id: \.self) { Text($0.label).tag(CollageShape?.some($0)) }

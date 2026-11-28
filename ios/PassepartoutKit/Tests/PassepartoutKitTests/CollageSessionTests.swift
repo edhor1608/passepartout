@@ -412,7 +412,7 @@ struct CollageSessionTests {
     let first = try await editingSession([try photo("a"), try photo("b")])
     first.edit { $0.canvas = .landscape3x2 }
     first.edit { $0.spacing = CollageSpacing(clamping: 20) }
-    first.edit { $0.setShapeOfAll(.square) }
+    first.edit { $0.setShape(.square, of: nil) }
     first.close()
 
     let second = try await editingSession([try photo("c"), try photo("d")])
