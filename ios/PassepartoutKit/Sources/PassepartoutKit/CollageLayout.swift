@@ -81,23 +81,27 @@ public struct CollageLayout: Sendable {
 
 extension CollageLayout {
   /// The place in the order a photo dropped at this point of the canvas takes: the cell that
-  /// contains the point, else the nearest one, and of equally near cells the earlier one. `nil`
-  /// beside the canvas, where letting go calls the drag off.
+  /// contains the point, else the nearest one, and of equally near cells the earlier one. A cell
+  /// contains its left and top edge but not its right and bottom one, so an edge two cells share
+  /// belongs to the cell that starts there. `nil` beside the canvas, where letting go calls the
+  /// drag off.
   public func dropIndex(x: Double, y: Double) -> Int? {
     guard (0..<Double(canvas.width)).contains(x), (0..<Double(canvas.height)).contains(y) else {
       return nil
+    }
+    func contains(_ rect: PixelRect) -> Bool {
+      (Double(rect.x)..<Double(rect.x + rect.width)).contains(x)
+        && (Double(rect.y)..<Double(rect.y + rect.height)).contains(y)
     }
     func squaredDistance(to rect: PixelRect) -> Double {
       let dx = max(Double(rect.x) - x, 0, x - Double(rect.x + rect.width))
       let dy = max(Double(rect.y) - y, 0, y - Double(rect.y + rect.height))
       return dx * dx + dy * dy
     }
-    var nearest = (index: 0, distance: Double.infinity)
-    for (index, cell) in cells.enumerated() {
-      let distance = squaredDistance(to: cell.rect)
-      if distance < nearest.distance { nearest = (index, distance) }
-    }
-    return nearest.index
+    return cells.firstIndex { contains($0.rect) }
+      ?? cells.indices.min { first, second in
+        squaredDistance(to: cells[first].rect) < squaredDistance(to: cells[second].rect)
+      }
   }
 }
 

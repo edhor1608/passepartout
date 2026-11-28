@@ -106,6 +106,14 @@ struct CollageLayoutTests {
     #expect(document.layout.dropIndex(x: 720.5, y: 719.5) == 0)
   }
 
+  @Test(arguments: [(720.0, 300.0, 1), (300, 720, 2), (720, 720, 3)])
+  func aDropOnASharedEdgeGoesToThePhotoThatStartsThere(x: Double, y: Double, index: Int) throws {
+    let document = try collage(
+      Array(repeating: (1000, 1000), count: 4), canvas: .square, spacing: 0)
+
+    #expect(document.layout.dropIndex(x: x, y: y) == index)
+  }
+
   @Test(arguments: CollageCanvas.allCases, spacings)
   func aDropOnTheMiddleOfAPhotoTakesItsPlace(canvas: CollageCanvas, spacing: Int) throws {
     for count in 1...Self.realistic.count {
