@@ -118,12 +118,3 @@ struct CollageInspector: View {
     }
   }
 }
-
-extension CollageShape {
-  var label: String {
-    switch self {
-    case .original: "Original"
-    case .square: "Quadrat"
-    }
-  }
-}

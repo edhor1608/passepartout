@@ -18,10 +18,6 @@ struct CollageEditor: View {
     if case .saving = status { true } else { false }
   }
 
-  private var isSaved: Bool {
-    if case .saved = status { true } else { false }
-  }
-
   var body: some View {
     NavigationStack {
       VStack(spacing: 0) {
@@ -41,16 +37,16 @@ struct CollageEditor: View {
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .principal) { title }
-        if !isSaved {
+        if case .saved = status {
+          ToolbarItem(placement: .confirmationAction) {
+            Button("Fertig") { session.close() }
+          }
+        } else {
           ToolbarItem(placement: .cancellationAction) {
             Button("Abbrechen") { session.close() }
               .disabled(isSaving)
           }
-        }
-        ToolbarItem(placement: .confirmationAction) {
-          if isSaved {
-            Button("Fertig") { session.close() }
-          } else {
+          ToolbarItem(placement: .confirmationAction) {
             Button("Sichern") { session.save() }
               .disabled(isSaving)
           }
