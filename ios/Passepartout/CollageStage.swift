@@ -15,7 +15,8 @@ struct CollageStage: View {
       CollageCanvasView(layout: document.layout, selection: $selection) { id, index in
         session.edit { $0.move(id, to: index) }
       }
-      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      // The free height goes below the paper, so the bar stays put when the format changes.
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
     .padding([.horizontal, .bottom], 12)
     .contentShape(.rect)
@@ -79,8 +80,9 @@ private struct CollageCanvasView: View {
   let move: (CollagePhoto.ID, Int) -> Void
   /// Resets itself when iOS cancels the gesture, so no photo stays lifted.
   @GestureState(resetTransaction: Transaction(animation: .snappy)) private var drag: Drag? = nil
-  /// The dropped photo, which stays above the others until it reached its place.
-  @State private var settling: CollagePhoto.ID?
+  /// Stays above the others while it flies to its place or back. Photos at rest never overlap,
+  /// so nothing resets it.
+  @State private var lastLifted: CollagePhoto.ID?
   @Environment(\.isEnabled) private var isEnabled
 
   private struct Drag: Equatable {
@@ -92,6 +94,15 @@ private struct CollageCanvasView: View {
 
   private static let space = "collage"
 
+  /// The photo whose place the lifted one takes when dropped now.
+  private var target: CollageLayout.Cell? {
+    guard let drag, let index = drag.target, layout.cells.indices.contains(index) else {
+      return nil
+    }
+    let cell = layout.cells[index]
+    return cell.id == drag.id ? nil : cell
+  }
+
   var body: some View {
     Color.white
       .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
@@ -101,6 +112,17 @@ private struct CollageCanvasView: View {
           let scale = geometry.size.width / CGFloat(layout.canvas.width)
           ForEach(Array(layout.cells.enumerated()), id: \.element.id) { index, cell in
             photo(cell, at: index, scale: scale)
+          }
+          // Its own layer, because the lifted photo covers the photo below it.
+          if let target {
+            let frame = target.rect.scaled(by: scale)
+            Rectangle()
+              .fill(.tint.opacity(0.3))
+              .strokeBorder(.tint, lineWidth: 3)
+              .frame(width: frame.width, height: frame.height)
+              .position(x: frame.midX, y: frame.midY)
+              .zIndex(2)
+              .allowsHitTesting(false)
           }
         }
       }
@@ -113,18 +135,16 @@ private struct CollageCanvasView: View {
   }
 
   private func photo(_ cell: CollageLayout.Cell, at index: Int, scale: CGFloat) -> some View {
-    let rect = cell.rect
+    let frame = cell.rect.scaled(by: scale)
     let isDragged = drag?.id == cell.id
-    let isTarget = drag.map { $0.target == index && $0.id != cell.id } ?? false
     let isSelected = selection == cell.id
     return Image(decorative: cell.photo.preview, scale: 1)
       .resizable()
       .scaledToFill()
-      .frame(width: CGFloat(rect.width) * scale, height: CGFloat(rect.height) * scale)
+      .frame(width: frame.width, height: frame.height)
       .clipped()
       .overlay {
-        if isTarget { Color.accentColor.opacity(0.3) }
-        if isTarget || isSelected { Rectangle().strokeBorder(.tint, lineWidth: 3) }
+        if isSelected { Rectangle().strokeBorder(.tint, lineWidth: 3) }
       }
       .contentShape(.rect)
       .accessibilityElement()
@@ -142,16 +162,14 @@ private struct CollageCanvasView: View {
       }
       .scaleEffect(isDragged ? 1.05 : 1)
       .shadow(color: .black.opacity(isDragged ? 0.35 : 0), radius: 12, y: 6)
+      .opacity(isDragged ? 0.85 : 1)
       .animation(.snappy, value: isDragged)
       // Below the animation, so the photo follows the finger without a delay.
       .offset(isDragged ? drag?.translation ?? .zero : .zero)
       .onTapGesture { selection = isSelected ? nil : cell.id }
       .gesture(dragging(cell, scale: scale))
-      .position(
-        x: (CGFloat(rect.x) + CGFloat(rect.width) / 2) * scale,
-        y: (CGFloat(rect.y) + CGFloat(rect.height) / 2) * scale
-      )
-      .zIndex(isDragged || settling == cell.id ? 1 : 0)
+      .position(x: frame.midX, y: frame.midY)
+      .zIndex(isDragged || lastLifted == cell.id ? 1 : 0)
   }
 
   private func dragging(_ cell: CollageLayout.Cell, scale: CGFloat) -> some Gesture {
@@ -163,14 +181,18 @@ private struct CollageCanvasView: View {
         drag = Drag(id: cell.id, translation: value.translation, target: target(value))
       }
       .onEnded { value in
+        lastLifted = cell.id
         guard let index = target(value) else { return }
-        settling = cell.id
-        withAnimation(.snappy) {
-          move(cell.id, index)
-        } completion: {
-          settling = nil
-        }
+        withAnimation(.snappy) { move(cell.id, index) }
       }
+  }
+}
+
+extension PixelRect {
+  fileprivate func scaled(by scale: CGFloat) -> CGRect {
+    CGRect(
+      x: CGFloat(x) * scale, y: CGFloat(y) * scale,
+      width: CGFloat(width) * scale, height: CGFloat(height) * scale)
   }
 }
 
